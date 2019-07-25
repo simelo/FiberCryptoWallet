@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/simelo/FiberCryptoWallet/src/models/transactions"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/qml"

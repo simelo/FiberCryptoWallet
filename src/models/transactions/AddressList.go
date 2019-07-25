@@ -97,4 +97,5 @@ func (al *AddressList) addExamples() {
 	adr3.SetAddressSky(111)
 	adr3.SetAddressCoinHours(13548)
 	al.addAddress(adr3)
+
 }
