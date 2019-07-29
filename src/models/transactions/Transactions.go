@@ -1,6 +1,8 @@
 package transactions
 
-import "github.com/therecipe/qt/core"
+import (
+	"github.com/therecipe/qt/core"
+)
 
 const (
 	Date = int(core.Qt__UserRole) + 1<<iota
@@ -30,9 +32,3 @@ const (
 	AddressSky
 	AddressCoinHours
 )
-
-func init() {
-	TransactionDetails_QmlRegisterType2("TransactionModels", 1, 0, "TransactionDetails")
-	// AddressDetails_QmlRegisterType2("TransactionModels", 1, 0, "AddressDetails")
-	AddressList_QmlRegisterType2("TransactionModels", 1, 0, "AddressList")
-}
