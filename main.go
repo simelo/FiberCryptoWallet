@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	core.QCoreApplication_SetAttribute(core.Qt__AA_EnableHighDpiScaling, true)
 
 	app := gui.NewQGuiApplication(len(os.Args), os.Args)

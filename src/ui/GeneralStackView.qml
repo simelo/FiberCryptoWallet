@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import BlockchainModels 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/"
@@ -16,6 +17,10 @@ Item {
         } else {
             stackView.push(componentOutputs)
         }
+    }
+
+    BlockchainStatusModel {
+        id: blockchainModel
     }
 
     function openBlockchainPage() {
@@ -83,6 +88,16 @@ Item {
 
         Blockchain {
             id: blockchain
+
+            onBackRequested: {
+                stackView.pop()
+                toolPageOpened = false
+            }
+
+            Component.onCompleted: {
+                model = blockchainModel
+                model.update()
+            }
         }
     }
 

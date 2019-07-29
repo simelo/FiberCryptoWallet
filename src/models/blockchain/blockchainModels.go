@@ -20,11 +20,11 @@ type BlockchainStatusModel struct {
 	_ string          `property:"totalSkySupply"`
 	_ string          `property:"currentCoinHoursSupply"`
 	_ string          `property:"totalCoinHoursSupply"`
+
+	_ func() `signal:"update,auto"`
 }
 
 func (bs *BlockchainStatusModel) init() {
-	println("init-BlockchainStatusModel")
-
 	// block details
 	bs.SetNumberOfBlocksDefault("0")
 	bs.SetTimestampLastBlockDefault(core.NewQDateTime3(core.NewQDate3(2000, 1, 1), core.NewQTime3(0, 0, 0, 0), core.Qt__LocalTime))
@@ -34,7 +34,9 @@ func (bs *BlockchainStatusModel) init() {
 	bs.SetTotalSkySupplyDefault("0")
 	bs.SetCurrentCoinHoursSupplyDefault("0")
 	bs.SetTotalCoinHoursSupplyDefault("0")
+}
 
+func (bs *BlockchainStatusModel) update() {
 	// update info
 	if err := bs.updateInfo(); err != nil {
 		println(err.Error())
@@ -77,8 +79,6 @@ func (bs *BlockchainStatusModel) updateInfo() error {
 	bs.SetTotalSkySupply(totalSkySupply)
 	bs.SetCurrentCoinHoursSupply(currentCoinHoursSupply)
 	bs.SetTotalCoinHoursSupply(totalCoinHoursSupply)
-
-	println("Status-updated")
 
 	return nil
 }
