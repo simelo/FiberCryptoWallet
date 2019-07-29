@@ -1,4 +1,4 @@
-package models
+package addresses
 
 import (
 	"github.com/therecipe/qt/core"
@@ -48,7 +48,6 @@ func (m *AddressesModel) init() {
 	m.ConnectEditAddress(m.editAddress)
 	m.ConnectRemoveAddress(m.removeAddress)
 	m.ConnectLoadModel(m.loadModel)
-
 }
 
 func (m *AddressesModel) data(index *core.QModelIndex, role int) *core.QVariant {

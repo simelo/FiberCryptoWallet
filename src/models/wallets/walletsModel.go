@@ -1,4 +1,4 @@
-package models
+package wallets
 
 import (
 	"github.com/therecipe/qt/core"

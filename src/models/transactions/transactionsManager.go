@@ -26,9 +26,3 @@ const (
 	transactionTypeSend = iota
 	transactionTypeReceive
 )
-
-const (
-	Address = int(core.Qt__UserRole) + 1<<iota
-	AddressSky
-	AddressCoinHours
-)
