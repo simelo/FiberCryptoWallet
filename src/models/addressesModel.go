@@ -1,4 +1,4 @@
-package addresses
+package models
 
 import (
 	"github.com/therecipe/qt/core"

@@ -1,4 +1,4 @@
-package transactions
+package models
 
 import (
 	"github.com/therecipe/qt/core"

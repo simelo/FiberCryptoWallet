@@ -1,9 +1,8 @@
-package wallets
+package models
 
 import (
 	"github.com/fibercrypto/FiberCryptoWallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/FiberCryptoWallet/src/core"
-	"github.com/fibercrypto/FiberCryptoWallet/src/models/addresses"
 	qtcore "github.com/therecipe/qt/core"
 )
 
@@ -21,7 +20,7 @@ type WalletManager struct {
 	_ func(id string, password string)                                     `slot:"encryptWallet"`
 	_ func(id string, password string)                                     `slot:"decryptWallet"`
 	_ func() []*QWallet                                                    `slot:"getWallets"`
-	_ func(id string) []*addresses.QAddress                                `slot:"getAddresses"`
+	_ func(id string) []*QAddress                                          `slot:"getAddresses"`
 }
 
 func (walletM *WalletManager) init() {
@@ -134,16 +133,16 @@ func (walletM *WalletManager) getWallets() []*QWallet {
 	return qwallets
 }
 
-func (walletM *WalletManager) getAddresses(Id string) []*addresses.QAddress {
+func (walletM *WalletManager) getAddresses(Id string) []*QAddress {
 	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(Id)
-	qaddresses := make([]*addresses.QAddress, 0)
+	qaddresses := make([]*QAddress, 0)
 	it, err := wlt.GetLoadedAddresses()
 	if err != nil {
 		return nil
 	}
 	for it.Next() {
 		addr := it.Value()
-		qaddress := addresses.NewQAddress(nil)
+		qaddress := NewQAddress(nil)
 		qaddress.SetAddress(addr.String())
 		sky, err := addr.GetCryptoAccount().GetBalance("Sky")
 		if err != nil {
