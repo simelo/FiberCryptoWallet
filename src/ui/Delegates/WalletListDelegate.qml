@@ -2,6 +2,12 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import WalletsManager 1.0
+
+// Resource imports
+// import "qrc:/ui/src/ui/"
+// import "qrc:/ui/src/ui/Dialogs"
+import "../Dialogs/" // For quick UI development, switch back to resources when making a release
 
 Item {
     id: root
@@ -67,9 +73,10 @@ Item {
                     horizontalAlignment: Text.AlignRight
                     Layout.preferredWidth: internalLabelsWidth
                 }
-            }
+            } // RowLayout
 
             onClicked: {
+                        
                 expanded = !expanded
             }
         } // ItemDelegate
@@ -90,20 +97,79 @@ Item {
             delegate: WalletListAddressDelegate {
                 width: walletList.width
                 height: index == 0 ? delegateHeight + 20 : visible ? delegateHeight : 0
+
+                onAddAddressesRequested: {
+                    dialogAddAddresses.open()
+                }
+                onEditWalletRequested: {
+                    dialogEditWallet.open()
+                }
             }
-        }
+
+        } // ListView
     } // ColumnLayout
+
+    DialogAddAddresses {
+        id: dialogAddAddresses
+        anchors.centerIn: Overlay.overlay
+
+        modal: true
+        focus: true
+
+        onAccepted: {
+            console.log("Adding accepted")
+        }
+        onRejected: {
+            console.log("Adding rejected")
+        }
+    } // DialogAddAddresses
+
+    DialogEditWallet {
+        id: dialogEditWallet
+        anchors.centerIn: Overlay.overlay
+
+        focus: true
+        modal: true
+
+        onAccepted: {
+            console.log("Editting accepted")
+        }
+        onRejected: {
+            console.log("Editting rejected")
+        }
+    } // DialogEditWallet
 
     // Roles: address, addressSky, addressCoinHours
     // Use listModel.append( { "address": value, "addressSky": value, "addressCoinHours": value } )
     // Or implement the model in the backend (a more recommendable approach)
-    ListModel {
+    AddressModel {
+
         id: listAddresses
-        // The first element must exist but will not be used
-        ListElement { address: "--------------------------"; addressSky: 0; addressCoinHours: 0 }
-        ListElement { address: "qrxw7364w8xerusftaxkw87ues"; addressSky: 30; addressCoinHours: 1049 }
-        ListElement { address: "8745yuetsrk8tcsku4ryj48ije"; addressSky: 12; addressCoinHours: 16011 }
-        ListElement { address: "gfdhgs343kweru38200384uwqd"; addressSky: 0; addressCoinHours: 72 }
-        ListElement { address: "00qdqsdjkssvmchskjkxxdg374"; addressSky: 521; addressCoinHours: 11 }
+        property Timer timer: Timer {
+                                id: addressModelTimer
+                                interval: 0
+                                repeat: false
+                                running: true
+                                onTriggered: {
+                                    listAddresses.loadModel(walletManager.getAddresses(fileName))
+                                    addressModelTimer.running = false 
+                                       
+                                    }
+                            }
     }
+
+    
+
+     //Roles: address, addressSky, addressCoinHours
+     //Use listModel.append( { "address": value, "addressSky": value, "addressCoinHours": value } )
+     //Or implement the model in the backend (a more recommendable approach)
+    //ListModel {
+    //    id: listAddresses
+    //    // The first element must exist but will not be used
+    //    ListElement { address: "--------------------------"; addressSky: 0; addressCoinHours: 0 }
+    //    ListElement { address: "qrxw7364w8xerusftaxkw87ues"; addressSky: 30; addressCoinHours: 1049 }
+    //    ListElement { address: "8745yuetsrk8tcsku4ryj48ije"; addressSky: 12; addressCoinHours: 16011 }
+    //    ListElement { address: "gfdhgs343kweru38200384uwqd"; addressSky: 0; addressCoinHours: 72 }
+    //    ListElement { address: "00qdqsdjkssvmchskjkxxdg374"; addressSky: 521; addressCoinHours: 11 }
+    //}
 }
