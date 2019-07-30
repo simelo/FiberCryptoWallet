@@ -23,6 +23,14 @@ Item {
         id: blockchainModel
     }
 
+    function openPendingTransactionsPage() {
+        if (stackView.depth > 1) {
+            stackView.replace(componentPendingTransactions)
+        } else {
+            stackView.push(componentPendingTransactions)
+        }
+    }
+
     function openBlockchainPage() {
         if (stackView.depth > 1) {
             stackView.replace(componentBlockchain)
@@ -80,6 +88,14 @@ Item {
 
         Outputs {
             id: outputs
+        }
+    }
+
+    Component {
+        id: componentPendingTransactions
+
+        PendingTransactions {
+            id: pendingTransactions
         }
     }
 
