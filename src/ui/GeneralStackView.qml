@@ -89,11 +89,6 @@ Item {
         Blockchain {
             id: blockchain
 
-            onBackRequested: {
-                stackView.pop()
-                toolPageOpened = false
-            }
-
             Component.onCompleted: {
                 model = blockchainModel
                 model.update()
