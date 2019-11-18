@@ -7,6 +7,12 @@
 *.vscode
 *.pro.user*
 CMake*
+*.cflags
+*.config
+*.creator
+*.cxxflags
+*.files
+*.includes
 
 # Unit test / coverage reports
 htmlcov/
