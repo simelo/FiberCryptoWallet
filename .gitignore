@@ -22,6 +22,8 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.html
+coverage.out
 *.cover
 .hypothesis/
 
@@ -64,4 +66,5 @@ rcc__*
 
 # Temporary build files
 rcc_cgo_*.go
+
 

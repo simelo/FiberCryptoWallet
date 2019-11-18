@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	Name              = int(core.Qt__UserRole) + iota +1
+	Name = int(core.Qt__UserRole) + iota + 1
 	EncryptionEnabled
 	Sky
 	CoinHours
@@ -26,10 +26,10 @@ type WalletModel struct {
 	_ []*QWallet               `property:"wallets"`
 
 	_ func(*QWallet)                                                                    `slot:"addWallet"`
-	_ func(row int, name string, encryptionEnabled bool, sky float64, coinHours uint64) `slot:"editWallet"`
+	_ func(row int, name string, encryptionEnabled bool, sky string, coinHours string)  `slot:"editWallet"`
 	_ func(row int)                                                                     `slot:"removeWallet"`
 	_ func([]*QWallet)                                                                  `slot:"loadModel"`
-	_ func([]*QWallet, []bool)                                                          `slot:"loadModelUsingExpanded"`
+	_ func([]*QWallet)                                                                  `slot:"updateModel"`
 	_ int                                                                               `property:"count"`
 }
 
@@ -37,8 +37,8 @@ type QWallet struct {
 	core.QObject
 	_ string  `property:"name"`
 	_ int     `property:"encryptionEnabled"`
-	_ float64 `property:"sky"`
-	_ uint64  `property:"coinHours"`
+	_ string  `property:"sky"`
+	_ string  `property:"coinHours"`
 	_ string  `property:"fileName"`
 	_ bool    `property:"expand"`
 }
@@ -64,7 +64,7 @@ func (walletModel *WalletModel) init() {
 	walletModel.ConnectEditWallet(walletModel.editWallet)
 	walletModel.ConnectRemoveWallet(walletModel.removeWallet)
 	walletModel.ConnectLoadModel(walletModel.loadModel)
-	walletModel.ConnectLoadModelUsingExpanded(walletModel.loadModelUsingExpanded)
+	walletModel.ConnectUpdateModel(walletModel.updateModel)
 
 }
 
@@ -116,7 +116,7 @@ func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QV
 }
 
 func (walletModel *WalletModel) setData(index *core.QModelIndex, value *core.QVariant, role int) bool {
-	
+
 	if !index.IsValid() {
 		return false
 	}
@@ -138,11 +138,11 @@ func (walletModel *WalletModel) setData(index *core.QModelIndex, value *core.QVa
 		}
 	case Sky:
 		{
-			w.SetSky(value.ToDouble(nil))
+			w.SetSky(value.ToString())
 		}
 	case CoinHours:
 		{
-			w.SetCoinHours(value.ToULongLong(nil))
+			w.SetCoinHours(value.ToString())
 		}
 	case FileName:
 		{
@@ -158,7 +158,7 @@ func (walletModel *WalletModel) setData(index *core.QModelIndex, value *core.QVa
 		}
 	}
 
-	walletModel.DataChanged(index, index, []int { role })
+	walletModel.DataChanged(index, index, []int{role})
 	return true
 }
 
@@ -183,11 +183,11 @@ func (walletModel *WalletModel) addWallet(w *QWallet) {
 	walletModel.EndInsertRows()
 }
 
-func (walletModel *WalletModel) editWallet(row int, name string, encrypted bool, sky float64, coinHours uint64) {
+func (walletModel *WalletModel) editWallet(row int, name string, encrypted bool, sky string, coinHours string) {
 	logWalletsModel.Info("Edit Wallet")
 	pIndex := walletModel.Index(row, 0, core.NewQModelIndex())
 
-	walletModel.setData(pIndex, core.NewQVariant1(name), Name)	
+	walletModel.setData(pIndex, core.NewQVariant1(name), Name)
 	if encrypted {
 		walletModel.setData(pIndex, core.NewQVariant1(1), EncryptionEnabled)
 	} else {
@@ -205,20 +205,11 @@ func (walletModel *WalletModel) removeWallet(row int) {
 	walletModel.EndRemoveRows()
 }
 
-func (walletModel *WalletModel) loadModelUsingExpanded(wallets []*QWallet, exp []bool) {
-	logWalletsModel.Info("Loading wallets")
+func (walletModel *WalletModel) updateModel(wallets []*QWallet) {
 	for i, wlt := range wallets {
-		if i < len(exp){
-			wallets[i].SetExpand(exp[i])
-		}
-		qml.QQmlEngine_SetObjectOwnership(wlt, qml.QQmlEngine__CppOwnership)
+		walletModel.editWallet(i, wlt.Name(), wlt.EncryptionEnabled() == 1, wlt.Sky(), wlt.CoinHours())
 	}
-	walletModel.BeginResetModel()
-	walletModel.SetWallets(wallets)
-	walletModel.SetCount(len(walletModel.Wallets()))
-	walletModel.EndResetModel()
 }
-
 
 func (walletModel *WalletModel) loadModel(wallets []*QWallet) {
 	logWalletsModel.Info("Loading wallets")
