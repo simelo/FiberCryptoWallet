@@ -20,9 +20,15 @@ deps: ## Add dependencies
 	dep ensure
 	rm -rf rm -rf vendor/github.com/therecipe
 
-run: build ## Run FiberCrypto Wallet.
+run-Linux:
 	@echo "Running FiberCrypto Wallet..."
 	@./deploy/linux/FiberCryptoWallet
+
+run-Darwin:
+	@echo "Running FiberCrypto Wallet..."
+	@open ./deploy/darwin/fibercryptowallet.app
+
+run: build run-$(UNAME_S) ## Run FiberCrypto Wallet.
 
 install-deps-no-envs: ## Install therecipe/qt with -tags=no_env set
 	go get -v -tags=no_env github.com/therecipe/qt/cmd/...
