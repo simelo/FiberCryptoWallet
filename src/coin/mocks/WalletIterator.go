@@ -39,15 +39,15 @@ func (_m *WalletIterator) Next() bool {
 }
 
 // Value provides a mock function with given fields:
-func (_m *WalletIterator) Value() core.Wallet {
+func (_m *WalletIterator) Value() core.FullWallet {
 	ret := _m.Called()
 
-	var r0 core.Wallet
-	if rf, ok := ret.Get(0).(func() core.Wallet); ok {
+	var r0 core.FullWallet
+	if rf, ok := ret.Get(0).(func() core.FullWallet); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(core.Wallet)
+			r0 = ret.Get(0).(core.FullWallet)
 		}
 	}
 

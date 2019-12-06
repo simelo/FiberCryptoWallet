@@ -10,22 +10,22 @@ type WalletSet struct {
 	mock.Mock
 }
 
-// CreateWallet provides a mock function with given fields: name, seed, isEncryptrd, pwd, scanAddressesN
-func (_m *WalletSet) CreateWallet(name string, seed string, isEncryptrd bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
-	ret := _m.Called(name, seed, isEncryptrd, pwd, scanAddressesN)
+// CreateWallet provides a mock function with given fields: name, seed, walletType, isEncryptrd, pwd, scanAddressesN
+func (_m *WalletSet) CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd core.PasswordReader, scanAddressesN int) (core.FullWallet, error) {
+	ret := _m.Called(name, seed, walletType, isEncryptrd, pwd, scanAddressesN)
 
-	var r0 core.Wallet
-	if rf, ok := ret.Get(0).(func(string, string, bool, core.PasswordReader, int) core.Wallet); ok {
-		r0 = rf(name, seed, isEncryptrd, pwd, scanAddressesN)
+	var r0 core.FullWallet
+	if rf, ok := ret.Get(0).(func(string, string, string, bool, core.PasswordReader, int) core.FullWallet); ok {
+		r0 = rf(name, seed, walletType, isEncryptrd, pwd, scanAddressesN)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(core.Wallet)
+			r0 = ret.Get(0).(core.FullWallet)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, bool, core.PasswordReader, int) error); ok {
-		r1 = rf(name, seed, isEncryptrd, pwd, scanAddressesN)
+	if rf, ok := ret.Get(1).(func(string, string, string, bool, core.PasswordReader, int) error); ok {
+		r1 = rf(name, seed, walletType, isEncryptrd, pwd, scanAddressesN)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -33,16 +33,30 @@ func (_m *WalletSet) CreateWallet(name string, seed string, isEncryptrd bool, pw
 	return r0, r1
 }
 
+// DefaultWalletType provides a mock function with given fields:
+func (_m *WalletSet) DefaultWalletType() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // GetWallet provides a mock function with given fields: id
-func (_m *WalletSet) GetWallet(id string) core.Wallet {
+func (_m *WalletSet) GetWallet(id string) core.FullWallet {
 	ret := _m.Called(id)
 
-	var r0 core.Wallet
-	if rf, ok := ret.Get(0).(func(string) core.Wallet); ok {
+	var r0 core.FullWallet
+	if rf, ok := ret.Get(0).(func(string) core.FullWallet); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(core.Wallet)
+			r0 = ret.Get(0).(core.FullWallet)
 		}
 	}
 
@@ -59,6 +73,22 @@ func (_m *WalletSet) ListWallets() core.WalletIterator {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(core.WalletIterator)
+		}
+	}
+
+	return r0
+}
+
+// SupportedWalletTypes provides a mock function with given fields:
+func (_m *WalletSet) SupportedWalletTypes() []string {
+	ret := _m.Called()
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func() []string); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
 		}
 	}
 

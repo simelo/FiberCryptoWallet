@@ -141,11 +141,11 @@ func (_m *AltcoinManager) RemoveSignService(_a0 core.TxnSigner) error {
 }
 
 // SignServicesForTxn provides a mock function with given fields: _a0, _a1
-func (_m *AltcoinManager) SignServicesForTxn(_a0 core.Wallet, _a1 core.Transaction) core.TxnSignerIterator {
+func (_m *AltcoinManager) SignServicesForTxn(_a0 core.FullWallet, _a1 core.Transaction) core.TxnSignerIterator {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 core.TxnSignerIterator
-	if rf, ok := ret.Get(0).(func(core.Wallet, core.Transaction) core.TxnSignerIterator); ok {
+	if rf, ok := ret.Get(0).(func(core.FullWallet, core.Transaction) core.TxnSignerIterator); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
