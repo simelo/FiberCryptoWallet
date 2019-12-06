@@ -100,7 +100,7 @@ func TestSignersReadyForTxn(t *testing.T) {
 	defer RemoveSignService(signerIDs[5]) // nolint gosec
 
 	var txn core.Transaction = new(mocks.Transaction)
-	var wlt core.Wallet = new(mocks.Wallet)
+	var wlt core.FullWallet = new(mocks.FullWallet)
 	signers[0].On("ReadyForTxn", wlt, txn).Return(true, nil)
 	signers[1].On("ReadyForTxn", wlt, txn).Return(false, nil)
 	signers[2].On("ReadyForTxn", wlt, txn).Return(false, errors.ErrInvalidID)

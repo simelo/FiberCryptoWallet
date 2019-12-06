@@ -34,7 +34,7 @@ func (m *fibercryptoAltcoinManager) RemoveSignService(signSrv core.TxnSigner) er
 }
 
 // SignServicesForTxn returns an object to iterate over signing srategies supported for a given transaction
-func (m *fibercryptoAltcoinManager) SignServicesForTxn(wlt core.Wallet, txn core.Transaction) core.TxnSignerIterator {
+func (m *fibercryptoAltcoinManager) SignServicesForTxn(wlt core.FullWallet, txn core.Transaction) core.TxnSignerIterator {
 	return signutil.FilterSignersFromMap(
 		m.signers,
 		func(signer core.TxnSigner) bool {

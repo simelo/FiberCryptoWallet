@@ -65,5 +65,5 @@ type AltcoinManager interface {
 	// EnumerateSignServices returns an object to iterate over global signing srategies
 	EnumerateSignServices() TxnSignerIterator
 	// SignServicesForTxn returns an object to iterate over strategies supported to sign a given transaction on behalf of a wallet
-	SignServicesForTxn(Wallet, Transaction) TxnSignerIterator
+	SignServicesForTxn(FullWallet, Transaction) TxnSignerIterator
 }

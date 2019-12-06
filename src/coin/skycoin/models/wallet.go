@@ -40,10 +40,10 @@ const (
 //Implements WalletIterator interface
 type SkycoinWalletIterator struct {
 	current int
-	wallets []core.Wallet
+	wallets []core.FullWallet
 }
 
-func (it *SkycoinWalletIterator) Value() core.Wallet {
+func (it *SkycoinWalletIterator) Value() core.FullWallet {
 	return it.wallets[it.current]
 }
 
@@ -59,7 +59,7 @@ func (it *SkycoinWalletIterator) HasNext() bool {
 	return !((it.current + 1) >= len(it.wallets))
 }
 
-func NewSkycoinWalletIterator(wallets []core.Wallet) *SkycoinWalletIterator {
+func NewSkycoinWalletIterator(wallets []core.FullWallet) *SkycoinWalletIterator {
 	return &SkycoinWalletIterator{wallets: wallets, current: -1}
 }
 
@@ -84,7 +84,7 @@ func (wltSrv *SkycoinRemoteWallet) ListWallets() core.WalletIterator {
 		logWallet.WithError(err).Error("Couldn't GET /api/v1/wallets")
 		return nil
 	}
-	wallets := make([]core.Wallet, 0)
+	wallets := make([]core.FullWallet, 0)
 	for _, wlt := range wlts {
 		nwlt := walletResponseToWallet(wlt)
 		nwlt.poolSection = wltSrv.poolSection
@@ -95,7 +95,7 @@ func (wltSrv *SkycoinRemoteWallet) ListWallets() core.WalletIterator {
 }
 
 // CreateWallet instantiates a new wallet given account seed
-func (wltSrv *SkycoinRemoteWallet) CreateWallet(label string, seed string, wltType string, IsEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
+func (wltSrv *SkycoinRemoteWallet) CreateWallet(label string, seed string, wltType string, IsEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.FullWallet, error) {
 	logWallet.Info("Creating wallet")
 	wlt := &RemoteWallet{} //nolint megacheck False negative
 	c, err := NewSkycoinApiClient(wltSrv.poolSection)
@@ -218,7 +218,7 @@ func (wltSrv *SkycoinRemoteWallet) IsEncrypted(walletName string) (bool, error) 
 }
 
 // GetWallet to lookup wallet by ID
-func (wltSrv *SkycoinRemoteWallet) GetWallet(id string) core.Wallet {
+func (wltSrv *SkycoinRemoteWallet) GetWallet(id string) core.FullWallet {
 	logWallet.Info("Getting remote wallet")
 	c, err := NewSkycoinApiClient(wltSrv.poolSection)
 	if err != nil {
@@ -679,7 +679,7 @@ func (wlt *RemoteWallet) GetLoadedAddresses() (core.AddressIterator, error) {
 }
 
 // ReadyForTxn determines whether this signer instance can be used by wallet to sign given transaction
-func (wlt *RemoteWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool, error) {
+func (wlt *RemoteWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bool, error) {
 	return checkTxnSupported(wlt, w, txn)
 }
 
@@ -763,7 +763,7 @@ type SkycoinLocalWallet struct {
 
 func (wltSrv *SkycoinLocalWallet) ListWallets() core.WalletIterator {
 	logWallet.Info("Listing Skycoin local wallets")
-	wallets := make([]core.Wallet, 0)
+	wallets := make([]core.FullWallet, 0)
 	entries, err := ioutil.ReadDir(wltSrv.walletDir)
 	if err != nil {
 		logWallet.WithError(err).WithField("dirname", wltSrv.walletDir).Error("Call to ioutil.ReadDir(dirname) inside ListWallets failed.")
@@ -797,7 +797,7 @@ func (wltSrv *SkycoinLocalWallet) ListWallets() core.WalletIterator {
 	return NewSkycoinWalletIterator(wallets)
 }
 
-func (wltSrv *SkycoinLocalWallet) GetWallet(id string) core.Wallet {
+func (wltSrv *SkycoinLocalWallet) GetWallet(id string) core.FullWallet {
 	logWallet.Info("Getting Skycoin local wallet")
 	path := filepath.Join(wltSrv.walletDir, id)
 	w, err := wallet.Load(path)
@@ -815,7 +815,7 @@ func (wltSrv *SkycoinLocalWallet) GetWallet(id string) core.Wallet {
 	}
 }
 
-func (wltSrv *SkycoinLocalWallet) CreateWallet(label string, seed string, wltType string, IsEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
+func (wltSrv *SkycoinLocalWallet) CreateWallet(label string, seed string, wltType string, IsEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.FullWallet, error) {
 	logWallet.Info("Creating Skycoin local wallet")
 	password, err := pwd("Insert Password")
 
@@ -1468,7 +1468,7 @@ func (wlt *LocalWallet) GetSkycoinWalletType() string {
 	return wlt.Type
 }
 
-func checkEquivalentSkycoinWallets(wlt1, wlt2 core.Wallet) (bool, error) {
+func checkEquivalentSkycoinWallets(wlt1, wlt2 core.FullWallet) (bool, error) {
 	if wlt1 == wlt2 {
 		return true, nil
 	}
@@ -1498,7 +1498,7 @@ func checkEquivalentSkycoinWallets(wlt1, wlt2 core.Wallet) (bool, error) {
 	return addrs1.HasNext() && addrs2.HasNext() && addrs1.Value().String() == addrs2.Value().String(), nil
 }
 
-func checkTxnSupported(wlt1, wlt2 core.Wallet, txn core.Transaction) (bool, error) {
+func checkTxnSupported(wlt1, wlt2 core.FullWallet, txn core.Transaction) (bool, error) {
 	// Wallets must match
 	if isMatch, err := checkEquivalentSkycoinWallets(wlt1, wlt2); err != nil || !isMatch {
 		return false, err
@@ -1509,7 +1509,7 @@ func checkTxnSupported(wlt1, wlt2 core.Wallet, txn core.Transaction) (bool, erro
 }
 
 // ReadyForTxn determines whether transaction can be signed with this signer instance
-func (wlt *LocalWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool, error) {
+func (wlt *LocalWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bool, error) {
 	return checkTxnSupported(wlt, w, txn)
 }
 
@@ -1545,8 +1545,8 @@ func (wlt *LocalWallet) GetSignerDescription() string {
 
 // Typoe assertions
 var (
-	_ core.Wallet            = &LocalWallet{}
-	_ core.Wallet            = &RemoteWallet{}
+	_ core.FullWallet            = &LocalWallet{}
+	_ core.FullWallet            = &RemoteWallet{}
 	_ skytypes.SkycoinWallet = &LocalWallet{}
 	_ skytypes.SkycoinWallet = &RemoteWallet{}
 	_ core.WalletEnv         = &WalletNode{}

@@ -3,7 +3,7 @@ package core
 // WalletIterator iterates over sequences of wallets
 type WalletIterator interface {
 	// Value of wallet at iterator pointer position
-	Value() Wallet
+	Value() FullWallet
 	// Next discards current value and moves iteration pointer up to next item
 	Next() bool
 	// HasNext may be used to query whether more items are to be expected in the sequence
@@ -15,9 +15,9 @@ type WalletSet interface {
 	// ListWallets returns an iterator over wallets in the set
 	ListWallets() WalletIterator
 	// GetWallet to lookup wallet by ID
-	GetWallet(id string) Wallet
+	GetWallet(id string) FullWallet
 	// CreateWallet instantiates a new wallet given account seed
-	CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd PasswordReader, scanAddressesN int) (Wallet, error)
+	CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd PasswordReader, scanAddressesN int) (FullWallet, error)
 	// DefaultWalletType default wallet type
 	DefaultWalletType() string
 	// SupportedWalletTypes list supported wallet type names
@@ -44,8 +44,8 @@ const (
 	ChangeAddress
 )
 
-// Wallet defines the contract that must be satisfied by altcoin crypto wallets
-type Wallet interface {
+// FullWallet defines the contract that must be satisfied by altcoin crypto wallets
+type FullWallet interface {
 	// GetId returns wallet local identifier
 	GetId() string
 	// GetLabel provides a human-readable name for this wallet to be shown in GUI controls

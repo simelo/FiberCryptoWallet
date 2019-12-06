@@ -31,12 +31,12 @@ func EnumerateSignServices() core.TxnSignerIterator {
 }
 
 // SignServicesForTxn returns an object to iterate over strategies supported to sign a given transaction on behalf of a wallet
-func SignServicesForTxn(wlt core.Wallet, txn core.Transaction) core.TxnSignerIterator {
+func SignServicesForTxn(wlt core.FullWallet, txn core.Transaction) core.TxnSignerIterator {
 	return local.LoadAltcoinManager().SignServicesForTxn(wlt, txn)
 }
 
 // ReadyForTxn determines whether global signer identified by UID can be used by wallet to sign given transaction
-func ReadyForTxn(signerID core.UID, wallet core.Wallet, txn core.Transaction) (bool, error) {
+func ReadyForTxn(signerID core.UID, wallet core.FullWallet, txn core.Transaction) (bool, error) {
 	signer := LookupSignService(signerID)
 	if signer == nil {
 		return false, errors.ErrInvalidID

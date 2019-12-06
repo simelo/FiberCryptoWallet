@@ -790,13 +790,13 @@ func loadTestWalletEnv(t *testing.T) core.WalletEnv {
 
 var whitespaceReplacer = strings.NewReplacer(" ", "-")
 
-func makeLocalWalletsFromKeyData(t *testing.T, keysData []KeyData) []core.Wallet {
-	walletsCache := make(map[string]core.Wallet)
-	wallets := make([]core.Wallet, len(keysData))
+func makeLocalWalletsFromKeyData(t *testing.T, keysData []KeyData) []core.FullWallet {
+	walletsCache := make(map[string]core.FullWallet)
+	wallets := make([]core.FullWallet, len(keysData))
 	walletSet := loadTestWalletEnv(t).GetWalletSet()
 	for i, kd := range keysData {
 		walletID := whitespaceReplacer.Replace(kd.Mnemonic)
-		var w core.Wallet
+		var w core.FullWallet
 		var isFound bool
 		var err error
 		if w, isFound = walletsCache[kd.Mnemonic]; !isFound {
@@ -956,7 +956,7 @@ func TestTransactionSignInputs(t *testing.T) {
 	require.Error(t, cipher.VerifyAddressSignedHash(a2, signedTxn.txn.Sigs[0], cipher.AddSHA256(h, signedTxn.txn.In[1])))
 }
 
-func makeLocalWallet(t *testing.T) core.Wallet {
+func makeLocalWallet(t *testing.T) core.FullWallet {
 	_, kd, err := makeUxOutWithSecret(t)
 	require.NoError(t, err)
 	require.NoError(t, err)

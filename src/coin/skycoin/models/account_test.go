@@ -51,7 +51,7 @@ func TestWalletListPendingTransactions(t *testing.T) {
 	local := &LocalWallet{}
 	local.Id = "G1"
 
-	wallets := NewSkycoinWalletIterator([]core.Wallet{remote, local})
+	wallets := NewSkycoinWalletIterator([]core.FullWallet{remote, local})
 
 	for wallets.Next() {
 		txns, err := wallets.Value().GetCryptoAccount().ListPendingTransactions()

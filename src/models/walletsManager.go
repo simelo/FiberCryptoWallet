@@ -675,7 +675,7 @@ func (walletM *WalletManager) getAddresses(Id string) []*QAddress {
 	return addrs
 }
 
-func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
+func fromWalletToQWallet(wlt core.FullWallet, isEncrypted bool) *QWallet {
 
 	qWallet := NewQWallet(nil)
 	qml.QQmlEngine_SetObjectOwnership(qWallet, qml.QQmlEngine__CppOwnership)
