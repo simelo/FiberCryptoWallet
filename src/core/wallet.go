@@ -44,14 +44,21 @@ const (
 	ChangeAddress
 )
 
-// FullWallet defines the contract that must be satisfied by altcoin crypto wallets
-type FullWallet interface {
-	// GetId returns wallet local identifier
+// Wallet defines the minimal contract implemented by every wallet
+type Wallet interface {
+	// WalletId returns wallet local identifier
 	GetId() string
-	// GetLabel provides a human-readable name for this wallet to be shown in GUI controls
+	// WalletLabel provides a human-readable name for this wallet to be shown in GUI controls
 	GetLabel() string
 	// SetLabel establishes a label for this wallet
 	SetLabel(wltName string)
+	// GetCryptoAccount instantiate object to determine wallet balance and transaction history
+	GetCryptoAccount() CryptoAccount
+}
+
+// FullWallet defines the contract that must be satisfied by altcoin crypto wallets
+type FullWallet interface {
+	Wallet
 	// Transfer instantiates unsigned transaction to send funds from any wallet address to single destination
 	Transfer(to TransactionOutput, options KeyValueStorage) (Transaction, error)
 	// SendFromAddress instantiates unsigned transaction to send funds from specific source addresses
@@ -62,8 +69,6 @@ type FullWallet interface {
 	// GenAddresses discover new addresses based on default hierarchically deterministic derivation sequences
 	// FIXME: Support account index to be fully compatible with BIP44
 	GenAddresses(addrType AddressType, startIndex, count uint32, pwd PasswordReader) AddressIterator
-	// GetCryptoAccount instantiate object to determine wallet balance and transaction history
-	GetCryptoAccount() CryptoAccount
 	// GetLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
 	GetLoadedAddresses() (AddressIterator, error)
 	// Sign creates a new transaction by (fully or partially) choosing a strategy to sign another transaction
