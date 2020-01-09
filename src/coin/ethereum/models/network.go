@@ -1,11 +1,11 @@
 package ethereum
 
 import (
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/ethtypes"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
-	"github.com/skycoin/skycoin/src/api"
 )
 
 var logNetwork = logging.MustGetLogger("Ethereum network")
@@ -61,8 +61,8 @@ type EthereumConnectionFactory struct {
 }
 
 func (cf *EthereumConnectionFactory) Create() (interface{}, error) {
-
-	return api.NewClient(cf.url), nil
+	clt := ethclient.NewClient()
+	return clt.Dial(cf.url)
 }
 
 func NewEthereumConnectionFactory(url string) *EthereumConnectionFactory {
