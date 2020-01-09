@@ -5,6 +5,7 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
+	"github.com/skycoin/skycoin/src/api"
 )
 
 var logNetwork = logging.MustGetLogger("Ethereum network")
@@ -53,4 +54,20 @@ func ReturnEthereumApiClient(obj ethtypes.EthereumApi) {
 		return
 	}
 	poolObj.pool.Put(poolObj.EthereumApi)
+}
+
+type EthereumConnectionFactory struct {
+	url string
+}
+
+func (cf *EthereumConnectionFactory) Create() (interface{}, error) {
+
+	return api.NewClient(cf.url), nil
+}
+
+func NewEthereumConnectionFactory(url string) *EthereumConnectionFactory {
+
+	return &EthereumConnectionFactory{
+		url: url,
+	}
 }
