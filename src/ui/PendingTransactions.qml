@@ -81,9 +81,9 @@ Page {
 
                     modelMine: modelData.mine
                     modelTransactionID: modelData.transactionID
-                    modelSky: modelData.sky
-                    modelCoinHours: modelData.coinHours
-                    modelTimestamp: modelData.timeStamp
+                    modelSky: modelData.amount
+                    modelCoinHours: modelData.hoursTraspassed
+                    modelTimestamp: modelData.date
 
                     height: hide ? 0 : implicitHeight
                     Behavior on height { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
