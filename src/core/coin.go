@@ -35,6 +35,8 @@ type Transaction interface {
 	VerifyUnsigned() error
 	// VerifySigned checks for valid unsigned transaction
 	VerifySigned() error
+	// GetBlockHeight checks return the transaction block height
+	GetBlockHeight() uint64
 	// IsFullySigned deermine whether all transaction elements have been signed
 	IsFullySigned() (bool, error)
 }

@@ -205,6 +205,24 @@ func (txn *SkycoinPendingTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
 }
 
+// GetBlockHeight checks return the transaction block height
+func (txn *SkycoinPendingTransaction) GetBlockHeight() uint64 {
+	logCoin.Info("Getting height of transaction block")
+
+	c, err := NewSkycoinApiClient(PoolSection)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	defer ReturnSkycoinClient(c)
+	txnU, err := c.Transaction(txn.Transaction.Transaction.Hash)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	return txnU.Status.BlockSeq
+}
+
 func checkFullySigned(rTxn skytypes.ReadableTxn) (bool, error) {
 	cTxn, err := rTxn.ToCreatedTransaction()
 	if err != nil {
@@ -364,6 +382,24 @@ func (txn *SkycoinUninjectedTransaction) VerifySigned() error {
 	return txn.txn.Verify()
 }
 
+// GetBlockHeight checks return the transaction block height
+func (txn *SkycoinUninjectedTransaction) GetBlockHeight() uint64 {
+	logCoin.Info("Getting height of transaction block")
+
+	c, err := NewSkycoinApiClient(PoolSection)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	defer ReturnSkycoinClient(c)
+	txnU, err := c.Transaction(txn.GetId())
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	return txnU.Status.BlockSeq
+}
+
 // IsFullySigned deermine whether all transaction elements have been signed
 func (txn *SkycoinUninjectedTransaction) IsFullySigned() (bool, error) {
 	return txn.txn.IsFullySigned(), nil
@@ -480,6 +516,24 @@ func (txn *SkycoinTransaction) VerifyUnsigned() error {
 // VerifySigned checks for valid unsigned transaction
 func (txn *SkycoinTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
+}
+
+// GetBlockHeight checks return the transaction block height
+func (txn *SkycoinTransaction) GetBlockHeight() uint64 {
+	logCoin.Info("Getting height of transaction block")
+
+	c, err := NewSkycoinApiClient(PoolSection)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	defer ReturnSkycoinClient(c)
+	txnU, err := c.Transaction(txn.skyTxn.Hash)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	return txnU.Status.BlockSeq
 }
 
 // IsFullySigned deermine whether all transaction elements have been signed
@@ -988,6 +1042,24 @@ func (txn *SkycoinCreatedTransaction) VerifyUnsigned() error {
 // VerifySigned checks for valid unsigned transaction
 func (txn *SkycoinCreatedTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
+}
+
+// GetBlockHeight checks return the transaction block height
+func (txn *SkycoinCreatedTransaction) GetBlockHeight() uint64 {
+	logCoin.Info("Getting height of transaction block")
+
+	c, err := NewSkycoinApiClient(PoolSection)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	defer ReturnSkycoinClient(c)
+	txnU, err := c.Transaction(txn.skyTxn.TxID)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get block height of transaction")
+		return 0
+	}
+	return txnU.Status.BlockSeq
 }
 
 // IsFullySigned deermine whether all transaction elements have been signed

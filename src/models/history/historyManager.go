@@ -124,6 +124,8 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 		outputs := address.NewAddressList(nil)
 		txnIns := txn.GetInputs()
 
+		txnDetails.SetBlockHeight(txn.GetBlockHeight())
+
 		for _, in := range txnIns {
 			qIn := address.NewAddressDetails(nil)
 			qIn.SetAddress(in.GetSpentOutput().GetAddress().String())

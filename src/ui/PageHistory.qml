@@ -112,6 +112,7 @@ Page {
         transactionID: listTransactions.currentItem !== null ? listTransactions.currentItem.modelTransactionID : "" 
         modelInputs: listTransactions.currentItem !== null ? listTransactions.currentItem.modelInputs : null
         modelOutputs: listTransactions.currentItem !== null ? listTransactions.currentItem.modelOutputs : null
+        blockHeight: listTransactions.currentItem !== null ? listTransactions.currentItem.modelBlockHeight : "0"
     }
 
     QTransactionList {

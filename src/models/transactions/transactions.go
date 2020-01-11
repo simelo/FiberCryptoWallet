@@ -26,6 +26,7 @@ const (
 	HoursTraspassed
 	HoursBurned
 	TransactionID
+	BlockHeight
 	Addresses
 	Inputs
 	Outputs
@@ -49,6 +50,7 @@ type TransactionDetails struct {
 	_ *qtCore.QDateTime    `property:"date"`
 	_ int                  `property:"status"`
 	_ int                  `property:"type"`
+	_ uint64               `property:"blockHeight"`
 	_ string               `property:"amount"`
 	_ string               `property:"hoursTraspassed"`
 	_ string               `property:"hoursBurned"`
@@ -75,6 +77,8 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	}
 
 	txnDetails.SetTransactionID(transaction.GetId())
+
+	txnDetails.SetBlockHeight(transaction.GetBlockHeight())
 
 	txnDetails.SetType(txType)
 
@@ -158,6 +162,12 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	if err != nil {
 		logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours accuracy")
 	}
+	fee, err := transaction.ComputeFee(coin.CoinHoursTicker)
+	if err != nil {
+		logTransactionDetails.WithError(err).Warn("Couldn't get transaction fee")
+	}
+
+	finalHours += fee
 	txnDetails.SetHoursTraspassed(util.FormatCoins(finalHours, accuracy))
 
 	txnDetails.SetAddresses(addresses)

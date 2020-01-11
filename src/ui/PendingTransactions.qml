@@ -49,7 +49,7 @@ Page {
                         Layout.rightMargin: 92
                     }
                     Label {
-                        text: qsTr("Coin hours")
+                        text: qsTr("final hours")
                         font.pointSize: 9
                         Layout.rightMargin: 33
                     }

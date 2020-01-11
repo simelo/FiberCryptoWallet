@@ -13,6 +13,9 @@ import HistoryModels 1.0
 ItemDelegate {
     id: root
 
+Component.onCompleted:{
+console.log(blockHeight)
+}
     property date modelDate: date
     property int modelType: type
     property int modelStatus: status
@@ -21,6 +24,7 @@ ItemDelegate {
     property string modelHoursReceived: hoursTraspassed
     property string modelHoursBurned: hoursBurned
     property string modelTransactionID: transactionID
+    property string modelBlockHeight: blockHeight
     property QAddressList modelAddresses: addresses
     property QAddressList modelInputs: inputs
     property QAddressList modelOutputs: outputs

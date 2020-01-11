@@ -22,6 +22,7 @@ Item {
     property string hoursReceived
     property string hoursBurned
     property string transactionID
+    property string blockHeight
     property QAddressList modelInputs
     property QAddressList modelOutputs
 
@@ -35,7 +36,8 @@ Item {
     enum Type {
         Send,
         Receive,
-        Internal
+        Internal,
+        Generic
     }
 
     implicitHeight: 80 + rowLayoutBasicDetails.height + (expanded ? rowLayoutMoreDetails.height : 0)
@@ -85,6 +87,16 @@ Item {
                     }
 
                     Label {
+                        text: qsTr("Height:")
+                        font.pointSize: Qt.application.font.pointSize * 0.9
+                        font.bold: true
+                    }
+                    Label {
+                        text: blockHeight
+                        font.pointSize: Qt.application.font.pointSize * 0.9
+                    }
+
+                    Label {
                         text: qsTr("Status:")
                         font.pointSize: Qt.application.font.pointSize * 0.9
                         font.bold: true
@@ -122,7 +134,7 @@ Item {
                 Layout.topMargin: -10
                 Layout.rightMargin: 20
                 Image {
-                    source: "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Receive ? "blue" : "amber") + ".svg"
+                    source: "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Receive || type === TransactionDetails.Type.Generic ? "blue" : "amber") + ".svg"
                     sourceSize: "72x72"
                     fillMode: Image.PreserveAspectFit
                     mirror: type === TransactionDetails.Type.Receive

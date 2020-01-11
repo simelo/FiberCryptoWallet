@@ -36,6 +36,7 @@ func (hm *TransactionList) init() {
 		transactions.HoursTraspassed: core.NewQByteArray2("hoursTraspassed", -1),
 		transactions.HoursBurned:     core.NewQByteArray2("hoursBurned", -1),
 		transactions.TransactionID:   core.NewQByteArray2("transactionID", -1),
+		transactions.BlockHeight:     core.NewQByteArray2("blockHeight", -1),
 		transactions.Addresses:       core.NewQByteArray2("addresses", -1),
 		transactions.Inputs:          core.NewQByteArray2("inputs", -1),
 		transactions.Outputs:         core.NewQByteArray2("outputs", -1),
@@ -106,6 +107,10 @@ func (hm *TransactionList) data(index *core.QModelIndex, role int) *core.QVarian
 	case transactions.TransactionID:
 		{
 			return core.NewQVariant1(transaction.TransactionID())
+		}
+	case transactions.BlockHeight:
+		{
+			return core.NewQVariant1(transaction.BlockHeight())
 		}
 	case transactions.Addresses:
 		{
