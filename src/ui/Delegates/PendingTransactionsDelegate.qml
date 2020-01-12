@@ -2,15 +2,14 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import ModelUtils 1.0
 
 ItemDelegate {
     id: root
 
-    property bool modelMine
     property string modelTransactionID
-    property string modelSky
-    property string modelCoinHours
     property date modelTimestamp
+    property Map coinOpts
 
     RowLayout {
         id: rowLayoutRoot
@@ -28,16 +27,6 @@ ItemDelegate {
             wrapMode: Label.WrapAnywhere
             Layout.fillWidth: true
             Layout.minimumWidth: implicitWidth/2 // As the font is monospaced, this should work fine
-        }
-
-        Label {
-            text: modelSky // model's role
-            Layout.preferredWidth: 100
-        }
-
-        Label {
-            text: modelCoinHours // model's role
-            Layout.preferredWidth: 80
         }
 
         Label {

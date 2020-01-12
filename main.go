@@ -1,17 +1,17 @@
 package main
 
 import (
-	"os"
-
 	_ "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/addressBook"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/history"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/pending"
+	_ "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/qml"
 	"github.com/therecipe/qt/widgets"
+	"os"
 )
 
 func main() {

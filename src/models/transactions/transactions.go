@@ -1,14 +1,13 @@
 package transactions
 
 import (
-	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
+	"fmt"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
+	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
-	"strconv"
 	"time"
 )
 
@@ -30,6 +29,7 @@ const (
 	Addresses
 	Inputs
 	Outputs
+	CoinOptions
 )
 
 const (
@@ -58,6 +58,7 @@ type TransactionDetails struct {
 	_ *address.AddressList `property:"addresses"`
 	_ *address.AddressList `property:"inputs"`
 	_ *address.AddressList `property:"outputs"`
+	_ modelUtil.Map        `property:"coinOptions"`
 }
 
 func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
@@ -83,95 +84,91 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	txnDetails.SetType(txType)
 
 	addresses := address.NewAddressList(nil)
-	inputs := address.NewAddressList(nil)
-	outputs := address.NewAddressList(nil)
+	inputList := address.NewAddressList(nil)
+	outputsList := address.NewAddressList(nil)
 
-	txnIns := transaction.GetInputs()
-	var totalAmount float64
-	for e := range txnIns {
+	for _, input := range transaction.GetInputs() {
 
 		qIn := address.NewAddressDetails(nil)
-		qIn.SetAddress(txnIns[e].GetSpentOutput().GetAddress().String())
+		qIn.SetAddress(input.GetSpentOutput().GetAddress().String())
+		inputCoinOptions := modelUtil.NewMap(nil)
 
-		skyUint64, err := txnIns[e].GetCoins(params.SkycoinTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Skycoins balance")
-			continue
-		}
-		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Skycoins quotient")
-			continue
-		}
-		skyFloat := float64(skyUint64) / float64(accuracy)
-		qIn.SetAddressSky(strconv.FormatFloat(skyFloat, 'f', -1, 64))
-		totalAmount += skyFloat
+		for _, asset := range input.SupportedAssets() {
+			inputCoin, err := input.GetCoins(asset)
+			if err != nil {
+				logTransactionDetails.WithError(err).Warnf("Couldn't get coin: %s", asset)
+				continue
+			}
 
-		chUint64, err := txnIns[e].GetCoins(params.CoinHoursTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours balance")
-			continue
+			accuracy, err := util.AltcoinQuotient(asset)
+
+			if err != nil {
+				logTransactionDetails.WithError(err).Warnf("Couldn't get quotient of %s", asset)
+				continue
+			}
+
+			inputCoinOptions.SetValue(asset, util.FormatCoins(inputCoin, accuracy))
 		}
-		accuracy, err = util.AltcoinQuotient(params.CoinHoursTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours quotient")
-			continue
-		}
-		qIn.SetAddressCoinHours(util.FormatCoins(chUint64, accuracy))
-		inputs.AddAddress(qIn)
+
+		qIn.SetCoinOptions(inputCoinOptions)
+		inputList.AddAddress(qIn)
 		addresses.AddAddress(qIn)
 	}
-	accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-	if err != nil {
-		logTransactionDetails.WithError(err).Warn("Couldn't get Sky accuracy")
-	}
 
-	txnDetails.SetAmount(util.FormatCoins(uint64(totalAmount), accuracy))
-	txnDetails.SetInputs(inputs)
-	var finalHours uint64
+	txnDetails.SetInputs(inputList)
+
+	var totals = make(map[string]uint64)
+
 	for _, out := range transaction.GetOutputs() {
-		sky, err := out.GetCoins(params.SkycoinTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Skycoins balance")
-			continue
-		}
+
 		qOu := address.NewAddressDetails(nil)
 		qOu.SetAddress(out.GetAddress().String())
-		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Skycoins quotient")
-			continue
+		outputCoinOptions := modelUtil.NewMap(nil)
+
+		for _, asset := range out.SupportedAssets() {
+
+			outputCoin, err := out.GetCoins(asset)
+			if err != nil {
+				logTransactionDetails.WithError(err).Warnf("Couldn't get coin %s", asset)
+				continue
+			}
+
+			accuracy, err := util.AltcoinQuotient(asset)
+			if err != nil {
+				logTransactionDetails.WithError(err).Warnf("Couldn't get quotient of %s", asset)
+				continue
+			}
+			totals[asset] += outputCoin
+			outputCoinOptions.SetValue(asset, util.FormatCoins(outputCoin, accuracy))
 		}
-		qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
-		val, err := out.GetCoins(params.CoinHoursTicker)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours balance")
-			continue
-		}
-		accuracy, err = util.AltcoinQuotient(coin.CoinHour)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours quotient")
-			continue
-		}
-		finalHours += val
-		qOu.SetAddressCoinHours(util.FormatCoins(val, accuracy))
-		outputs.AddAddress(qOu)
+
+		qOu.SetCoinOptions(outputCoinOptions)
+
+		outputsList.AddAddress(qOu)
 		addresses.AddAddress(qOu)
 	}
-	accuracy, err = util.AltcoinQuotient(coin.CoinHoursTicker)
-	if err != nil {
-		logTransactionDetails.WithError(err).Warn("Couldn't get Coin Hours accuracy")
-	}
-	fee, err := transaction.ComputeFee(coin.CoinHoursTicker)
-	if err != nil {
-		logTransactionDetails.WithError(err).Warn("Couldn't get transaction fee")
+
+	txnCoinOptions := modelUtil.NewMap(nil)
+
+	for asset := range totals {
+		fee, err := transaction.ComputeFee(asset)
+		if err != nil {
+			logTransactionDetails.WithError(err).Warnf("Couldn't get transaction fee of %s coin", asset)
+		}
+
+		totals[asset] += fee
+
+		accuracy, err := util.AltcoinQuotient(asset)
+		if err != nil {
+			logTransactionDetails.WithError(err).Warnf("Couldn't get accuracy of coin %s", asset)
+		}
+
+		txnCoinOptions.SetValue(fmt.Sprintf("total %s", asset), util.FormatCoins(totals[asset], accuracy))
 	}
 
-	finalHours += fee
-	txnDetails.SetHoursTraspassed(util.FormatCoins(finalHours, accuracy))
-
+	txnDetails.SetCoinOptions(txnCoinOptions)
+	txnDetails.SetOutputs(outputsList)
 	txnDetails.SetAddresses(addresses)
-	txnDetails.SetOutputs(outputs)
 
 	return txnDetails, nil
 }

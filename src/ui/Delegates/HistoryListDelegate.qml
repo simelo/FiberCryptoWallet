@@ -15,6 +15,7 @@ ItemDelegate {
 
 Component.onCompleted:{
 console.log(blockHeight)
+
 }
     property date modelDate: date
     property int modelType: type

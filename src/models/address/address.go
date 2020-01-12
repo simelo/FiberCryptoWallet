@@ -1,6 +1,7 @@
 package address
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"github.com/therecipe/qt/core"
 )
@@ -16,14 +17,15 @@ const (
 	Address = int(core.Qt__UserRole) + 1<<iota
 	AddressSky
 	AddressCoinHours
+	CoinOptions
 )
 
 type AddressDetails struct {
 	core.QObject
-
-	_ string `property:"address"`
-	_ string `property:"addressSky"`
-	_ string `property:"addressCoinHours"`
+	_ string   `property:"address"`
+	_ util.Map `property:"coinOptions"`
+	_ string   `property:"addressSky"`
+	_ string   `property:"addressCoinHours"`
 }
 
 type AddressList struct {
@@ -44,6 +46,7 @@ func (al *AddressList) init() {
 		Address:          core.NewQByteArray2("address", -1),
 		AddressSky:       core.NewQByteArray2("addressSky", -1),
 		AddressCoinHours: core.NewQByteArray2("addressCoinHours", -1),
+		CoinOptions:      core.NewQByteArray2("CoinOptions", -1),
 	})
 
 	al.ConnectRowCount(al.rowCount)
@@ -93,6 +96,10 @@ func (al *AddressList) data(index *core.QModelIndex, role int) *core.QVariant {
 	case AddressSky:
 		{
 			return core.NewQVariant1(address.AddressSky())
+		}
+	case CoinOptions:
+		{
+			return core.NewQVariant1(address.CoinOptions())
 		}
 	default:
 		{

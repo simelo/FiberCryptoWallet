@@ -48,11 +48,11 @@ Page {
                         font.pointSize: 9
                         Layout.rightMargin: 92
                     }
-                    Label {
-                        text: qsTr("final hours")
-                        font.pointSize: 9
-                        Layout.rightMargin: 33
-                    }
+//                    Label {
+//                        text: qsTr("final hours")
+//                        font.pointSize: 9
+//                        Layout.rightMargin: 33
+//                    }
                     Label {
                         text: qsTr("Timestamp")
                         font.pointSize: 9
@@ -79,11 +79,9 @@ Page {
 
                     width: parent.width
 
-                    modelMine: modelData.mine
                     modelTransactionID: modelData.transactionID
-                    modelSky: modelData.amount
-                    modelCoinHours: modelData.hoursTraspassed
                     modelTimestamp: modelData.date
+                    coinOpts: modelData.coinOptions
 
                     height: hide ? 0 : implicitHeight
                     Behavior on height { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }

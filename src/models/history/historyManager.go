@@ -11,7 +11,7 @@ import (
 	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 
-	//local "github.com/fibercrypto/fibercryptowallet/src/main"
+	// local "github.com/fibercrypto/fibercryptowallet/src/main"
 	"github.com/fibercrypto/fibercryptowallet/src/models"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
@@ -314,7 +314,7 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 				}
 				txnDetails.SetHoursTraspassed(util.FormatCoins(traspassedHoursMoved, accuracy))
 				val := float64(skyAmountMoved)
-				//FIXME: Error here is skipped
+				// FIXME: Error here is skipped
 				accuracy, _ = util.AltcoinQuotient(params.SkycoinTicker)
 				if err != nil {
 					logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")

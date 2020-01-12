@@ -40,6 +40,7 @@ func (hm *TransactionList) init() {
 		transactions.Addresses:       core.NewQByteArray2("addresses", -1),
 		transactions.Inputs:          core.NewQByteArray2("inputs", -1),
 		transactions.Outputs:         core.NewQByteArray2("outputs", -1),
+		transactions.CoinOptions:     core.NewQByteArray2("coinOptions", -1),
 	})
 
 	hm.ConnectRowCount(hm.rowCount)
@@ -124,6 +125,10 @@ func (hm *TransactionList) data(index *core.QModelIndex, role int) *core.QVarian
 	case transactions.Outputs:
 		{
 			return core.NewQVariant1(transaction.Outputs())
+		}
+	case transactions.CoinOptions:
+		{
+			return core.NewQVariant1(transaction.CoinOptions())
 		}
 	default:
 		{
