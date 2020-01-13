@@ -3,12 +3,17 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import ModelUtils 1.0
+import HistoryModels 1.0
 
 ItemDelegate {
     id: root
 
     property string modelTransactionID
     property date modelTimestamp
+    property string modelStatus
+    property string modelType
+    property QAddressList modelInputs
+    property QAddressList modelOutputs
     property Map coinOpts
 
     RowLayout {

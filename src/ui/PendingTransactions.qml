@@ -7,7 +7,7 @@ import PendingModels 1.0
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
 import "Delegates/" // For quick UI development, switch back to resources when making a release
-
+import "Dialogs/"
 Page {
     id: root
 
@@ -81,6 +81,10 @@ Page {
 
                     modelTransactionID: modelData.transactionID
                     modelTimestamp: modelData.date
+                    modelStatus: modelData.status
+                    modelType: modelData.type
+                    modelInputs: modelData.inputs
+                    modelOutputs: modelData.outputs
                     coinOpts: modelData.coinOptions
 
                     height: hide ? 0 : implicitHeight
@@ -89,6 +93,11 @@ Page {
                     Behavior on opacity { NumberAnimation { duration: 100 } }
 
                     clip: true
+                    onClicked:{
+                        dialogTransactionDetails.open()
+                        listPendingTransactions.currentIndex = index
+                    }
+
                 } // PendingTransactionsDelegate (delegate)
 
                 ScrollBar.vertical: ScrollBar { }
@@ -109,6 +118,30 @@ Page {
             }
 
         }
+
+    }
+
+  DialogTransactionDetails {
+        id: dialogTransactionDetails
+
+        readonly property real maxHeight: expanded ? 650 : 450
+
+        anchors.centerIn: Overlay.overlay
+        width: applicationWindow.width > 640 ? 640 - 40 : applicationWindow.width - 40
+        height: applicationWindow.height > maxHeight ? maxHeight - 40 : applicationWindow.height - 40
+        Behavior on height { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
+
+        modal: true
+        focus: true
+
+        date: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelTimestamp : ""
+        status: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelStatus : 0
+        type: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelType : 0
+        transactionID: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelTransactionID : ""
+        modelInputs: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelInputs : null
+        modelOutputs: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelOutputs : null
+        blockHeight: "0"
+        coinOpts: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.coinOpts: null
 
     }
 

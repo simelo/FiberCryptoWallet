@@ -2,6 +2,7 @@ package util
 
 import (
 	qtCore "github.com/therecipe/qt/core"
+	"sort"
 )
 
 func init() {
@@ -30,10 +31,14 @@ func (coinOpt *Map) getValue(key string) string {
 }
 
 func (coinOpt *Map) getKeys() []string {
+	if len(coinOpt.keyValue) == 0 {
+		return []string{}
+	}
 	var keysList = make([]string, 0)
 	for e := range coinOpt.keyValue {
 		keysList = append(keysList, e)
 	}
+	sort.Strings(keysList)
 	return keysList
 }
 

@@ -19,6 +19,7 @@ Dialog {
     property alias transactionID: transactionDetails.transactionID
     property alias blockHeight: transactionDetails.blockHeight
 
+    property alias coinOpts: transactionDetails.modelCoinOpts
     property alias modelInputs: transactionDetails.modelInputs
     property alias modelOutputs: transactionDetails.modelOutputs
 

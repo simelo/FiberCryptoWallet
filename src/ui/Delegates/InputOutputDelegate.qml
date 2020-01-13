@@ -2,10 +2,40 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import ModelUtils 1.0
 
 Item {
     id: root
-    implicitHeight: 80
+    implicitHeight: 90
+
+  Component.onCompleted:{
+  console.log("Test")
+            let keyList=coinOptions.getKeys()
+            for (var i=0;i<keyList.length;i++){
+            console.log()
+                Qt.createQmlObject("import QtQuick 2.12;
+                                    import QtQuick.Controls 2.12;
+                                    import QtQuick.Controls.Material 2.12;
+                                    import QtQuick.Layouts 1.12
+                                        Label {
+                                            text: qsTr(\""+keyList[i]+":\")
+                                            font.pointSize: Qt.application.font.pointSize * 0.9
+                                            font.bold: true
+                                        }
+                                    ",gridLayoutInputAndOutputInfo)
+
+                Qt.createQmlObject("import QtQuick 2.12;
+                                    import QtQuick.Controls 2.12;
+                                    import QtQuick.Controls.Material 2.12;
+                                    import QtQuick.Layouts 1.12
+                                        Label {
+                                            text: \""+coinOptions.getValue(keyList[i])+"\"
+                                            font.pointSize: Qt.application.font.pointSize * 0.9
+                                        }
+
+                                    ",gridLayoutInputAndOutputInfo)
+            }
+  }
 
     ColumnLayout {
         id: columnLayoutRoot
@@ -38,26 +68,26 @@ Item {
             Layout.alignment: Qt.AlignTop
             Layout.leftMargin: labelIndex.width + rowLayoutHeader.spacing
             Layout.fillWidth: true
-
-            Label {
-                text: qsTr("Coins:")
-                font.pointSize: Qt.application.font.pointSize * 0.9
-                font.bold: true
-            }
-            Label {
-                text: addressSky
-                font.pointSize: Qt.application.font.pointSize * 0.9
-            }
-
-            Label {
-                text: qsTr("Hours:")
-                font.pointSize: Qt.application.font.pointSize * 0.9
-                font.bold: true
-            }
-            Label {
-                text: addressCoinHours
-                font.pointSize: Qt.application.font.pointSize * 0.9
-            }
+            id :gridLayoutInputAndOutputInfo
+//            Label {
+//                text: qsTr("Coins:")
+//                font.pointSize: Qt.application.font.pointSize * 0.9
+//                font.bold: true
+//            }
+//            Label {
+//                text: addressSky
+//                font.pointSize: Qt.application.font.pointSize * 0.9
+//            }
+//
+//            Label {
+//                text: qsTr("Hours:")
+//                font.pointSize: Qt.application.font.pointSize * 0.9
+//                font.bold: true
+//            }
+//            Label {
+//                text: addressCoinHours
+//                font.pointSize: Qt.application.font.pointSize * 0.9
+//            }
         }
     } // ColumnLayout
 }

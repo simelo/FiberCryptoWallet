@@ -1,6 +1,7 @@
 package history
 
 import (
+	util2 "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"sort"
 	"strconv"
 	"time"
@@ -146,6 +147,7 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
 				continue
 			}
+			qIn.SetCoinOptions(util2.NewMap(nil))
 			accuracy, err = util.AltcoinQuotient(params.CoinHoursTicker)
 			if err != nil {
 				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours quotient")
@@ -173,6 +175,7 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins balance")
 				continue
 			}
+
 			qOu := address.NewAddressDetails(nil)
 			qOu.SetAddress(out.GetAddress().String())
 			accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
@@ -180,6 +183,8 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
 				continue
 			}
+			qOu.SetCoinOptions(util2.NewMap(nil))
+
 			qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
 			val, err := out.GetCoins(params.CoinHoursTicker)
 			if err != nil {

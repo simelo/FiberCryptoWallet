@@ -3,6 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import HistoryModels 1.0
+import ModelUtils 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
@@ -25,7 +26,7 @@ Item {
     property string blockHeight
     property QAddressList modelInputs
     property QAddressList modelOutputs
-
+    property Map modelCoinOpts
     readonly property bool expanded: buttonMoreDetails.checked
 
     enum Status {
@@ -39,6 +40,45 @@ Item {
         Internal,
         Generic
     }
+
+  Component.onCompleted:{
+            let keyList=modelCoinOpts.getKeys()
+            for (var i=0;i<keyList.length;i++){
+                Qt.createQmlObject("import QtQuick 2.12;
+                                    import QtQuick.Controls 2.12;
+                                    import QtQuick.Controls.Material 2.12
+                                    import QtQuick.Layouts 1.12
+                                    RowLayout{
+                                        spacing: 20
+                                        Material.foreground: Material.Grey
+                                        Label {
+                                            text: qsTr(\""+keyList[i]+":\")
+                                            font.pointSize: Qt.application.font.pointSize * 0.9
+                                            font.bold: true
+                                        }
+                                        Label {
+                                            text: \""+modelCoinOpts.getValue(keyList[i])+"\"
+                                            font.pointSize: Qt.application.font.pointSize * 0.9
+                                            Layout.fillWidth: true
+                                        }
+                                    }",columnLayoutBasicDetails)
+
+                Qt.createQmlObject("import QtQuick 2.12;
+                                    import QtQuick.Controls 2.12;
+                                    import QtQuick.Controls.Material 2.12
+                                    import QtQuick.Layouts 1.12
+                                         Label {
+                                            text: (type === TransactionDetails.Type.Receive ? \"Receive\" : TransactionDetails.Type.Generic ? \"\": \"Send\") + ' ' + qsTr(\""+modelCoinOpts.getValue(keyList[i])+"\") + ' ' + qsTr(\""+keyList[i]+"\")
+                                            font.bold: true
+                                            font.pointSize: Qt.application.font.pointSize * 1.15
+                                            horizontalAlignment: Label.AlignHCenter
+                                            Layout.fillWidth: true
+                                         }
+                                    ",rightUpPanel)
+
+            }
+  }
+
 
     implicitHeight: 80 + rowLayoutBasicDetails.height + (expanded ? rowLayoutMoreDetails.height : 0)
     Behavior on implicitHeight { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
@@ -57,8 +97,10 @@ Item {
             Layout.fillWidth: true
 
             ColumnLayout {
+            id: columnLayoutBasicDetails
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
+                Layout.topMargin: 30
 
                 Label {
                     text: qsTr("Transaction")
@@ -130,6 +172,7 @@ Item {
             }
 
             ColumnLayout {
+                id: rightUpPanel
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: -10
                 Layout.rightMargin: 20
@@ -140,13 +183,14 @@ Item {
                     mirror: type === TransactionDetails.Type.Receive
                     Layout.fillWidth: true
                 }
-                Label {
-                    text: (type === TransactionDetails.Type.Receive ? "Receive" : "Send") + ' ' + amount + ' ' + qsTr("SKY")
-                    font.bold: true
-                    font.pointSize: Qt.application.font.pointSize * 1.15
-                    horizontalAlignment: Label.AlignHCenter
-                    Layout.fillWidth: true
-                }
+
+//                Label {
+//                    text: (type === TransactionDetails.Type.Receive ? "Receive" : TransactionDetails.Type.Generic ? "": "Send") + ' ' + amount + ' ' + qsTr("SKY")
+//                    font.bold: true
+//                    font.pointSize: Qt.application.font.pointSize * 1.15
+//                    horizontalAlignment: Label.AlignHCenter
+//                    Layout.fillWidth: true
+//                }
             }
         } // RowLayout
 

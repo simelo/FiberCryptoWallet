@@ -22,10 +22,10 @@ const (
 
 type AddressDetails struct {
 	core.QObject
-	_ string   `property:"address"`
-	_ util.Map `property:"coinOptions"`
-	_ string   `property:"addressSky"`
-	_ string   `property:"addressCoinHours"`
+	_ string    `property:"address"`
+	_ *util.Map `property:"coinOptions"`
+	_ string    `property:"addressSky"`
+	_ string    `property:"addressCoinHours"`
 }
 
 type AddressList struct {
@@ -46,7 +46,7 @@ func (al *AddressList) init() {
 		Address:          core.NewQByteArray2("address", -1),
 		AddressSky:       core.NewQByteArray2("addressSky", -1),
 		AddressCoinHours: core.NewQByteArray2("addressCoinHours", -1),
-		CoinOptions:      core.NewQByteArray2("CoinOptions", -1),
+		CoinOptions:      core.NewQByteArray2("coinOptions", -1),
 	})
 
 	al.ConnectRowCount(al.rowCount)

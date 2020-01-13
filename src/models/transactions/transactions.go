@@ -58,7 +58,7 @@ type TransactionDetails struct {
 	_ *address.AddressList `property:"addresses"`
 	_ *address.AddressList `property:"inputs"`
 	_ *address.AddressList `property:"outputs"`
-	_ modelUtil.Map        `property:"coinOptions"`
+	_ *modelUtil.Map       `property:"coinOptions"`
 }
 
 func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
@@ -163,7 +163,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 			logTransactionDetails.WithError(err).Warnf("Couldn't get accuracy of coin %s", asset)
 		}
 
-		txnCoinOptions.SetValue(fmt.Sprintf("total %s", asset), util.FormatCoins(totals[asset], accuracy))
+		txnCoinOptions.SetValue(fmt.Sprintf("Total %s", asset), util.FormatCoins(totals[asset], accuracy))
 	}
 
 	txnDetails.SetCoinOptions(txnCoinOptions)
