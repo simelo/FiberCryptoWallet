@@ -69,10 +69,8 @@ Page {
         id: toolTipFilters
 
         anchors.centerIn: Overlay.overlay
-
-        readonly property real minimumHeight: Math.min(applicationWindow.height - 100, filter.contentHeight + 150)
-        width: 300
-        height: minimumHeight
+        width: applicationWindow.width > 440 ? 440 - 40 : applicationWindow.width - 40
+        height: Math.min(applicationWindow.height - 40, filter.contentHeight + header.height + footer.height + topPadding + bottomPadding)
 
         modal: true
         standardButtons: Dialog.Close

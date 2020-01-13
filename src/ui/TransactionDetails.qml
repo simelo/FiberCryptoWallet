@@ -80,7 +80,8 @@ Item {
   }
 
 
-    implicitHeight: 80 + rowLayoutBasicDetails.height + (expanded ? rowLayoutMoreDetails.height : 0)
+    readonly property real basicHeight: 80 + rowLayoutBasicDetails.height
+    implicitHeight: Math.min(basicHeight + (expanded ? Math.max(listViewInputs.height, listViewOutputs.height) : 0), maxHeight)
     Behavior on implicitHeight { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
 
     implicitWidth: 600
@@ -172,12 +173,11 @@ Item {
             }
 
             ColumnLayout {
-                id: rightUpPanel
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: -10
                 Layout.rightMargin: 20
                 Image {
-                    source: "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Receive || type === TransactionDetails.Type.Generic ? "blue" : "amber") + ".svg"
+                    source: "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Receive ? "blue" : "amber") + ".svg"
                     sourceSize: "72x72"
                     fillMode: Image.PreserveAspectFit
                     mirror: type === TransactionDetails.Type.Receive
@@ -205,7 +205,7 @@ Item {
                 implicitWidth: 200
                 flat: true
                 checkable: true
-                text: (checked ? qsTr("Less") : qsTr("More")) + ' ' + qsTr("details")
+                text: checked ? qsTr("Less details") : qsTr("More details")
             }
 
             Rectangle {
@@ -221,14 +221,15 @@ Item {
 
             Layout.alignment: Qt.AlignTop
             Layout.fillWidth: true
+            Layout.fillHeight: true
 
             opacity: expanded ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
 
             ColumnLayout {
                 id: columnLayoutInputs
-                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
+                Layout.fillHeight: true
 
                 Label {
                     text: qsTr("Inputs")
@@ -240,18 +241,14 @@ Item {
                 ScrollView {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
-
-                    contentHeight: listViewInputs.height
+                    Layout.fillHeight: true
 
                     ListView {
                         id: listViewInputs
 
                         Material.foreground: Material.Grey
-                        height: contentHeight
                         model: modelInputs
                         clip: true
-                        Layout.alignment: Qt.AlignTop
-                        Layout.fillWidth: true
                         delegate: InputOutputDelegate {
                             width: parent.width
                         }
@@ -261,8 +258,8 @@ Item {
 
             ColumnLayout {
                 id: columnLayoutOutputs
-                Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
+                Layout.fillHeight: true
 
                 Label {
                     text: qsTr("Outputs")
@@ -274,18 +271,15 @@ Item {
                 ScrollView {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
-
-                    contentHeight: listViewInputs.height
+                    Layout.fillHeight: true
+                    Component.onCompleted: console.log("LALALALA", width, height, contentWidth, contentHeight)
 
                     ListView {
                         id: listViewOutputs
 
                         Material.foreground: Material.Grey
-                        height: contentHeight
                         model: modelOutputs
                         clip: true
-                        Layout.alignment: Qt.AlignTop
-                        Layout.fillWidth: true
                         delegate: InputOutputDelegate {
                             width: parent.width
                         }
