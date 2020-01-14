@@ -173,6 +173,7 @@ Item {
             }
 
             ColumnLayout {
+            id: rightUpPanel
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: -10
                 Layout.rightMargin: 20
@@ -272,8 +273,6 @@ Item {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Component.onCompleted: console.log("LALALALA", width, height, contentWidth, contentHeight)
-
                     ListView {
                         id: listViewOutputs
 

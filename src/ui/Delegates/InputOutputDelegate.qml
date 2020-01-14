@@ -9,10 +9,8 @@ Item {
     implicitHeight: 90
 
   Component.onCompleted:{
-  console.log("Test")
             let keyList=coinOptions.getKeys()
             for (var i=0;i<keyList.length;i++){
-            console.log()
                 Qt.createQmlObject("import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;
                                     import QtQuick.Controls.Material 2.12;

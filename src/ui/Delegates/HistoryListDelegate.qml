@@ -13,10 +13,6 @@ import HistoryModels 1.0
 ItemDelegate {
     id: root
 
-Component.onCompleted:{
-console.log(blockHeight)
-
-}
     property date modelDate: date
     property int modelType: type
     property int modelStatus: status
