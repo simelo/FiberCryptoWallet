@@ -54,7 +54,7 @@ func (eb *EthereumBlock) GetPrevHash() ([]byte, error) {
 	return eb.ethBlock.ParentHash().Bytes(), nil
 }
 
-//TODO look for right values
+//TODO look for right values, there is no version field in ethereum blocks
 func (eb *EthereumBlock) GetVersion() (uint32, error) {
 	return 0, nil
 }
@@ -82,6 +82,12 @@ func (eb *EthereumBlock) IsGenesisBlock() (bool, error) {
 	return eb.ethBlock.NumberU64() == 0, nil
 }
 
-func (eb *EthereumBlock) GetTotalAmount() (uint64, error)
+func (eb *EthereumBlock) GetTotalAmount() (uint64, error) {
+	var total uint64 = 0
+	for _, txn := range eb.ethBlock.Transactions() {
+		total += txn.Value().Uint64()
+	}
+	return total, nil
+}
 
 func (eb *EthereumBlock) GetTransactions() ([]Transaction, error)
