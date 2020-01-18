@@ -5,6 +5,23 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
 )
 
+type CoinTrait struct {
+	trait string
+	value string
+}
+
+func NewCoinTrait(trait, val string) core.CoinTrait {
+	return &CoinTrait{trait: trait, value: val}
+}
+
+func (c *CoinTrait) GetTrait() string {
+	return c.trait
+}
+
+func (c *CoinTrait) GetValue() string {
+	return c.value
+}
+
 func NewGenericOutput(addr core.Address, id string) GenericOutput {
 	return GenericOutput{
 		Address: addr,
@@ -23,6 +40,10 @@ type GenericOutput struct {
 // GetId provides transaction output ID
 func (gOut *GenericOutput) GetId() string {
 	return gOut.id
+}
+
+func (gOut *GenericOutput) GetCoinTraits() []core.CoinTrait {
+	return []core.CoinTrait{}
 }
 
 // IsSpent determines whether there exists a confirmed transaction with an input spending this output

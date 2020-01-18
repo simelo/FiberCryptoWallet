@@ -15,6 +15,12 @@ const (
 	TXN_STATUS_CONFIRMED
 )
 
+// CoinTrait contain the trait with its value.
+type CoinTrait interface {
+	GetTrait() string
+	GetValue() string
+}
+
 // Transaction encapsulates the contract for atomic transfers of coins
 type Transaction interface {
 	// Crypto assets involved in or supported by this transaction
@@ -37,6 +43,8 @@ type Transaction interface {
 	VerifySigned() error
 	// GetBlockHeight checks return the transaction block height
 	GetBlockHeight() uint64
+	// GetCoinTraits return a list of traits of the transaction for each currency
+	GetCoinTraits() []CoinTrait
 	// IsFullySigned deermine whether all transaction elements have been signed
 	IsFullySigned() (bool, error)
 }
@@ -60,6 +68,8 @@ type TransactionInput interface {
 	// GetCoins looks up coins for asset represented by ticker
 	// that have been spent by this input
 	GetCoins(ticker string) (uint64, error)
+	// GetCoinTraits return a list of traits of the input for each currency
+	GetCoinTraits() []CoinTrait
 	// SupportedAssets enumerates tickers of crypto assets supported by this output
 	SupportedAssets() []string
 }
@@ -84,6 +94,8 @@ type TransactionOutput interface {
 	GetAddress() Address
 	// GetCoins looks up coins for asset represented by ticker that have been transferred in this output
 	GetCoins(ticker string) (uint64, error)
+	// GetCoinTraits return a list of traits of the output for each currency
+	GetCoinTraits() []CoinTrait
 	// SupportedAssets enumerates tickers of crypto assets supported by this output
 	SupportedAssets() []string
 }

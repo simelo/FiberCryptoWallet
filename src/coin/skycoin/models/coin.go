@@ -2,6 +2,8 @@ package skycoin
 
 import (
 	"fmt"
+	"github.com/SkycoinProject/skycoin/src/util/droplet"
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"strconv"
 	"time"
 
@@ -205,6 +207,42 @@ func (txn *SkycoinPendingTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
 }
 
+// GetCoinTraits return a list of traits of the transaction for each currency
+func (txn *SkycoinPendingTransaction) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting traits for the skycoin currency")
+	var totalSkycoin uint64
+	var totalCoinHours uint64
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	for e := range txn.Transaction.Transaction.Out {
+		sky, err := strconv.ParseFloat(txn.Transaction.Transaction.Out[e].Coins, 64)
+		if err != nil {
+			logCoin.WithError(err).Errorf("Could parse SKY to float")
+		}
+		totalSkycoin += uint64(sky * float64(skyAccuracy))
+
+		totalCoinHours += txn.Transaction.Transaction.Out[e].Hours * schAccuracy
+	}
+	fee, err := txn.ComputeFee(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not compute the Feed for coin hours")
+	}
+	var coinTraits = make([]core.CoinTrait, 0)
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(totalSkycoin, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(totalCoinHours+fee, schAccuracy)),
+		util.NewCoinTrait("Transaction Fee (in SCH)", util.FormatCoins(fee, schAccuracy)))
+
+	return coinTraits
+}
+
 // GetBlockHeight checks return the transaction block height
 func (txn *SkycoinPendingTransaction) GetBlockHeight() uint64 {
 	logCoin.Info("Getting height of transaction block")
@@ -382,6 +420,36 @@ func (txn *SkycoinUninjectedTransaction) VerifySigned() error {
 	return txn.txn.Verify()
 }
 
+// GetCoinTraits return a list of traits of the transaction for each currency
+func (txn *SkycoinUninjectedTransaction) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting traits for the skycoin currency")
+	var totalSkycoin uint64
+	var totalCoinHours uint64
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+	for e := range txn.txn.Out {
+		totalSkycoin += txn.txn.Out[e].Coins * skyAccuracy
+		totalCoinHours += txn.txn.Out[e].Hours * schAccuracy
+	}
+	var coinTraits = make([]core.CoinTrait, 0)
+	fee, err := txn.ComputeFee(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not compute the Feed for coin hours")
+	}
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(totalSkycoin, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(totalCoinHours+fee, schAccuracy)),
+		util.NewCoinTrait("Transaction Fee (in SCH)", util.FormatCoins(fee, schAccuracy)))
+
+	return coinTraits
+}
+
 // GetBlockHeight checks return the transaction block height
 func (txn *SkycoinUninjectedTransaction) GetBlockHeight() uint64 {
 	logCoin.Info("Getting height of transaction block")
@@ -518,6 +586,42 @@ func (txn *SkycoinTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
 }
 
+// GetCoinTraits return a list of traits of the transaction for each currency
+func (txn *SkycoinTransaction) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting traits for the skycoin currency")
+	var totalSkycoin uint64
+	var totalCoinHours uint64
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	for e := range txn.skyTxn.Out {
+		sky, err := strconv.ParseFloat(txn.skyTxn.Out[e].Coins, 64)
+		if err != nil {
+			logCoin.WithError(err).Errorf("Could parse SKY to float")
+		}
+		totalSkycoin += uint64(sky * float64(skyAccuracy))
+
+		totalCoinHours += txn.skyTxn.Out[e].Hours * schAccuracy
+	}
+	fee, err := txn.ComputeFee(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not compute the Feed for coin hours")
+	}
+	var coinTraits = make([]core.CoinTrait, 0)
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(totalSkycoin, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(totalCoinHours+fee, schAccuracy)),
+		util.NewCoinTrait("Transaction Fee (in SCH)", util.FormatCoins(fee, schAccuracy)))
+
+	return coinTraits
+}
+
 // GetBlockHeight checks return the transaction block height
 func (txn *SkycoinTransaction) GetBlockHeight() uint64 {
 	logCoin.Info("Getting height of transaction block")
@@ -626,6 +730,29 @@ func (in *SkycoinTransactionInput) GetId() string {
 	return in.skyIn.Hash
 }
 
+func (in *SkycoinTransactionInput) GetCoinTraits() []core.CoinTrait {
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	sky, err := droplet.FromString(in.skyIn.Coins)
+	if err != nil {
+		logCoin.Error(err)
+	}
+
+	var coinTraits = make([]core.CoinTrait, 0)
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(sky, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(in.skyIn.Hours, schAccuracy)))
+
+	return coinTraits
+}
+
 func (in *SkycoinTransactionInput) GetSpentOutput() core.TransactionOutput {
 	logCoin.Info("Getting spent outputs for transaction inputs")
 
@@ -727,8 +854,34 @@ type SkycoinTransactionOutput struct {
 }
 
 func (out *SkycoinTransactionOutput) GetId() string {
-	logCoin.Info("Getting if of transaction output")
+	logCoin.Info("Getting id of transaction output")
 	return out.skyOut.Hash
+}
+
+// GetCoinTraits return a list of traits of the output for each currency
+func (out *SkycoinTransactionOutput) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting coin traits of transaction output")
+	var coinTraits = make([]core.CoinTrait, 0)
+	sky, err := droplet.FromString(out.skyOut.Coins)
+	if err != nil {
+		logCoin.Error(err)
+	}
+
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	coinTraits = append(coinTraits, util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(sky, skyAccuracy)))
+
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	coinTraits = append(coinTraits, util.NewCoinTrait("Coin Hours (SCH)",
+		util.FormatCoins(out.skyOut.Hours, schAccuracy)))
+
+	return coinTraits
 
 }
 
@@ -815,6 +968,33 @@ func (in *SkycoinCreatedTransactionInput) GetId() string {
 	return in.skyIn.UxID
 }
 
+func (in *SkycoinCreatedTransactionInput) GetCoinTraits() []core.CoinTrait {
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	sky, err := droplet.FromString(in.skyIn.Coins)
+	if err != nil {
+		logCoin.Error(err)
+	}
+
+	sch, err := strconv.ParseUint(in.skyIn.Hours, 10, 64)
+	if err != nil {
+		logCoin.Error(err)
+	}
+	var coinTraits = make([]core.CoinTrait, 0)
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(sky, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(sch, schAccuracy)))
+
+	return coinTraits
+}
+
 func (in *SkycoinCreatedTransactionInput) GetSpentOutput() core.TransactionOutput {
 	if in.spentOutput == nil {
 
@@ -895,6 +1075,36 @@ func (out *SkycoinCreatedTransactionOutput) GetId() string {
 	return out.skyOut.UxID
 }
 
+// GetCoinTraits return a list of traits of the output for each currency
+func (out *SkycoinCreatedTransactionOutput) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting coin traits of transaction output")
+	var coinTraits = make([]core.CoinTrait, 0)
+	sky, err := droplet.FromString(out.skyOut.Coins)
+	if err != nil {
+		logCoin.Error(err)
+	}
+
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	coinTraits = append(coinTraits, util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(sky, skyAccuracy)))
+
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+
+	sch, err := strconv.ParseUint(out.skyOut.Hours, 10, 64)
+	if err != nil {
+		logCoin.Error(err)
+	}
+
+	coinTraits = append(coinTraits, util.NewCoinTrait("Coin Hours(SCH)",
+		util.FormatCoins(sch, schAccuracy)))
+
+	return coinTraits
+}
 func (out *SkycoinCreatedTransactionOutput) GetAddress() core.Address {
 	skyAddrs, err := NewSkycoinAddress(out.skyOut.Address)
 	if err != nil {
@@ -1042,6 +1252,45 @@ func (txn *SkycoinCreatedTransaction) VerifyUnsigned() error {
 // VerifySigned checks for valid unsigned transaction
 func (txn *SkycoinCreatedTransaction) VerifySigned() error {
 	return verifyReadableTransaction(txn, true)
+}
+
+// GetCoinTraits return a list of traits of the transaction for each currency
+func (txn *SkycoinCreatedTransaction) GetCoinTraits() []core.CoinTrait {
+	logCoin.Info("Getting traits for the skycoin currency")
+	var totalSkycoin uint64
+	var totalCoinHours uint64
+	skyAccuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SKY")
+	}
+	schAccuracy, err := util.AltcoinQuotient(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not get accuracy of SCH")
+	}
+	for e := range txn.skyTxn.Out {
+		sky, err := strconv.ParseFloat(txn.skyTxn.Out[e].Coins, 64)
+		if err != nil {
+			logCoin.WithError(err).Errorf("Could parse SKY to float")
+		}
+		totalSkycoin += uint64(sky * float64(skyAccuracy))
+
+		coinHours, err := strconv.ParseUint(txn.skyTxn.Out[e].Hours, 10, 64)
+		if err != nil {
+			logCoin.WithError(err).Errorf("Could parse SCH to uint")
+		}
+		totalCoinHours += coinHours * schAccuracy
+	}
+	var coinTraits = make([]core.CoinTrait, 0)
+	fee, err := txn.ComputeFee(params.CoinHoursTicker)
+	if err != nil {
+		logCoin.WithError(err).Errorf("Could not compute the Feed for coin hours")
+	}
+	coinTraits = append(coinTraits,
+		util.NewCoinTrait("Skycoin (SKY)", util.FormatCoins(totalSkycoin, skyAccuracy)),
+		util.NewCoinTrait("Coin Hours (SCH)", util.FormatCoins(totalCoinHours+fee, schAccuracy)),
+		util.NewCoinTrait("Transaction Fee (in SCH)", util.FormatCoins(fee, schAccuracy)))
+
+	return coinTraits
 }
 
 // GetBlockHeight checks return the transaction block height

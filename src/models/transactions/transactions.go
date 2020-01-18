@@ -1,11 +1,9 @@
 package transactions
 
 import (
-	"fmt"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
 	"time"
@@ -68,6 +66,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	txnDetails.SetDate(qtCore.NewQDateTime3(qtCore.NewQDate3(t.Year(), int(t.Month()), t.Day()),
 		qtCore.NewQTime3(t.Hour(), t.Minute(), 0, 0), qtCore.Qt__LocalTime))
+
 	switch transaction.GetStatus() {
 	case core.TXN_STATUS_CONFIRMED:
 		txnDetails.SetStatus(TransactionStatusConfirmed)
@@ -93,21 +92,8 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 		qIn.SetAddress(input.GetSpentOutput().GetAddress().String())
 		inputCoinOptions := modelUtil.NewMap(nil)
 
-		for _, asset := range input.SupportedAssets() {
-			inputCoin, err := input.GetCoins(asset)
-			if err != nil {
-				logTransactionDetails.WithError(err).Warnf("Couldn't get coin: %s", asset)
-				continue
-			}
-
-			accuracy, err := util.AltcoinQuotient(asset)
-
-			if err != nil {
-				logTransactionDetails.WithError(err).Warnf("Couldn't get quotient of %s", asset)
-				continue
-			}
-
-			inputCoinOptions.SetValue(asset, util.FormatCoins(inputCoin, accuracy))
+		for _, v := range input.GetCoinTraits() {
+			inputCoinOptions.SetValue(v.GetTrait(), v.GetValue())
 		}
 
 		qIn.SetCoinOptions(inputCoinOptions)
@@ -117,29 +103,14 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	txnDetails.SetInputs(inputList)
 
-	var totals = make(map[string]uint64)
-
 	for _, out := range transaction.GetOutputs() {
 
 		qOu := address.NewAddressDetails(nil)
 		qOu.SetAddress(out.GetAddress().String())
 		outputCoinOptions := modelUtil.NewMap(nil)
 
-		for _, asset := range out.SupportedAssets() {
-
-			outputCoin, err := out.GetCoins(asset)
-			if err != nil {
-				logTransactionDetails.WithError(err).Warnf("Couldn't get coin %s", asset)
-				continue
-			}
-
-			accuracy, err := util.AltcoinQuotient(asset)
-			if err != nil {
-				logTransactionDetails.WithError(err).Warnf("Couldn't get quotient of %s", asset)
-				continue
-			}
-			totals[asset] += outputCoin
-			outputCoinOptions.SetValue(asset, util.FormatCoins(outputCoin, accuracy))
+		for _, v := range out.GetCoinTraits() {
+			outputCoinOptions.SetValue(v.GetTrait(), v.GetValue())
 		}
 
 		qOu.SetCoinOptions(outputCoinOptions)
@@ -149,21 +120,8 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	}
 
 	txnCoinOptions := modelUtil.NewMap(nil)
-
-	for asset := range totals {
-		fee, err := transaction.ComputeFee(asset)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warnf("Couldn't get transaction fee of %s coin", asset)
-		}
-
-		totals[asset] += fee
-
-		accuracy, err := util.AltcoinQuotient(asset)
-		if err != nil {
-			logTransactionDetails.WithError(err).Warnf("Couldn't get accuracy of coin %s", asset)
-		}
-
-		txnCoinOptions.SetValue(fmt.Sprintf("Total %s", asset), util.FormatCoins(totals[asset], accuracy))
+	for _, v := range transaction.GetCoinTraits() {
+		txnCoinOptions.SetValue(v.GetTrait(), v.GetValue())
 	}
 
 	txnDetails.SetCoinOptions(txnCoinOptions)

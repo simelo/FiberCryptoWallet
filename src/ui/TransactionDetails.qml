@@ -27,6 +27,7 @@ Item {
     property QAddressList modelInputs
     property QAddressList modelOutputs
     property Map modelCoinOpts
+    property alias specificDetails : gridLayoutSpecificInfo
     readonly property bool expanded: buttonMoreDetails.checked
 
     enum Status {
@@ -41,46 +42,7 @@ Item {
         Generic
     }
 
-  Component.onCompleted:{
-            let keyList=modelCoinOpts.getKeys()
-            for (var i=0;i<keyList.length;i++){
-                Qt.createQmlObject("import QtQuick 2.12;
-                                    import QtQuick.Controls 2.12;
-                                    import QtQuick.Controls.Material 2.12
-                                    import QtQuick.Layouts 1.12
-                                    RowLayout{
-                                        spacing: 20
-                                        Material.foreground: Material.Grey
-                                        Label {
-                                            text: qsTr(\""+keyList[i]+":\")
-                                            font.pointSize: Qt.application.font.pointSize * 0.9
-                                            font.bold: true
-                                        }
-                                        Label {
-                                            text: \""+modelCoinOpts.getValue(keyList[i])+"\"
-                                            font.pointSize: Qt.application.font.pointSize * 0.9
-                                            Layout.fillWidth: true
-                                        }
-                                    }",columnLayoutBasicDetails)
-
-                Qt.createQmlObject("import QtQuick 2.12;
-                                    import QtQuick.Controls 2.12;
-                                    import QtQuick.Controls.Material 2.12
-                                    import QtQuick.Layouts 1.12
-                                         Label {
-                                            text: (type === TransactionDetails.Type.Receive ? \"Receive\" : TransactionDetails.Type.Generic ? \"\": \"Send\") + ' ' + qsTr(\""+modelCoinOpts.getValue(keyList[i])+"\") + ' ' + qsTr(\""+keyList[i]+"\")
-                                            font.bold: true
-                                            font.pointSize: Qt.application.font.pointSize * 1.15
-                                            horizontalAlignment: Label.AlignHCenter
-                                            Layout.fillWidth: true
-                                         }
-                                    ",rightUpPanel)
-
-            }
-  }
-
-
-    readonly property real basicHeight: 80 + rowLayoutBasicDetails.height
+    readonly property real basicHeight: 80 + rowLayoutBasicDetails.height + rowLayoutSpecificDetails.height
     implicitHeight: Math.min(basicHeight + (expanded ? Math.max(listViewInputs.height, listViewOutputs.height) : 0), maxHeight)
     Behavior on implicitHeight { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
 
@@ -101,10 +63,10 @@ Item {
             id: columnLayoutBasicDetails
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: true
-                Layout.topMargin: 30
+                Layout.topMargin: 5
 
                 Label {
-                    text: qsTr("Transaction")
+                    text: qsTr("Basic Transaction Details")
                     font.bold: true
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
@@ -150,16 +112,6 @@ Item {
                     }
 
                     Label {
-                        text: qsTr("Hours:")
-                        font.pointSize: Qt.application.font.pointSize * 0.9
-                        font.bold: true
-                    }
-                    Label {
-                        text: root.hoursReceived + ' ' + qsTr("received") + ' | ' + hoursBurned + ' ' + qsTr("burned")
-                        font.pointSize: Qt.application.font.pointSize * 0.9
-                    }
-
-                    Label {
                         text: qsTr("Tx ID:")
                         font.pointSize: Qt.application.font.pointSize * 0.9
                         font.bold: true
@@ -183,17 +135,50 @@ Item {
                     fillMode: Image.PreserveAspectFit
                     mirror: type === TransactionDetails.Type.Receive
                     Layout.fillWidth: true
+//                    Layout.fillWidth: true
                 }
-
 //                Label {
-//                    text: (type === TransactionDetails.Type.Receive ? "Receive" : TransactionDetails.Type.Generic ? "": "Send") + ' ' + amount + ' ' + qsTr("SKY")
+//                    text: (type === TransactionDetails.Type.Receive ? \"Receive\" : TransactionDetails.Type.Generic ? \"\": \"Send\") + ' ' + qsTr(\""+""+"\") + ' ' + qsTr(\""+"M"+"\")
 //                    font.bold: true
 //                    font.pointSize: Qt.application.font.pointSize * 1.15
 //                    horizontalAlignment: Label.AlignHCenter
-//                    Layout.fillWidth: true
 //                }
+
+                Label {
+                    text: (type === TransactionDetails.Type.Receive ? "Receive" : TransactionDetails.Type.Generic ? "": "Send") + ' ' + coinOpts.getValue(coinOpts.getKeys()[0]) + ' ' + coinOpts.getKeys()[0]
+                    font.bold: true
+                    font.pointSize: Qt.application.font.pointSize * 1.15
+                    horizontalAlignment: Label.AlignHCenter
+                    Layout.fillWidth: true
+                }
             }
         } // RowLayout
+
+        RowLayout{
+            id: rowLayoutSpecificDetails
+            Layout.alignment: Qt.AlignTop
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ColumnLayout {
+                id:columnLayoutSpecificDetails
+                Layout.alignment: Qt.AlignTop
+                Layout.fillWidth: true
+                Label {
+                    text: qsTr("Specific Transaction Details")
+                    font.bold: true
+                    Layout.alignment: Qt.AlignTop
+                    Layout.fillWidth: true
+                }
+                GridLayout {
+                    id: gridLayoutSpecificInfo
+                    Material.foreground: Material.Grey
+                    columns: 2
+                    columnSpacing: 10
+                    Layout.alignment: Qt.AlignTop
+                    Layout.fillWidth: true
+                }
+            }
+        }
 
         RowLayout {
             id: rowLayoutDetailsSeparator

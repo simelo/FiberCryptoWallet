@@ -94,8 +94,8 @@ Page {
 
                     clip: true
                     onClicked:{
-                        dialogTransactionDetails.open()
                         listPendingTransactions.currentIndex = index
+                        dialogTransactionDetails.open()
                     }
 
                 } // PendingTransactionsDelegate (delegate)

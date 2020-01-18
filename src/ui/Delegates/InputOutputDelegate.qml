@@ -11,6 +11,9 @@ Item {
   Component.onCompleted:{
             let keyList=coinOptions.getKeys()
             for (var i=0;i<keyList.length;i++){
+            if (coinOptions.getValue(keyList[i])=="0"){
+                continue
+            }
                 Qt.createQmlObject("import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;
                                     import QtQuick.Controls.Material 2.12;
