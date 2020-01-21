@@ -59,7 +59,7 @@ Item {
         ListView {
             id: listViewFilterAddress
 
-            property AddressModel listAddresses
+//            property AddressModel listAddresses
             property int checkedDelegates: 0
             property bool allChecked: false
 

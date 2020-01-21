@@ -11,7 +11,7 @@ import "../" // For quick UI development, switch back to resources when making a
 Item {
     id: root
 
-    readonly property bool itemVisible: index === 0 || addressSky > 0 || emptyAddressVisible
+    readonly property bool itemVisible: index === 0 || coinOptions.getValue(coinOptions.getKeys()[0]) !=="0"  || emptyAddressVisible
     property bool showOnlyAddresses: false
 
     signal addAddressesRequested()
@@ -200,7 +200,7 @@ Item {
         Label {
             id: labelAddressSky
             visible:  !showOnlyAddresses
-            text: addressSky // a role of the model
+            text: coinOptions.getValue(coinOptions.getKeys()[0]) // a role of the model
             color: Material.accent
             horizontalAlignment: Text.AlignRight
             Layout.preferredWidth: internalLabelsWidth

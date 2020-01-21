@@ -4,6 +4,7 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"github.com/therecipe/qt/core"
+	"github.com/therecipe/qt/qml"
 )
 
 var logAddressModel = logging.MustGetLogger("Address Model")
@@ -18,6 +19,7 @@ const (
 	AddressSky
 	AddressCoinHours
 	CoinOptions
+	WalletId
 )
 
 type AddressDetails struct {
@@ -26,6 +28,8 @@ type AddressDetails struct {
 	_ *util.Map `property:"coinOptions"`
 	_ string    `property:"addressSky"`
 	_ string    `property:"addressCoinHours"`
+	_ string    `property:"walletId"`
+	// _ *models.ModelOutputs `property:"unspendOutputs"`
 }
 
 type AddressList struct {
@@ -37,6 +41,7 @@ type AddressList struct {
 
 	_ func(transaction *AddressDetails) `signal:"addAddress,auto"`
 	_ func(index int)                   `signal:"removeAddress,auto"`
+	_ func([]*AddressDetails)           `slot:"loadModel"`
 
 	_ []*AddressDetails `property:"addresses"`
 }
@@ -47,12 +52,13 @@ func (al *AddressList) init() {
 		AddressSky:       core.NewQByteArray2("addressSky", -1),
 		AddressCoinHours: core.NewQByteArray2("addressCoinHours", -1),
 		CoinOptions:      core.NewQByteArray2("coinOptions", -1),
+		WalletId:         core.NewQByteArray2("walletId", -1),
 	})
 
 	al.ConnectRowCount(al.rowCount)
 	al.ConnectData(al.data)
 	al.ConnectRoleNames(al.roleNames)
-
+	al.ConnectLoadModel(al.loadModel)
 }
 
 func (al *AddressList) rowCount(*core.QModelIndex) int {
@@ -72,6 +78,9 @@ func (al *AddressList) addAddress(address *AddressDetails) {
 
 func (al *AddressList) removeAddress(index int) {
 	logAddressModel.Info("Removing Address")
+	if index >= len(al.Addresses()) {
+		return
+	}
 	al.BeginRemoveRows(core.NewQModelIndex(), index, index)
 	al.SetAddresses(append(al.Addresses()[:index], al.Addresses()[index+1:]...))
 	al.EndRemoveRows()
@@ -101,9 +110,35 @@ func (al *AddressList) data(index *core.QModelIndex, role int) *core.QVariant {
 		{
 			return core.NewQVariant1(address.CoinOptions())
 		}
+	case WalletId:
+		{
+			return core.NewQVariant1(address.WalletId())
+		}
 	default:
 		{
 			return core.NewQVariant()
 		}
 	}
+}
+
+func (al *AddressList) loadModel(Qaddresses []*AddressDetails) {
+	for _, addr := range Qaddresses {
+		qml.QQmlEngine_SetObjectOwnership(addr, qml.QQmlEngine__CppOwnership)
+	}
+
+	addresses := make([]*AddressDetails, 0)
+	address := NewAddressDetails(nil)
+	address.SetAddress("--------------------------")
+	address.SetAddressSky("0")
+	address.SetAddressCoinHours("0")
+	qml.QQmlEngine_SetObjectOwnership(address, qml.QQmlEngine__CppOwnership)
+	addresses = append(addresses, address)
+	addresses = append(addresses, Qaddresses...)
+
+	al.BeginResetModel()
+	al.SetAddresses(addresses)
+	// al.SetCount(len(addresses))
+
+	al.EndResetModel()
+
 }

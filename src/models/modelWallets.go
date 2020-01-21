@@ -122,6 +122,7 @@ func (m *ModelWallets) loadModel() {
 
 		for addresses.Next() {
 			a := addresses.Value()
+
 			outputs := a.GetCryptoAccount().ScanUnspentOutputs()
 			if outputs == nil {
 				continue

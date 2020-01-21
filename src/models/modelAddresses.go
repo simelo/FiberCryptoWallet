@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"github.com/therecipe/qt/core"
 )
 
@@ -23,8 +24,8 @@ type ModelAddresses struct {
 
 func (m *ModelAddresses) init() {
 	m.SetRoles(map[int]*core.QByteArray{
-		Address:  core.NewQByteArray2("address", -1),
-		QOutputs: core.NewQByteArray2("qoutputs", -1),
+		address.Address: core.NewQByteArray2("address", -1),
+		QOutputs:        core.NewQByteArray2("qoutputs", -1),
 	})
 
 	m.ConnectRowCount(m.rowCount)

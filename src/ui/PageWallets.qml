@@ -32,18 +32,20 @@ Page {
                 Layout.fillWidth: true
             }
             Label {
-                text: qsTr("SKY")
+                text: qsTr("Balance")
                 font.pointSize: 9
                 horizontalAlignment: Text.AlignRight
                 Layout.preferredWidth: internalLabelsWidth
-            }
-            Label {
-                text: qsTr("Coin hours")
-                font.pointSize: 9
-                horizontalAlignment: Text.AlignRight
                 Layout.rightMargin: listWalletRightMargin
-                Layout.preferredWidth: internalLabelsWidth
+
             }
+//            Label {
+//                text: qsTr("Coin hours")
+//                font.pointSize: 9
+//                horizontalAlignment: Text.AlignRight
+//                Layout.rightMargin: listWalletRightMargin
+//                Layout.preferredWidth: internalLabelsWidth
+//            }
         } // RowLayout
 
         Rectangle {

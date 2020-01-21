@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import WalletsManager 1.0
 import OutputsModels 1.0
+import HistoryModels 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
@@ -230,7 +231,7 @@ Page {
                                     comboBoxWalletsSendFrom.checkedElements.push(index)
                                     comboBoxWalletsSendFrom.checkedElementsText.push(text)
                                 }
-                                listAddresses.addAddresses(walletManager.getAddresses(comboBoxWalletsSendFrom.model.wallets[index].fileName))
+                                listAddresses.loadModel(walletManager.getAddresses(comboBoxWalletsSendFrom.model.wallets[index].fileName))
                                 listOutputs.insertOutputs(walletManager.getOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName))
                             } else {
                                 var pos = comboBoxWalletsSendFrom.checkedElements.indexOf(index)
@@ -313,7 +314,7 @@ Page {
                     }
                 }
 
-                model: AddressModel{
+                model: QAddressList{
                     id: listAddresses
                 }
 
@@ -628,9 +629,9 @@ Page {
         }
     }
 
-    AddressModel{
-        id: modelAddressesByWallet
-    }
+//    AddressModel{
+//        id: modelAddressesByWallet
+//    }
 
     ListModel {
         id: listModelDestinations

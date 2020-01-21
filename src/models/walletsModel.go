@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"strconv"
 
 	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
@@ -17,6 +18,7 @@ const (
 	CoinHours
 	FileName
 	Expand
+	Addresses
 )
 
 var logWalletsModel = logging.MustGetLogger("Wallets Model")
@@ -39,12 +41,13 @@ type WalletModel struct {
 
 type QWallet struct {
 	core.QObject
-	_ string `property:"name"`
-	_ int    `property:"encryptionEnabled"`
-	_ string `property:"sky"`
-	_ string `property:"coinHours"`
-	_ string `property:"fileName"`
-	_ bool   `property:"expand"`
+	_ string               `property:"name"`
+	_ int                  `property:"encryptionEnabled"`
+	_ string               `property:"sky"`
+	_ string               `property:"coinHours"`
+	_ string               `property:"fileName"`
+	_ *address.AddressList `property:"addresses"`
+	_ bool                 `property:"expand"`
 }
 
 func (walletModel *WalletModel) init() {
@@ -56,6 +59,7 @@ func (walletModel *WalletModel) init() {
 		CoinHours:         core.NewQByteArray2("coinHours", -1),
 		FileName:          core.NewQByteArray2("fileName", -1),
 		Expand:            core.NewQByteArray2("expand", -1),
+		Addresses:         core.NewQByteArray2("addresses", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(walletModel, qml.QQmlEngine__CppOwnership)
 	walletModel.ConnectData(walletModel.data)
@@ -74,6 +78,7 @@ func (walletModel *WalletModel) init() {
 
 func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QVariant {
 	logWalletsModel.Info("Loading data for index")
+
 	if !index.IsValid() {
 		return core.NewQVariant()
 	}
@@ -116,6 +121,10 @@ func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QV
 	case Expand:
 		{
 			return core.NewQVariant1(w.IsExpand())
+		}
+	case Addresses:
+		{
+			return core.NewQVariant1(w.Addresses())
 		}
 	default:
 		{
@@ -227,8 +236,9 @@ func (walletModel *WalletModel) updateModel(wallets []*QWallet) {
 
 func (walletModel *WalletModel) loadModel(wallets []*QWallet) {
 	logWalletsModel.Info("Loading wallets")
+
 	for _, wlt := range wallets {
-		//wallets[i].SetSky(58)
+		// wallets[i].SetSky(58)
 		qml.QQmlEngine_SetObjectOwnership(wlt, qml.QQmlEngine__CppOwnership)
 	}
 	walletModel.BeginResetModel()

@@ -4,7 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import QtGraphicalEffects 1.12
 import WalletsManager 1.0
-
+import HistoryModels 1.0
 // Resource imports
 // import "qrc:/ui/src/ui/Dialogs"
 import "../Dialogs/" // For quick UI development, switch back to resources when making a release
@@ -89,23 +89,27 @@ Item {
                     }
                 }
 
-                Label {
-                    id: labelCoins
-                    text: coinHours // a role of the model
-                    horizontalAlignment: Text.AlignRight
-                    Layout.preferredWidth: internalLabelsWidth
-                }
+//                Label {
+//                    id: labelCoins
+//                    text: coinHours // a role of the model
+//                    horizontalAlignment: Text.AlignRight
+//                    Layout.preferredWidth: internalLabelsWidth
+//                }
             } // RowLayout
 
             onClicked: {
-
                 expanded = !expanded
             }
         } // ItemDelegate
 
+        ColumnLayout{
+
+        }
+
+
         ListView {
             id: addressList
-            model: listAddresses
+            model: addresses
             implicitHeight: expanded ? delegateHeight*(addressList.count) + 50 : 0
             property alias parentRoot: root
             opacity: expanded ? 1.0 : 0.0
@@ -227,20 +231,22 @@ Item {
     // Roles: address, addressSky, addressCoinHours
     // Use listModel.append( { "address": value, "addressSky": value, "addressCoinHours": value } )
     // Or implement the model in the backend (a more recommendable approach)
-    AddressModel {
-
-        id: listAddresses
-        property Timer timer: Timer {
-            id: addressModelTimer
-            interval: 7000
-            repeat: true
-            running: true
-            onTriggered: {
-                listAddresses.updateModel(fileName);
-            }
-        }
-    }
+//    QAddressList {
+//
+//        id: listAddresses
+//        property Timer timer: Timer {
+//            id: addressModelTimer
+//            interval: 7000
+//            repeat: trueGetLoadedAddresses
+//            running: true
+//            onTriggered: {
+//                walletManager.updateModel(fileName,listAddresses);
+//            }
+//        }
+//    }
     Component.onCompleted: {
-        listAddresses.updateModel(fileName);
+
+//        walletManager.updateModel(fileName,listAddresses);
+//    console.log(addresses.addresses[0].address)
     }
 }
