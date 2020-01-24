@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
@@ -49,6 +50,7 @@ type EthereumBlock struct {
 	ethBlock *types.Block
 	version  uint32
 	fee      uint64
+	ethTxns  []core.Transaction
 }
 
 func (eb *EthereumBlock) GetHash() ([]byte, error) {
@@ -102,6 +104,38 @@ func (eb *EthereumBlock) GetTotalAmount() (uint64, error) {
 	return total, nil
 }
 
-func (eb *EthereumBlock) GetTransactions() ([]Transaction, error) {
+func (eb *EthereumBlock) GetTransactions() ([]core.Transaction, error) {
 	logBlockchain.Info("Getting transactions")
+	if eb.ethTxns == nil {
+		clt, err := NewEthereumApiClient("default")
+		if err != nil {
+			logBlockchain.WithError(err).Error("Error getting ethereum api client")
+			return nil, err
+		}
+		defer ReturnEthereumApiClient(clt)
+		txns := make([]core.Transaction, 0)
+		var errorOcurred bool
+		for _, txn := range eb.ethBlock.Transactions() {
+			nCtx := context.Background()
+			rcp, err := clt.TransactionReceipt(nCtx, txn.Hash())
+			if err != nil {
+				logCoin.WithError(err).Error("Error getting transaction receipt")
+				continue
+			}
+			fee := (new(big.Int).Mul(txn.GasPrice(), new(big.Int).SetUint64(rcp.GasUsed))).Uint64()
+
+			nTxn := &EthereumTransaction{
+				fee:       fee,
+				status:    core.TXN_STATUS_CONFIRMED,
+				timestamp: core.Timestamp(eb.ethBlock.Time()),
+				txn:       txn,
+			}
+			txns = append(txns, nTxn)
+		}
+		if !errorOcurred {
+			eb.ethTxns = txns
+		}
+		return txns, nil
+	}
+	return eb.ethTxns, nil
 }
