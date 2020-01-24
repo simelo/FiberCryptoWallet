@@ -44,6 +44,7 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 
 type EthereumBlock struct {
 	ethBlock *types.Block
+	version  int
 }
 
 func (eb *EthereumBlock) GetHash() ([]byte, error) {
