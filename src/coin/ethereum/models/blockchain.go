@@ -5,7 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
+	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 )
+
+var logBlockchain = logging.MustGetLogger("Skycoin Blockchain")
 
 type EthereumBlockchainInfo struct {
 }
@@ -44,46 +47,54 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 
 type EthereumBlock struct {
 	ethBlock *types.Block
-	version  int
+	version  uint32
+	fee      uint64
 }
 
 func (eb *EthereumBlock) GetHash() ([]byte, error) {
+	logBlockchain.Info("Getting hash")
 	return eb.ethBlock.Hash().Bytes(), nil
 }
 
 func (eb *EthereumBlock) GetPrevHash() ([]byte, error) {
+	logBlockchain.Info("Getting previous block hash")
 	return eb.ethBlock.ParentHash().Bytes(), nil
 }
 
-//TODO look for right values, there is no version field in ethereum blocks
 func (eb *EthereumBlock) GetVersion() (uint32, error) {
-	return 0, nil
+	logBlockchain.Info("Getting version")
+	return eb.version, nil
 }
 
 func (eb *EthereumBlock) GetTime() (core.Timestamp, error) {
+	logBlockchain.Info("Getting time")
 	tm := core.Timestamp(eb.ethBlock.Time())
 	return tm, nil
 }
 
 func (eb *EthereumBlock) GetHeight() (uint64, error) {
+	logBlockchain.Info("Getting heigth")
 	return eb.ethBlock.NumberU64(), nil
 }
 
-//TODO learn how the fee is calculated in eth
 func (eb *EthereumBlock) GetFee(ticker string) (uint64, error) {
-	return 0, nil
+	logBlockchain.Info("Getting fee")
+	return eb.fee, nil
 }
 
 func (eb *EthereumBlock) GetSize() (uint64, error) {
+	logBlockchain.Info("Getting size")
 	size := uint64(eb.ethBlock.Size())
 	return size, nil
 }
 
 func (eb *EthereumBlock) IsGenesisBlock() (bool, error) {
+	logBlockchain.Info("Getting if is genesis block")
 	return eb.ethBlock.NumberU64() == 0, nil
 }
 
 func (eb *EthereumBlock) GetTotalAmount() (uint64, error) {
+	logBlockchain.Info("Getting total amount")
 	var total uint64 = 0
 	for _, txn := range eb.ethBlock.Transactions() {
 		total += txn.Value().Uint64()
@@ -91,4 +102,6 @@ func (eb *EthereumBlock) GetTotalAmount() (uint64, error) {
 	return total, nil
 }
 
-func (eb *EthereumBlock) GetTransactions() ([]Transaction, error)
+func (eb *EthereumBlock) GetTransactions() ([]Transaction, error) {
+	logBlockchain.Info("Getting transactions")
+}
