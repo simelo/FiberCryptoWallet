@@ -15,22 +15,32 @@ import (
 
 var logBlockchain = logging.MustGetLogger("Skycoin Blockchain")
 
+func NewEthereumBlockcain(invalidCacheTime uint64) *EthereumBlockchain {
+	return &EthereumBlockchain{
+		lastTimeStatusRequestedLastBlock:     0,
+		lastTimeStatusRequestedNumberOfBlock: 0,
+		CacheTime:                            invalidCacheTime,
+		lastBlock:                            nil,
+		numberOfBlocks:                       0,
+	}
+}
+
 type EthereumBlockchain struct { //Implements BlockchainStatus interface
 	lastTimeStatusRequestedNumberOfBlock uint64
 	lastTimeStatusRequestedLastBlock     uint64
 	CacheTime                            uint64
-	lastBLock                            core.Block
+	lastBlock                            core.Block
 	numberOfBlocks                       uint64
 }
 
-func (bl *EthereumBlockchain) numberOfBlocksCachedIsValid() bool {
-	elapsed := uint64(time.Now().UTC().UnixNano()) - bl.lastTimeStatusRequestedNumberOfBlock
-	return elapsed < bl.CacheTime
+func (eb *EthereumBlockchain) numberOfBlocksCachedIsValid() bool {
+	elapsed := uint64(time.Now().UTC().UnixNano()) - eb.lastTimeStatusRequestedNumberOfBlock
+	return elapsed < eb.CacheTime
 }
 
-func (bl *EthereumBlockchain) lastBlocksCachedIsValid() bool {
-	elapsed := uint64(time.Now().UTC().UnixNano()) - bl.lastTimeStatusRequestedLastBlock
-	return elapsed < bl.CacheTime
+func (eb *EthereumBlockchain) lastBlockCachedIsValid() bool {
+	elapsed := uint64(time.Now().UTC().UnixNano()) - eb.lastTimeStatusRequestedLastBlock
+	return elapsed < eb.CacheTime
 }
 
 // TODO
@@ -40,8 +50,9 @@ func (eb *EthereumBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticke
 
 func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 	logBlockchain.Info("Getting last block")
-	if eb.lastBlockCacheIsValid() {
+	if eb.lastBlockCachedIsValid() {
 		return eb.lastBlock, nil
+
 	}
 	clt, err := NewEthereumApiClient("default")
 	if err != nil {
@@ -61,8 +72,8 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		return nil, err
 	}
 	eb.lastTimeStatusRequestedLastBlock = uint64(time.Now().UTC().UnixNano())
-	eb.lastBLock = NewEthereumBlock(ethBlk, uint32(version.Uint64()))
-	return eb.lastBLock, nil
+	eb.lastBlock = NewEthereumBlock(ethBlk, uint32(version.Uint64()))
+	return eb.lastBlock, nil
 }
 
 func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
