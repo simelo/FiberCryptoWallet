@@ -41,7 +41,6 @@ func NewEthereumApiClient(section string) (ethtypes.EthereumApi, error) {
 		}
 		return nil, err
 	}
-
 	ethApi, ok := obj.(ethtypes.EthereumApi)
 	if !ok {
 		logNetwork.Errorf("There is no proper client in %s pool", section)
