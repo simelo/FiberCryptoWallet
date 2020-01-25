@@ -28,7 +28,6 @@ func (eb *EthereumBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticke
 	return 0, nil
 }
 
-//TODO fix version of the block
 func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 	logBlockchain.Info("Getting last block")
 	clt, err := NewEthereumApiClient("default")
@@ -42,8 +41,13 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
 	}
-	return NewEthereumBlock(ethBlk, 0), nil
 
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting last block")
+		return nil, err
+	}
+	return NewEthereumBlock(ethBlk, uint32(version.Uint64())), nil
 }
 
 func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
@@ -61,7 +65,6 @@ func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
 	return (heigth + 1), nil
 }
 
-//TODO fix version of the block
 func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
 	logBlockchain.Info("Getting block by hash")
 	clt, err := NewEthereumApiClient("default")
@@ -75,10 +78,15 @@ func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
 		logBlockchain.WithError(err).Error("Error getting block by hash")
 		return nil, err
 	}
-	return NewEthereumBlock(blk, 0), nil
+
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting block by hash")
+		return nil, err
+	}
+	return NewEthereumBlock(blk, uint32(version.Uint64())), nil
 }
 
-//TODO fix version number
 func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, error) {
 	logBlockchain.Info("Getting block range")
 	if end < start {
@@ -90,15 +98,20 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 		logBlockchain.WithError(err).Error("Error getting block range")
 		return nil, err
 	}
+	nCtx := context.Background()
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		return nil, err
+	}
 	answ := make([]core.Block, 0)
 	for i := start; i <= end; i++ {
-		nCtx := context.Background()
+		nCtx = context.Background()
 		blk, err := clt.BlockByNumber(nCtx, new(big.Int).SetUint64(i))
 		if err != nil {
 			logBlockchain.WithError(err).Error("Error getting block")
 			continue
 		}
-		answ = append(answ, NewEthereumBlock(blk, 0))
+		answ = append(answ, NewEthereumBlock(blk, uint32(version.Uint64())))
 	}
 	return answ, nil
 }
@@ -159,6 +172,7 @@ func (eb *EthereumBlock) GetFee(ticker string) (uint64, error) {
 			logBlockchain.WithError(err).Error("Error getting fee")
 			return 0, nil
 		}
+		fee += txnFee
 	}
 	return fee, nil
 }

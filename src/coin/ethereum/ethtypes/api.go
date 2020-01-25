@@ -12,4 +12,5 @@ type EthereumApi interface {
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
 	TransactionReceipt(ctx context.Context, hash common.Hash) (*types.Receipt, error)
+	ProtocolVersion(ctx context.Context) (*big.Int, error)
 }
