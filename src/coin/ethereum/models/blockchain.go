@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -14,13 +15,22 @@ import (
 
 var logBlockchain = logging.MustGetLogger("Skycoin Blockchain")
 
-type EthereumBlockchainInfo struct {
+type EthereumBlockchain struct { //Implements BlockchainStatus interface
+	lastTimeStatusRequestedNumberOfBlock uint64
+	lastTimeStatusRequestedLastBlock     uint64
+	CacheTime                            uint64
+	lastBLock                            core.Block
+	numberOfBlocks                       uint64
 }
 
-type EthereumBlockchain struct { //Implements BlockchainStatus interface
-	lastTimeStatusRequested uint64
-	CacheTime               uint64
-	cachedStatus            *EthereumBlockchainInfo
+func (bl *EthereumBlockchain) numberOfBlocksCachedIsValid() bool {
+	elapsed := uint64(time.Now().UTC().UnixNano()) - bl.lastTimeStatusRequestedNumberOfBlock
+	return elapsed < bl.CacheTime
+}
+
+func (bl *EthereumBlockchain) lastBlocksCachedIsValid() bool {
+	elapsed := uint64(time.Now().UTC().UnixNano()) - bl.lastTimeStatusRequestedLastBlock
+	return elapsed < bl.CacheTime
 }
 
 // TODO
@@ -30,6 +40,9 @@ func (eb *EthereumBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticke
 
 func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 	logBlockchain.Info("Getting last block")
+	if eb.lastBlockCacheIsValid() {
+		return eb.lastBlock, nil
+	}
 	clt, err := NewEthereumApiClient("default")
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting last block")
@@ -47,11 +60,17 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
 	}
-	return NewEthereumBlock(ethBlk, uint32(version.Uint64())), nil
+	eb.lastTimeStatusRequestedLastBlock = uint64(time.Now().UTC().UnixNano())
+	eb.lastBLock = NewEthereumBlock(ethBlk, uint32(version.Uint64()))
+	return eb.lastBLock, nil
 }
 
 func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
 	logBlockchain.Infof("Getting number of blocks")
+	if eb.numberOfBlocksCachedIsValid() {
+		return eb.numberOfBlocks, nil
+	}
+
 	lastBlock, err := eb.GetLastBlock()
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting number of blocks")
@@ -62,7 +81,9 @@ func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
 		logBlockchain.WithError(err).Error("Error getting number of blocks")
 		return 0, nil
 	}
-	return (heigth + 1), nil
+	eb.lastTimeStatusRequestedNumberOfBlock = uint64(time.Now().UTC().UnixNano())
+	eb.numberOfBlocks = (heigth + 1)
+	return eb.numberOfBlocks, nil
 }
 
 func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
