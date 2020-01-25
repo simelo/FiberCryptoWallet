@@ -31,7 +31,6 @@ func (eb *EthereumBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticke
 //TODO fix version of the block
 func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 	logBlockchain.Info("Getting last block")
-
 	clt, err := NewEthereumApiClient("default")
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting last block")
@@ -156,7 +155,10 @@ func (eb *EthereumBlock) GetFee(ticker string) (uint64, error) {
 	var fee uint64 = 0
 	for _, txn := range txns {
 		txnFee, err := txn.ComputeFee(eth)
-		if err != nil
+		if err != nil {
+			logBlockchain.WithError(err).Error("Error getting fee")
+			return 0, nil
+		}
 	}
 	return fee, nil
 }

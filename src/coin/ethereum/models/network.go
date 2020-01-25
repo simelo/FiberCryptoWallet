@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/ethtypes"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
@@ -61,8 +62,30 @@ type EthereumConnectionFactory struct {
 }
 
 func (cf *EthereumConnectionFactory) Create() (interface{}, error) {
-	clt := ethclient.NewClient()
-	return clt.Dial(cf.url)
+	return NewEthereumClientExtended(cf.url)
+}
+
+type ethereumClientExtended struct {
+	*ethclient.Client
+	c *rpc.Client
+}
+
+func NewEthereumClientExtended(url string) (*ethereumClientExtended, error) {
+	clt, err := ethclient.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := rpc.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ethereumClientExtended{
+		Client: clt,
+		c:      c,
+	}, nil
+
 }
 
 func NewEthereumConnectionFactory(url string) *EthereumConnectionFactory {
