@@ -1,6 +1,10 @@
 package ethereum
 
 import (
+	"context"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/ethtypes"
@@ -68,6 +72,16 @@ func (cf *EthereumConnectionFactory) Create() (interface{}, error) {
 type ethereumClientExtended struct {
 	*ethclient.Client
 	c *rpc.Client
+}
+
+func (clt *ethereumClientExtended) ProtocolVersion(ctx context.Context) (*big.Int, error) {
+	var result hexutil.Big
+	err := clt.c.CallContext(ctx, &result, "eth_protocolVersion")
+	if err != nil {
+		return nil, err
+	}
+
+	return (*big.Int)(&result), err
 }
 
 func NewEthereumClientExtended(url string) (*ethereumClientExtended, error) {
