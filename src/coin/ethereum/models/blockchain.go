@@ -4,8 +4,11 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
+	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 )
 
@@ -20,36 +23,97 @@ type EthereumBlockchain struct { //Implements BlockchainStatus interface
 	cachedStatus            *EthereumBlockchainInfo
 }
 
+// TODO
 func (eb *EthereumBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticker string) (uint64, error) {
 	return 0, nil
 }
 
+//TODO fix version of the block
 func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
+	logBlockchain.Info("Getting last block")
+
 	clt, err := NewEthereumApiClient("default")
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting last block")
+		return nil, err
+	}
 	nCtx := context.Background()
 	ethBlk, err := clt.BlockByNumber(nCtx, nil)
 	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
 	}
+	return NewEthereumBlock(ethBlk, 0), nil
 
 }
 
 func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
-	return 0, nil
+	logBlockchain.Infof("Getting number of blocks")
+	lastBlock, err := eb.GetLastBlock()
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting number of blocks")
+		return 0, err
+	}
+	heigth, err := lastBlock.GetHeight()
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting number of blocks")
+		return 0, nil
+	}
+	return (heigth + 1), nil
 }
 
+//TODO fix version of the block
 func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
-	return nil, nil
+	logBlockchain.Info("Getting block by hash")
+	clt, err := NewEthereumApiClient("default")
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting block by hash")
+		return nil, err
+	}
+	nCtx := context.Background()
+	blk, err := clt.BlockByHash(nCtx, common.HexToHash(hash))
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting block by hash")
+		return nil, err
+	}
+	return NewEthereumBlock(blk, 0), nil
 }
 
+//TODO fix version number
 func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, error) {
-	return nil, nil
+	logBlockchain.Info("Getting block range")
+	if end < start {
+		logBlockchain.WithError(errors.ErrInvalidRange).Error("Error getting block range")
+		return nil, errors.ErrInvalidRange
+	}
+	clt, err := NewEthereumApiClient("default")
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting block range")
+		return nil, err
+	}
+	answ := make([]core.Block, 0)
+	for i := start; i <= end; i++ {
+		nCtx := context.Background()
+		blk, err := clt.BlockByNumber(nCtx, new(big.Int).SetUint64(i))
+		if err != nil {
+			logBlockchain.WithError(err).Error("Error getting block")
+			continue
+		}
+		answ = append(answ, NewEthereumBlock(blk, 0))
+	}
+	return answ, nil
+}
+
+func NewEthereumBlock(blk *types.Block, version uint32) *EthereumBlock {
+	return &EthereumBlock{
+		version:  version,
+		ethBlock: blk,
+	}
 }
 
 type EthereumBlock struct {
 	ethBlock *types.Block
 	version  uint32
-	fee      uint64
 	ethTxns  []core.Transaction
 }
 
@@ -81,7 +145,20 @@ func (eb *EthereumBlock) GetHeight() (uint64, error) {
 
 func (eb *EthereumBlock) GetFee(ticker string) (uint64, error) {
 	logBlockchain.Info("Getting fee")
-	return eb.fee, nil
+	if ticker != eth {
+		return 0, errors.ErrInvalidAltcoinTicker
+	}
+	txns, err := eb.GetTransactions()
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting fee")
+		return 0, err
+	}
+	var fee uint64 = 0
+	for _, txn := range txns {
+		txnFee, err := txn.ComputeFee(eth)
+		if err != nil
+	}
+	return fee, nil
 }
 
 func (eb *EthereumBlock) GetSize() (uint64, error) {

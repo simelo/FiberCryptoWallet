@@ -5,6 +5,8 @@ import (
 )
 
 var (
+	// ErrInvalidRange the range specified is not correct
+	ErrInvalidRange = errors.New("Invalid range")
 	// ErrInvalidPoolSection no section for name found in the pool
 	ErrInvalidPoolSection = errors.New("Invalid Section")
 	// ErrObjectPoolUndeflow no objects can be allocated from the pool
