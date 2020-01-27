@@ -20,3 +20,7 @@ func mockEthApiProtocolVersion(mock *EthereumApiMock, ctx context.Context, versi
 func mockEthApiGetBlockByHash(mock *EthereumApiMock, ctx context.Context, hash common.Hash, blk *types.Block, err error) {
 	mock.On("BlockByHash", ctx, hash).Return(blk, err)
 }
+
+func mockEthApiGetTransactionReceipt(mock *EthereumApiMock, ctx context.Context, hash common.Hash, txn *types.Receipt, err error) {
+	mock.On("TransactionReceipt", ctx, hash).Return(txn, err)
+}
