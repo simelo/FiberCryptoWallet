@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"strings"
 
 	local "github.com/fibercrypto/fibercryptowallet/src/main"
 )
@@ -29,4 +30,9 @@ func RegisterConfig() error {
 
 	return nil
 
+}
+
+func GetOption(path string) (string, error) {
+	stringList := strings.Split(path, "/")
+	return sectionManager.GetValue(stringList[len(stringList)-1], stringList[:len(stringList)-1])
 }
