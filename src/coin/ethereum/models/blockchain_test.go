@@ -27,7 +27,7 @@ func TestEthereumBlockchainGetLastBlock(t *testing.T) {
 	version := new(big.Int).SetInt64(1)
 	mockEthApiProtocolVersion(global_mock, ctx, version, nil)
 
-	blockchain := NewEthereumBlockcain(0)
+	blockchain := NewEthereumBlockchain(0)
 	require.NotNil(t, blockchain)
 
 	blk, err := blockchain.GetLastBlock()
@@ -57,7 +57,7 @@ func TestEthereumBlockchainGetNumberOfBlocks(t *testing.T) {
 	version := new(big.Int).SetInt64(1)
 	mockEthApiProtocolVersion(global_mock, ctx, version, nil)
 
-	blockchain := NewEthereumBlockcain(0)
+	blockchain := NewEthereumBlockchain(0)
 	require.NotNil(t, blockchain)
 
 	number, err := blockchain.GetNumberOfBlocks()
@@ -79,7 +79,7 @@ func TestEthereumBlockchainGetBlockByHash(t *testing.T) {
 	version := new(big.Int).SetInt64(1)
 	mockEthApiProtocolVersion(global_mock, ctx, version, nil)
 
-	blockchain := NewEthereumBlockcain(0)
+	blockchain := NewEthereumBlockchain(0)
 	require.NotNil(t, blockchain)
 
 	blk, err := blockchain.GetBlockByHash(block.Hash().String())
@@ -107,7 +107,7 @@ func TestEthereumBlockchainGetRangeBlocks(t *testing.T) {
 	version := new(big.Int).SetInt64(1)
 	mockEthApiProtocolVersion(global_mock, ctx, version, nil)
 
-	blockchain := NewEthereumBlockcain(0)
+	blockchain := NewEthereumBlockchain(0)
 	require.NotNil(t, blockchain)
 
 	blks, err := blockchain.GetRangeBlocks(3, 2)

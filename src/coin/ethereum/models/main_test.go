@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 		global_mock = new(EthereumApiMock)
 	}
 
-	err := core.GetMultiPool().CreateSection("default", global_mock)
+	err := core.GetMultiPool().CreateSection(PoolSection, global_mock)
 	if err != nil {
 		logModelTest.WithError(err).Warn("Error creating pool section")
 		return
