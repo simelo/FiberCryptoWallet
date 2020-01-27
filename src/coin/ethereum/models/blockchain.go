@@ -65,13 +65,13 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
 	}
-	//version, err := clt.ProtocolVersion(nCtx)
-	//if err != nil {
-	//	logBlockchain.WithError(err).Error("Error getting last block")
-	//	return nil, err
-	//}
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting last block")
+		return nil, err
+	}
 	eb.lastTimeStatusRequestedLastBlock = uint64(time.Now().UTC().UnixNano())
-	eb.lastBlock = NewEthereumBlock(ethBlk, 0 /*uint32(version.Uint64())*/)
+	eb.lastBlock = NewEthereumBlock(ethBlk, uint32(version.Uint64()))
 	return eb.lastBlock, nil
 }
 
@@ -110,12 +110,12 @@ func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
 		return nil, err
 	}
 
-	//version, err := clt.ProtocolVersion(nCtx)
-	//if err != nil {
-	//	logBlockchain.WithError(err).Error("Error getting block by hash")
-	//	return nil, err
-	//}
-	return NewEthereumBlock(blk, 0 /*uint32(version.Uint64())*/), nil
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		logBlockchain.WithError(err).Error("Error getting block by hash")
+		return nil, err
+	}
+	return NewEthereumBlock(blk, uint32(version.Uint64())), nil
 }
 
 func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, error) {
@@ -130,10 +130,10 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 		return nil, err
 	}
 	nCtx := context.Background()
-	//version, err := clt.ProtocolVersion(nCtx)
-	//if err != nil {
-	//	return nil, err
-	//}
+	version, err := clt.ProtocolVersion(nCtx)
+	if err != nil {
+		return nil, err
+	}
 	answ := make([]core.Block, 0)
 	for i := start; i <= end; i++ {
 		nCtx = context.Background()
@@ -142,7 +142,7 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 			logBlockchain.WithError(err).Error("Error getting block")
 			continue
 		}
-		answ = append(answ, NewEthereumBlock(blk, 0 /*uint32(version.Uint64())*/))
+		answ = append(answ, NewEthereumBlock(blk, uint32(version.Uint64())))
 	}
 	return answ, nil
 }
