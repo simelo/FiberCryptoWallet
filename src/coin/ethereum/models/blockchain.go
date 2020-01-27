@@ -15,7 +15,7 @@ import (
 
 var logBlockchain = logging.MustGetLogger("Skycoin Blockchain")
 
-func NewEthereumBlockcain(invalidCacheTime uint64) *EthereumBlockchain {
+func NewEthereumBlockchain(invalidCacheTime uint64) *EthereumBlockchain {
 	return &EthereumBlockchain{
 		lastTimeStatusRequestedLastBlock:     0,
 		lastTimeStatusRequestedNumberOfBlock: 0,
@@ -54,7 +54,7 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		return eb.lastBlock, nil
 
 	}
-	clt, err := NewEthereumApiClient("default")
+	clt, err := NewEthereumApiClient(PoolSection)
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
@@ -65,14 +65,13 @@ func (eb *EthereumBlockchain) GetLastBlock() (core.Block, error) {
 		logBlockchain.WithError(err).Error("Error getting last block")
 		return nil, err
 	}
-
-	version, err := clt.ProtocolVersion(nCtx)
-	if err != nil {
-		logBlockchain.WithError(err).Error("Error getting last block")
-		return nil, err
-	}
+	//version, err := clt.ProtocolVersion(nCtx)
+	//if err != nil {
+	//	logBlockchain.WithError(err).Error("Error getting last block")
+	//	return nil, err
+	//}
 	eb.lastTimeStatusRequestedLastBlock = uint64(time.Now().UTC().UnixNano())
-	eb.lastBlock = NewEthereumBlock(ethBlk, uint32(version.Uint64()))
+	eb.lastBlock = NewEthereumBlock(ethBlk, 0 /*uint32(version.Uint64())*/)
 	return eb.lastBlock, nil
 }
 
@@ -99,7 +98,7 @@ func (eb *EthereumBlockchain) GetNumberOfBlocks() (uint64, error) {
 
 func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
 	logBlockchain.Info("Getting block by hash")
-	clt, err := NewEthereumApiClient("default")
+	clt, err := NewEthereumApiClient(PoolSection)
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting block by hash")
 		return nil, err
@@ -111,12 +110,12 @@ func (eb *EthereumBlockchain) GetBlockByHash(hash string) (core.Block, error) {
 		return nil, err
 	}
 
-	version, err := clt.ProtocolVersion(nCtx)
-	if err != nil {
-		logBlockchain.WithError(err).Error("Error getting block by hash")
-		return nil, err
-	}
-	return NewEthereumBlock(blk, uint32(version.Uint64())), nil
+	//version, err := clt.ProtocolVersion(nCtx)
+	//if err != nil {
+	//	logBlockchain.WithError(err).Error("Error getting block by hash")
+	//	return nil, err
+	//}
+	return NewEthereumBlock(blk, 0 /*uint32(version.Uint64())*/), nil
 }
 
 func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, error) {
@@ -125,16 +124,16 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 		logBlockchain.WithError(errors.ErrInvalidRange).Error("Error getting block range")
 		return nil, errors.ErrInvalidRange
 	}
-	clt, err := NewEthereumApiClient("default")
+	clt, err := NewEthereumApiClient(PoolSection)
 	if err != nil {
 		logBlockchain.WithError(err).Error("Error getting block range")
 		return nil, err
 	}
 	nCtx := context.Background()
-	version, err := clt.ProtocolVersion(nCtx)
-	if err != nil {
-		return nil, err
-	}
+	//version, err := clt.ProtocolVersion(nCtx)
+	//if err != nil {
+	//	return nil, err
+	//}
 	answ := make([]core.Block, 0)
 	for i := start; i <= end; i++ {
 		nCtx = context.Background()
@@ -143,7 +142,7 @@ func (eb *EthereumBlockchain) GetRangeBlocks(start, end uint64) ([]core.Block, e
 			logBlockchain.WithError(err).Error("Error getting block")
 			continue
 		}
-		answ = append(answ, NewEthereumBlock(blk, uint32(version.Uint64())))
+		answ = append(answ, NewEthereumBlock(blk, 0 /*uint32(version.Uint64())*/))
 	}
 	return answ, nil
 }
@@ -232,7 +231,7 @@ func (eb *EthereumBlock) GetTotalAmount() (uint64, error) {
 func (eb *EthereumBlock) GetTransactions() ([]core.Transaction, error) {
 	logBlockchain.Info("Getting transactions")
 	if eb.ethTxns == nil {
-		clt, err := NewEthereumApiClient("default")
+		clt, err := NewEthereumApiClient(PoolSection)
 		if err != nil {
 			logBlockchain.WithError(err).Error("Error getting ethereum api client")
 			return nil, err
@@ -244,7 +243,7 @@ func (eb *EthereumBlock) GetTransactions() ([]core.Transaction, error) {
 			nCtx := context.Background()
 			rcp, err := clt.TransactionReceipt(nCtx, txn.Hash())
 			if err != nil {
-				logCoin.WithError(err).Error("Error getting transaction receipt")
+				logCoin.WithError(err).Error("Error getting transaction receipt2")
 				continue
 			}
 			fee := (new(big.Int).Mul(txn.GasPrice(), new(big.Int).SetUint64(rcp.GasUsed))).Uint64()

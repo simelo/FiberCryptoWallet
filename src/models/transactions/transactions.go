@@ -1,6 +1,9 @@
 package transactions
 
 import (
+	"strconv"
+	"time"
+
 	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
@@ -8,8 +11,6 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
-	"strconv"
-	"time"
 )
 
 var logTransactionDetails = logging.MustGetLogger("TransactionDetails")
