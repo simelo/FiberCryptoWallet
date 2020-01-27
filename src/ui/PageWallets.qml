@@ -134,6 +134,16 @@ Page {
         height: applicationWindow.height > 640 ? 640 - 40 : applicationWindow.height - 40
     }
 
+    DrawerWalletDetails{
+        id: drawerWalletDetail
+        width: root.width > 340 ? 340 : root.width - 30
+        topPadding: 20
+        leftPadding: 20
+        bottomPadding: 20
+        height: parent.height
+        edge: Qt.RightEdge
+
+    }
 
     // Roles: name, encryptionEnabled, sky, coinHours
     // Use listModel.append( { "name": value, "encryptionEnabled": value, "sky": value, "coinHours": value } )

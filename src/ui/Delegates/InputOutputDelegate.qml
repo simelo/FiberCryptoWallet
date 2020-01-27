@@ -11,9 +11,7 @@ Item {
   Component.onCompleted:{
             let keyList=coinOptions.getKeys()
             for (var i=0;i<keyList.length;i++){
-            if (coinOptions.getValue(keyList[i])=="0"){
-                continue
-            }
+
                 Qt.createQmlObject("import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;
                                     import QtQuick.Controls.Material 2.12;
@@ -33,7 +31,6 @@ Item {
                                             text: \""+coinOptions.getValue(keyList[i])+"\"
                                             font.pointSize: Qt.application.font.pointSize * 0.9
                                         }
-
                                     ",gridLayoutInputAndOutputInfo)
             }
   }
@@ -70,25 +67,6 @@ Item {
             Layout.leftMargin: labelIndex.width + rowLayoutHeader.spacing
             Layout.fillWidth: true
             id :gridLayoutInputAndOutputInfo
-//            Label {
-//                text: qsTr("Coins:")
-//                font.pointSize: Qt.application.font.pointSize * 0.9
-//                font.bold: true
-//            }
-//            Label {
-//                text: addressSky
-//                font.pointSize: Qt.application.font.pointSize * 0.9
-//            }
-//
-//            Label {
-//                text: qsTr("Hours:")
-//                font.pointSize: Qt.application.font.pointSize * 0.9
-//                font.bold: true
-//            }
-//            Label {
-//                text: addressCoinHours
-//                font.pointSize: Qt.application.font.pointSize * 0.9
-//            }
         }
     } // ColumnLayout
 }

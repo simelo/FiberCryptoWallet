@@ -857,13 +857,33 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	qWallet.SetExpand(false)
 	qWallet.SetAddresses(address.NewAddressList(nil))
 	qWallet.SetFileName(wlt.GetId())
-
+	qWallet.SetCoin(wlt.GetCoinType())
 	qWallet.SetEncryptionEnabled(0)
 	if isEncrypted {
 		qWallet.SetEncryptionEnabled(1)
 	}
 
-	// Get the first asset (the first asset need be the main asset ) and obtains the balance for that.
+	coinOpts := modelUtil.NewMap(nil)
+
+	// Iterate on all asset (the first asset need be the main asset ) and obtains the balance for that.
+	for _, asset := range wlt.GetCryptoAccount().ListAssets() {
+		bl, err := wlt.GetCryptoAccount().GetBalance(asset)
+		if err != nil {
+			logWalletManager.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
+			qWallet.SetSky("N/A")
+			qWallet.SetCoinHours("N/A")
+		} else {
+			accuracy, err := util.AltcoinQuotient(asset)
+			if err != nil {
+				logWalletManager.WithError(err).Warnf("Couldn't get %s Altcoin quotient", util.AltcoinCaption(asset))
+			}
+			floatBl := float64(bl) / float64(accuracy)
+			// qWallet.SetSky(fmt.Sprint(floatBl) + " " + asset)
+			coinOpts.SetValue(util.AltcoinCaption(asset), fmt.Sprint(floatBl)+" "+asset)
+		}
+	}
+
+	qWallet.SetCoinOptions(coinOpts)
 	bl, err := wlt.GetCryptoAccount().GetBalance(wlt.GetCryptoAccount().ListAssets()[0])
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Couldn't get Skycoin balance")
@@ -878,14 +898,6 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 		qWallet.SetSky(fmt.Sprint(floatBl) + " " + wlt.GetCryptoAccount().ListAssets()[0])
 	}
 
-	// bl, err = wlt.GetCryptoAccount().GetBalance(sky.CoinHoursTicker)
-	// if err != nil {
-	// 	qWallet.SetCoinHours("N/A")
-	// 	logWalletManager.WithError(err).Error("Couldn't get Coin Hours balance")
-	// 	return qWallet
-	// }
-	// qWallet.SetCoinHours(fmt.Sprint(bl))
-
 	qWallet.SetCoinHours("N/A")
 
 	addrIt, err := wlt.GetLoadedAddresses()
@@ -895,11 +907,7 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	}
 
 	var addressList = address.NewAddressList(nil)
-	firstAddr := address.NewAddressDetails(nil)
-	firstAddr.SetAddress("--------------------------")
-	firstAddr.SetCoinOptions(modelUtil.NewMap(nil))
 	var addressDetailList = make([]*address.AddressDetails, 0)
-	addressDetailList = append(addressDetailList, firstAddr)
 	for addrIt.Next() {
 		var addrsDetail = address.NewAddressDetails(nil)
 		addrsDetail.SetWalletId(wlt.GetId())

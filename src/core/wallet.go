@@ -52,6 +52,8 @@ type Wallet interface {
 	GetLabel() string
 	// SetLabel establishes a label for this wallet
 	SetLabel(wltName string)
+	// GetCoinType return the type of coin of current wallet
+	GetCoinType() string
 	// Transfer instantiates unsigned transaction to send funds from any wallet address to single destination
 	Transfer(to TransactionOutput, options KeyValueStore) (Transaction, error)
 	// SendFromAddress instantiates unsigned transaction to send funds from specific source addresses

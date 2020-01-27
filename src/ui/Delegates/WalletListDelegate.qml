@@ -13,7 +13,6 @@ Item {
     id: root
 
     readonly property real delegateHeight: 30
-    property bool emptyAddressVisible: true
     property bool expanded: expand
     // The following property is used to avoid a binding conflict with the `height` property.
     // Also avoids a bug with the animation when collapsing a wallet
@@ -75,7 +74,7 @@ Item {
 
                 Label {
                     id: labelSky
-                    text: sky === qsTr("N/A") ? "" : sky // a role of the model
+                    text: sky === qsTr("N/A") ? "" : coinOpts.getValue(coinOpts.getKeys()[0]) // a role of the model
                     color: Material.accent
                     horizontalAlignment: Text.AlignRight
                     Layout.preferredWidth: internalLabelsWidth
@@ -98,53 +97,56 @@ Item {
             } // RowLayout
 
             onClicked: {
-                expanded = !expanded
+                console.log(addresses.addresses.length)
+                console.log(encryptionEnabled)
+                drawerWalletDetail.walletName = Qt.binding(function(){return name})
+                drawerWalletDetail.walletCoin = coin
+                drawerWalletDetail.walletCoinOpts = coinOpts
+                drawerWalletDetail.walletAddressList = Qt.binding(function(){return addresses})
+                drawerWalletDetail.walletStatus = Qt.binding(function(){return encryptionEnabled})
+                drawerWalletDetail.walletFileName = fileName
+                drawerWalletDetail.walletIndex = index
+                drawerWalletDetail.visible = true
+//                expanded = !expanded
             }
         } // ItemDelegate
 
-        ColumnLayout{
-
-        }
-
-
-        ListView {
-            id: addressList
-            model: addresses
-            implicitHeight: expanded ? delegateHeight*(addressList.count) + 50 : 0
-            property alias parentRoot: root
-            opacity: expanded ? 1.0 : 0.0
-            clip: true
-            interactive: false
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-
-            Behavior on implicitHeight { NumberAnimation { duration: 250; easing.type: Easing.OutQuint } }
-            Behavior on opacity { NumberAnimation { duration: expanded ? 250 : 1000; easing.type: Easing.OutQuint } }
-
-            delegate: WalletListAddressDelegate {
-                width: walletList.width
-                height: index == 0 ? delegateHeight + 20 : visible ? delegateHeight : 0
-
-                onAddAddressesRequested: {
-                    dialogAddAddresses.open()
-                }
-                onEditWalletRequested: {
-                    dialogEditWallet.originalWalletName = name
-                    dialogEditWallet.name = name
-                    dialogEditWallet.open()
-                }
-            }
-
-        } // ListView
+//        ListView {
+//            id: addressList
+//            model: addresses
+//            implicitHeight: expanded ? delegateHeight*(addressList.count) + 50 : 0
+//            property alias parentRoot: root
+//            opacity: expanded ? 1.0 : 0.0
+//            clip: true
+//            interactive: false
+//            Layout.fillWidth: true
+//            Layout.alignment: Qt.AlignTop
+//
+//            Behavior on implicitHeight { NumberAnimation { duration: 250; easing.type: Easing.OutQuint } }
+//            Behavior on opacity { NumberAnimation { duration: expanded ? 250 : 1000; easing.type: Easing.OutQuint } }
+//
+//            delegate: WalletListAddressDelegate {
+//                width: walletList.width
+//                height: index == 0 ? delegateHeight + 20 : visible ? delegateHeight : 0
+//
+//                onAddAddressesRequested: {
+//                    dialogAddAddresses.open()
+//                }
+//                onEditWalletRequested: {
+//                    dialogEditWallet.originalWalletName = name
+//                    dialogEditWallet.name = name
+//                    dialogEditWallet.open()
+//                }
+//            }
+//
+//        } // ListView
     } // ColumnLayout
 
     DialogAddAddresses {
         id: dialogAddAddresses
         anchors.centerIn: Overlay.overlay
-
         modal: true
         focus: true
-
         onAccepted: {
             if (encryptionEnabled){
                 dialogGetPasswordForAddAddresses.title = "Enter Password"

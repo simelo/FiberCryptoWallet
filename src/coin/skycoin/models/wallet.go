@@ -781,6 +781,10 @@ func (wlt *RemoteWallet) GetSignerDescription() string {
 	return "Remote Skycoin wallet " + wlt.Id
 }
 
+func (wlt *RemoteWallet) GetCoinType() string {
+	return wlt.CoinType
+}
+
 func walletResponseToWallet(wltR api.WalletResponse) *RemoteWallet {
 	return &RemoteWallet{
 		CoinType:  string(wltR.Meta.Coin),
@@ -1687,6 +1691,10 @@ func (wlt *LocalWallet) SignTransaction(txn core.Transaction, pwdReader core.Pas
 
 func (wlt *LocalWallet) GetSignerUID() core.UID {
 	return SignerIDLocalWallet
+}
+
+func (wlt *LocalWallet) GetCoinType() string {
+	return wlt.CoinType
 }
 
 func (wlt *LocalWallet) GetSignerDescription() string {
