@@ -49,6 +49,29 @@ Item {
     implicitWidth: 600
     clip: true
 
+    function getIconPath(){
+        if (type === TransactionDetails.Type.Recive || type === TransactionDetails.Type.Send){
+        return "qrc:/images/resources/images/icons/send-" + type === TransactionDetails.Type.Recive ? "blue" : "amber" + ".svg"
+        }
+        if( !coinOpts){
+        return "qrc:/images/resources/images/icons/error.svg"
+        }
+        return "qrc:/images/resources/images/icons/"+coinOpts.getKeys()[0].split(' ')[0].toLowerCase()+"-Icon.svg"
+    }
+
+    function setMainBalance(){
+        let text = "";
+        if (type === TransactionDetails.Type.Recive || type === TransactionDetails.Type.Send){
+        text+= type === TransactionDetails.Type.Recive ? "Recive" : "Send"
+        }
+
+        if(!coinOpts){
+             return text
+        }
+
+        return text + coinOpts.getValue(coinOpts.getKeys()[0]) + " " + coinOpts.getKeys()[0]
+    }
+
     ColumnLayout {
         id: columnLayoutRoot
         anchors.fill: parent
@@ -127,25 +150,19 @@ Item {
             ColumnLayout {
             id: rightUpPanel
                 Layout.alignment: Qt.AlignTop
-                Layout.topMargin: -10
+                Layout.topMargin: 0
                 Layout.rightMargin: 20
                 Image {
-                    source: "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Receive ? "blue" : "amber") + ".svg"
-                    sourceSize: "72x72"
+                    source: getIconPath()
+                    sourceSize: "64x64"
                     fillMode: Image.PreserveAspectFit
                     mirror: type === TransactionDetails.Type.Receive
                     Layout.fillWidth: true
-//                    Layout.fillWidth: true
                 }
-//                Label {
-//                    text: (type === TransactionDetails.Type.Receive ? \"Receive\" : TransactionDetails.Type.Generic ? \"\": \"Send\") + ' ' + qsTr(\""+""+"\") + ' ' + qsTr(\""+"M"+"\")
-//                    font.bold: true
-//                    font.pointSize: Qt.application.font.pointSize * 1.15
-//                    horizontalAlignment: Label.AlignHCenter
-//                }
 
                 Label {
-                    text: (type === TransactionDetails.Type.Receive ? "Receive" : TransactionDetails.Type.Generic ? "": "Send") + ' ' + coinOpts.getValue(coinOpts.getKeys()[0]) + ' ' + coinOpts.getKeys()[0]
+                    id : labelMainBalance
+                    text: setMainBalance()
                     font.bold: true
                     font.pointSize: Qt.application.font.pointSize * 1.15
                     horizontalAlignment: Label.AlignHCenter

@@ -30,7 +30,6 @@
         <file>src/ui/MenuThemeAccent.qml</file>
         <file>src/ui/ToolButtonQR.qml</file>
         <file>src/ui/Delegates/WalletListDelegate.qml</file>
-        <file>src/ui/Delegates/WalletListAddressDelegate.qml</file>
         <file>src/ui/Delegates/NetworkingListDelegate.qml</file>
         <file>src/ui/Delegates/OutputsListDelegate.qml</file>
         <file>src/ui/Delegates/OutputsListAddressDelegate.qml</file>

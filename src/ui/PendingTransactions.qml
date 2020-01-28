@@ -44,16 +44,6 @@ Page {
                         Layout.fillWidth: true
                     }
                     Label {
-                        text: qsTr("Sky")
-                        font.pointSize: 9
-                        Layout.rightMargin: 92
-                    }
-//                    Label {
-//                        text: qsTr("final hours")
-//                        font.pointSize: 9
-//                        Layout.rightMargin: 33
-//                    }
-                    Label {
                         text: qsTr("Timestamp")
                         font.pointSize: 9
                         Layout.rightMargin: 98

@@ -74,7 +74,6 @@ id: root
                                     }
                                     }
                                 }
-
                             }",walletDetails.specificDetails)
 
         Qt.createQmlObject("import QtQuick 2.12;
@@ -86,16 +85,31 @@ id: root
                                 font.pointSize: Qt.application.font.pointSize * 0.9
                                 font.bold: true
                             }",walletDetails.specificDetails)
-        Qt.createQmlObject("import QtQuick 2.12;
-                            import QtQuick.Controls 2.12;
-                            import QtQuick.Controls.Material 2.12
-                            import QtQuick.Layouts 1.12
-                            Label {
-                                text: walletCoin
-                                font.pointSize: Qt.application.font.pointSize * 0.9
-                                Layout.fillWidth: true
-                            }",walletDetails.specificDetails)
 
+       Qt.createQmlObject("import QtQuick 2.12;
+                                   import QtQuick.Controls 2.12;
+                                   import QtQuick.Controls.Material 2.12
+                                   import QtQuick.Layouts 1.12
+                                   import QtGraphicalEffects 1.0
+
+                                   RowLayout{
+                                   Label {
+                                       id: labelCoin
+                                       text: walletCoin
+                                       font.pointSize: Qt.application.font.pointSize * 0.9
+                                   }
+                                   Rectangle {
+                                       height:labelCoin.height
+                                       width:height
+                                       radius: width / 2
+                                       Image {
+                                           id: imageCoin
+                                           anchors.centerIn: parent
+                                           source:\"qrc:/images/resources/images/icons/\"+walletCoin+\"-Icon.svg\"
+                                           sourceSize:Qt.size(parent.width, parent.height)
+                                       }
+                                   }
+                                }",walletDetails.specificDetails)
 
         let keyList=walletCoinOpts.getKeys()
             for (var i=0;i<keyList.length;i++){
