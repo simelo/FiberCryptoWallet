@@ -12,7 +12,7 @@ import (
 var logTransactionDetails = logging.MustGetLogger("TransactionDetails")
 
 func init() {
-	TransactionDetails_QmlRegisterType2("HistoryModels", 1, 0, "QTransactionDetail")
+	TransactionDetails_QmlRegisterType2("Transaction", 1, 0, "QTransactionDetail")
 }
 
 const (
@@ -45,25 +45,26 @@ const (
 
 type TransactionDetails struct {
 	qtCore.QObject
-	_ *qtCore.QDateTime    `property:"date"`
-	_ int                  `property:"status"`
-	_ int                  `property:"type"`
-	_ uint64               `property:"blockHeight"`
-	_ string               `property:"amount"`
-	_ string               `property:"hoursTraspassed"`
-	_ string               `property:"hoursBurned"`
-	_ string               `property:"transactionID"`
-	_ *address.AddressList `property:"addresses"`
-	_ *address.AddressList `property:"inputs"`
-	_ *address.AddressList `property:"outputs"`
-	_ *modelUtil.Map       `property:"coinOptions"`
+	Txn core.Transaction
+	_   *qtCore.QDateTime    `property:"date"`
+	_   int                  `property:"status"`
+	_   int                  `property:"type"`
+	_   uint64               `property:"blockHeight"`
+	_   string               `property:"amount"`
+	_   string               `property:"hoursTraspassed"`
+	_   string               `property:"hoursBurned"`
+	_   string               `property:"transactionID"`
+	_   *address.AddressList `property:"addresses"`
+	_   *address.AddressList `property:"inputs"`
+	_   *address.AddressList `property:"outputs"`
+	_   *modelUtil.Map       `property:"coinOptions"`
 }
 
 func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
 
 	txnDetails := NewTransactionDetails(nil)
 	t := time.Unix(int64(transaction.GetTimestamp()), 0)
-
+	txnDetails.Txn = transaction
 	txnDetails.SetDate(qtCore.NewQDateTime3(qtCore.NewQDate3(t.Year(), int(t.Month()), t.Day()),
 		qtCore.NewQTime3(t.Hour(), t.Minute(), 0, 0), qtCore.Qt__LocalTime))
 

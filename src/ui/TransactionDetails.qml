@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
-import HistoryModels 1.0
+import Transaction 1.0
 import ModelUtils 1.0
 
 // Resource imports
@@ -51,7 +51,7 @@ Item {
 
     function getIconPath(){
         if (type === TransactionDetails.Type.Recive || type === TransactionDetails.Type.Send){
-        return "qrc:/images/resources/images/icons/send-" + type === TransactionDetails.Type.Recive ? "blue" : "amber" + ".svg"
+        return "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Send ? "blue" : "amber") + ".svg"
         }
         if( !coinOpts){
         return "qrc:/images/resources/images/icons/error.svg"

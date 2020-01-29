@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
-import Transactions 1.0
+import Transaction 1.0
 import Utils 1.0
 
 // Resource imports
@@ -17,7 +17,7 @@ Page {
     property string walletEncrypted
     property string destinationAddress
     property string amount
-    property QTransaction txn
+    property QTransactionDetail txn
 
     footer: ToolBar {
         id: tabBarSend
@@ -35,7 +35,7 @@ Page {
             onClicked: {
 
                 var isEncrypted
-                var walletSelected
+//                var walletSelected
                 var walletSelecteds
                 if (advancedMode){
                     var outs = stackView.currentItem.advancedPage.getSelectedOutputsWithWallets()
@@ -58,20 +58,21 @@ Page {
                 } else{
                     walletSelected = stackView.currentItem.simplePage.getSelectedWallet()
                     isEncrypted = stackView.currentItem.simplePage.walletIsEncrypted()
-                    var addrs = []
-                    addrs.push([])
-                    addrs.push([])
+                    let addrs = [[],[]]
+
                     addrs[0].push(stackView.currentItem.simplePage.getDestinationAddress())
                     addrs[1].push(walletSelected)
+
+                    console.log(addrs)
                     txn = walletManager.sendTo(walletSelected, stackView.currentItem.simplePage.getDestinationAddress(), stackView.currentItem.simplePage.getAmount())
                 }
                 dialogSendTransaction.showPasswordField =  false//isEncrypted// get if the current wallet is encrypted
-                //dialogSendTransaction.previewDate = "2019-02-26 15:27"               
+                //dialogSendTransaction.previewDate = "2019-02-26 15:27"
                 dialogSendTransaction.previewType = TransactionDetails.Type.Send
-                dialogSendTransaction.previewAmount = txn.amount
-                dialogSendTransaction.previewHoursReceived = txn.hoursTraspassed
-                dialogSendTransaction.previewHoursBurned = txn.hoursBurned
-                dialogSendTransaction.previewtransactionID = txn.transactionId
+//                dialogSendTransaction.previewAmount = txn.amount
+//                dialogSendTransaction.previewHoursReceived = txn.hoursTraspassed
+//                dialogSendTransaction.previewHoursBurned = txn.hoursBurned
+                dialogSendTransaction.previewtransactionID = txn.transactionID
                 dialogSendTransaction.inputs = txn.inputs
                 dialogSendTransaction.outputs = txn.outputs
                 dialogSendTransaction.walletsAddresses = addrs

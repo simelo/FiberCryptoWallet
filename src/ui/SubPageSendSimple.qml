@@ -31,16 +31,16 @@ Page {
     }
     signal qrCodeRequested(var data)
 
-function getAddressList(){
-addressList.clear()
-for(var i=0;i<abm.count;i++){
-for(var j=0;j<abm.contacts[i].address.rowCount();j++){
-addressList.append({name:abm.contacts[i].name,
-address:abm.contacts[i].address.address[j].value,
-coinType:abm.contacts[i].address.address[j].coinType})
-}
-}
-}
+    function getAddressList(){
+        addressList.clear()
+        for(var i=0;i<abm.count;i++){
+            for(var j=0;j<abm.contacts[i].address.rowCount();j++){
+                addressList.append({name:abm.contacts[i].name,
+                                       address:abm.contacts[i].address.address[j].value,
+                                       coinType:abm.contacts[i].address.address[j].coinType})
+            }
+        }
+    }
 
 
     onQrCodeRequested: {
@@ -48,44 +48,44 @@ coinType:abm.contacts[i].address.address[j].coinType})
         dialogQR.open()
     }
 
- AddrsBookModel{
-    id:abm
+    AddrsBookModel{
+        id:abm
     }
 
- DialogSelectAddressByAddressBook{
-                            id: dialogSelectAddressByAddressBook
+    DialogSelectAddressByAddressBook{
+        id: dialogSelectAddressByAddressBook
 
-                            anchors.centerIn: Overlay.overlay
-                            width: applicationWindow.width > 540 ? 540 - 40 : applicationWindow.width - 40
-                            height: applicationWindow.height - 40
+        anchors.centerIn: Overlay.overlay
+        width: applicationWindow.width > 540 ? 540 - 40 : applicationWindow.width - 40
+        height: applicationWindow.height - 40
 
-                            listAddrsModel: addressList
+        listAddrsModel: addressList
 
-                            focus: true
-                            modal: true
+        focus: true
+        modal: true
 
-onAboutToShow:{
-getAddressList()
-}
+        onAboutToShow:{
+            getAddressList()
+        }
 
-         onAccepted: {
-                textFieldWalletsSendTo.text = selectedAddress
-                      }
-                }
+        onAccepted: {
+            textFieldWalletsSendTo.text = selectedAddress
+        }
+    }
 
-                 DialogGetPassword{
-                 id:getpass
-                 anchors.centerIn: Overlay.overlay
-                 height:180
-                 onAccepted:{
-                 if(!abm.authenticate(getpass.password)){
-                 getpass.open()
-                 }else{
-                 abm.loadContacts()
-                 dialogSelectAddressByAddressBook.open()
-                 }
-                 }
-                 }
+    DialogGetPassword{
+        id:getpass
+        anchors.centerIn: Overlay.overlay
+        height:180
+        onAccepted:{
+            if(!abm.authenticate(getpass.password)){
+                getpass.open()
+            }else{
+                abm.loadContacts()
+                dialogSelectAddressByAddressBook.open()
+            }
+        }
+    }
 
     ColumnLayout {
         id: columnLayoutRoot
@@ -112,8 +112,8 @@ getAddressList()
                     Component.onCompleted: {
                         loadModel(walletManager.getWallets())
                     }
-                } 
-                
+                }
+
                 // Taken from Qt 5.13.0 source code:
                 delegate: MenuItem {
                     width: parent.width
@@ -140,21 +140,21 @@ getAddressList()
 
             Label { text: qsTr("Send to") }
 
-             Button {
-                                id: buttonSelectCustomChangeAddress
-                                text: qsTr("Select")
-                                flat: true
-                                highlighted: true
+            Button {
+                id: buttonSelectCustomChangeAddress
+                text: qsTr("Select")
+                flat: true
+                highlighted: true
 
-                                onClicked: {
-                                 if(abm.getSecType()!=2){
-                                        abm.loadContacts()
-                                        dialogSelectAddressByAddressBook.open()
-                                     }else{
-                                     getpass.open()
-                                   }
-                                }
-                            }
+                onClicked: {
+                    if(abm.getSecType()!=2){
+                        abm.loadContacts()
+                        dialogSelectAddressByAddressBook.open()
+                    }else{
+                        getpass.open()
+                    }
+                }
+            }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -170,7 +170,7 @@ getAddressList()
                         qrCodeRequested(textFieldWalletsSendTo.text)
                     }
                 }
-                
+
                 TextField {
                     id: textFieldWalletsSendTo
                     font.family: "Code New Roman"
@@ -197,12 +197,12 @@ getAddressList()
                 notation: DoubleValidator.StandardNotation
             }
             onTextChanged:{
-                    root.amount = text
-                }
+                root.amount = text
+            }
         }
     } // ColumnLayout (root)
 
     ListModel{
-    id:addressList
+        id:addressList
     }
 }

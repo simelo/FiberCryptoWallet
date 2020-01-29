@@ -16,7 +16,7 @@ Dialog {
 
     property alias previewDate: transactionDetails.date                    
     property alias previewType: transactionDetails.type                  
-    property alias previewAmount: transactionDetails.amount              
+//    property alias previewAmount: transactionDetails.amount
     property alias previewHoursReceived: transactionDetails.hoursReceived
     property alias previewHoursBurned: transactionDetails.hoursBurned    
     property alias previewtransactionID: transactionDetails.transactionID
@@ -49,7 +49,6 @@ Dialog {
 
             TransactionDetails {
                 id: transactionDetails
-
                 Layout.fillWidth: true
             }
 
