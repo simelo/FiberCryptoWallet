@@ -76,6 +76,7 @@ Page {
                     modelInputs: modelData.inputs
                     modelOutputs: modelData.outputs
                     coinOpts: modelData.coinOptions
+                    modelAmount: modelData.amount
 
                     height: hide ? 0 : implicitHeight
                     Behavior on height { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
@@ -127,10 +128,11 @@ Page {
         date: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelTimestamp : ""
         status: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelStatus : 0
         type: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelType : 0
+        modelAmount: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelAmount : 0
         transactionID: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelTransactionID : ""
         modelInputs: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelInputs : null
         modelOutputs: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.modelOutputs : null
-        blockHeight: "0"
+        blockHeight: "N/A"
         coinOpts: listPendingTransactions.currentItem !== null ? listPendingTransactions.currentItem.coinOpts: null
 
     }

@@ -6,6 +6,7 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
+	"sort"
 	"sync"
 
 	"github.com/fibercrypto/fibercryptowallet/src/util"
@@ -48,9 +49,10 @@ type WalletManager struct {
 	_ func(id string, password string) int                                                                                                                  `slot:"encryptWallet"`
 	_ func(id string, password string) int                                                                                                                  `slot:"decryptWallet"`
 	_ func() []*QWallet                                                                                                                                     `slot:"getWallets"`
+	_ func() []string                                                                                                                                       `slot:"getCurrencyList"`
 	_ func(id string) []*address.AddressDetails                                                                                                             `slot:"getAddresses"`
 	_ func(wltIds, addresses []string, source string, pwd interface{}, index []int, qTxn *transactions.TransactionDetails) *transactions.TransactionDetails `slot:"signTxn"`
-	_ func(wltId string, destinationAddress string, amount string) *transactions.TransactionDetails                                                         `slot:"sendTo"`
+	_ func(wltId string, destinationAddress string, amount, currency string) *transactions.TransactionDetails                                               `slot:"sendTo"`
 	_ func(id, label string) *QWallet                                                                                                                       `slot:"editWallet"`
 	_ func(wltId, address string) []*QOutput                                                                                                                `slot:"getOutputs"`
 	_ func(txn *transactions.TransactionDetails) bool                                                                                                       `slot:"broadcastTxn"`
@@ -77,6 +79,7 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectEncryptWallet(walletM.encryptWallet)
 		walletM.ConnectDecryptWallet(walletM.decryptWallet)
 		walletM.ConnectGetWallets(walletM.getWallets)
+		walletM.ConnectGetCurrencyList(walletM.getCurrencyList)
 		walletM.ConnectGetAddresses(walletM.getAddresses)
 		walletM.ConnectSendTo(walletM.sendTo)
 		walletM.ConnectSignTxn(walletM.signTxn)
@@ -547,14 +550,12 @@ func (walletM *WalletManager) getOutputsFromWallet(wltId string) []*QOutput {
 	return outs
 }
 
-func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount string) *transactions.TransactionDetails {
+func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount, currency string) *transactions.TransactionDetails {
 	logWalletManager.Info("Creating Transaction")
 	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-	// wlt.GetCoinType()
 	addr := util.NewGenericAddress(destinationAddress)
-	opt := util.NewKeyValueMap()
-	opt.SetValue("BurnFactor", "0.5")
-	opt.SetValue("CoinHoursSelectionType", "auto")
+	opt := util.GetOptionForCurrencyTxn(currency)
+
 	if wlt == nil {
 		logWalletManager.Warn("Couldn't load wallet to create transaction")
 		return nil
@@ -576,6 +577,8 @@ func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount string) *
 		logWalletManager.WithError(err).Warn("Couldn't convert transaction")
 		return nil
 	}
+
+	qTxn.SetAmount(amount)
 	logWalletManager.Info("Transaction created")
 	return qTxn
 }
@@ -647,7 +650,7 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 	return qTxn
 
 }
-func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails) {
+func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, txn *transactions.TransactionDetails) {
 	channel := make(chan *transactions.TransactionDetails)
 	go func() {
 		var pwd core.PasswordReader = func(message string, ctx core.KeyValueStore) (string, error) {
@@ -671,7 +674,7 @@ func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []strin
 			return pass, nil
 		}
 
-		channel <- walletM.signTxn(wltIds, addresses, source, pwd, index, qTxn)
+		channel <- walletM.signTxn(wltIds, addresses, source, pwd, index, txn)
 	}()
 
 	go func() {
@@ -845,6 +848,31 @@ func (walletM *WalletManager) editWallet(id, label string) *QWallet {
 	return qWallet
 }
 
+func (walletM *WalletManager) getCurrencyList() []string {
+	logWalletManager.Info("Obtaining list of currency")
+	if walletM.wallets == nil {
+		walletM.updateWallets()
+	}
+
+	var currencyList = make([]string, 0)
+	exist := func(currency string) bool {
+		for e := range currencyList {
+			if currencyList[e] == currency {
+				return true
+			}
+		}
+		return false
+	}
+
+	for e := range walletM.wallets {
+		if !exist(walletM.wallets[e].Currency()) {
+			currencyList = append(currencyList, walletM.wallets[e].Currency())
+		}
+	}
+	sort.Strings(currencyList)
+	return currencyList
+}
+
 func (walletM *WalletManager) getAddresses(Id string) []*address.AddressDetails {
 	addrs, ok := walletM.addresseseByWallets[Id]
 	if !ok {
@@ -862,7 +890,7 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	qWallet.SetExpand(false)
 	qWallet.SetAddresses(address.NewAddressList(nil))
 	qWallet.SetFileName(wlt.GetId())
-	qWallet.SetCoin(wlt.GetCoinType())
+	qWallet.SetCurrency(wlt.GetCoinType())
 	qWallet.SetEncryptionEnabled(0)
 	if isEncrypted {
 		qWallet.SetEncryptionEnabled(1)
@@ -875,8 +903,6 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 		bl, err := wlt.GetCryptoAccount().GetBalance(asset)
 		if err != nil {
 			logWalletManager.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
-			qWallet.SetSky("N/A")
-			qWallet.SetCoinHours("N/A")
 		} else {
 			accuracy, err := util.AltcoinQuotient(asset)
 			if err != nil {
@@ -888,22 +914,6 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	}
 
 	qWallet.SetCoinOptions(coinOpts)
-	bl, err := wlt.GetCryptoAccount().GetBalance(wlt.GetCryptoAccount().ListAssets()[0])
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't get Skycoin balance")
-		qWallet.SetSky("N/A")
-		qWallet.SetCoinHours("N/A")
-	} else {
-		accuracy, err := util.AltcoinQuotient(wlt.GetCryptoAccount().ListAssets()[0])
-		if err != nil {
-			logWalletManager.WithError(err).Warn("Couldn't get Skycoin Altcoin quotient")
-		}
-		floatBl := float64(bl) / float64(accuracy)
-		qWallet.SetSky(fmt.Sprint(floatBl) + " " + wlt.GetCryptoAccount().ListAssets()[0])
-	}
-
-	qWallet.SetCoinHours("N/A")
-
 	addrIt, err := wlt.GetLoadedAddresses()
 
 	if err != nil {

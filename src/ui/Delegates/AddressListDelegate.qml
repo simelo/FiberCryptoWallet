@@ -53,7 +53,7 @@ Item {
                 text: value
                 selectByMouse: true
                 Layout.fillWidth: true
-                Material.accent: abm.addressIsValid(text) ? parent.Material.accent : Material.color(Material.Red)
+                Material.accent: abm.addressIsValid(text, coinType) ? parent.Material.accent : Material.color(Material.Red)
                 onTextChanged:{
                 value = text
                 enableOkBtn()
@@ -67,8 +67,8 @@ Item {
         Layout.fillWidth: true
         model:coins
         currentIndex:getIndexForCoinType(coinType)
-onCurrentTextChanged:{
-coinType=cbCoinTypes.currentText
+        onCurrentTextChanged:{
+            coinType=cbCoinTypes.currentText
 }
 }
         }

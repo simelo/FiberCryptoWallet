@@ -22,17 +22,17 @@ Item {
         dialogQR.open()
     }
 
-function getAddressList(){
-contactAddrsModel.clear()
-console.log(abm.count)
-for(var i=0;i<abm.count;i++){
-for(var j=0;j<abm.contacts[i].address.address.length;j++){
-contactAddrsModel.append({name:abm.contacts[i].name,
-address:abm.contacts[i].address.address[j].value,
-coinType:abm.contacts[i].address.address[j].coinType})
-}
-}
-}
+    function getAddressList(){
+        contactAddrsModel.clear()
+        console.log(abm.count)
+        for(var i=0;i<abm.count;i++){
+            for(var j=0;j<abm.contacts[i].address.address.length;j++){
+                contactAddrsModel.append({name:abm.contacts[i].name,
+                address:abm.contacts[i].address.address[j].value,
+                coinType:abm.contacts[i].address.address[j].coinType})
+            }
+        }
+    }
 
     implicitHeight: rootLayout.height
     clip: true
@@ -97,7 +97,7 @@ coinType:abm.contacts[i].address.address[j].coinType})
                 text: address
                 selectByMouse: true
                 Layout.fillWidth: true
-                Material.accent: abm.addressIsValid(text) ? parent.Material.accent : Material.color(Material.Red)
+                Material.accent: abm.addressIsValid(text,coinType) ? parent.Material.accent : Material.color(Material.Red)
                 onTextChanged: address = text
             }
 

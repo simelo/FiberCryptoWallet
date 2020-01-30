@@ -29,18 +29,16 @@ type TransactionList struct {
 func (hm *TransactionList) init() {
 	logHistoryManager.Info("Initialize Transaction list for History")
 	hm.SetRoles(map[int]*core.QByteArray{
-		transactions.Date:            core.NewQByteArray2("date", -1),
-		transactions.Status:          core.NewQByteArray2("status", -1),
-		transactions.Type:            core.NewQByteArray2("type", -1),
-		transactions.Amount:          core.NewQByteArray2("amount", -1),
-		transactions.HoursTraspassed: core.NewQByteArray2("hoursTraspassed", -1),
-		transactions.HoursBurned:     core.NewQByteArray2("hoursBurned", -1),
-		transactions.TransactionID:   core.NewQByteArray2("transactionID", -1),
-		transactions.BlockHeight:     core.NewQByteArray2("blockHeight", -1),
-		transactions.Addresses:       core.NewQByteArray2("addresses", -1),
-		transactions.Inputs:          core.NewQByteArray2("inputs", -1),
-		transactions.Outputs:         core.NewQByteArray2("outputs", -1),
-		transactions.CoinOptions:     core.NewQByteArray2("coinOptions", -1),
+		transactions.Date:          core.NewQByteArray2("date", -1),
+		transactions.Status:        core.NewQByteArray2("status", -1),
+		transactions.Type:          core.NewQByteArray2("type", -1),
+		transactions.Amount:        core.NewQByteArray2("amount", -1),
+		transactions.TransactionID: core.NewQByteArray2("transactionID", -1),
+		transactions.BlockHeight:   core.NewQByteArray2("blockHeight", -1),
+		transactions.Addresses:     core.NewQByteArray2("addresses", -1),
+		transactions.Inputs:        core.NewQByteArray2("inputs", -1),
+		transactions.Outputs:       core.NewQByteArray2("outputs", -1),
+		transactions.CoinOptions:   core.NewQByteArray2("coinOptions", -1),
 	})
 
 	hm.ConnectRowCount(hm.rowCount)
@@ -96,14 +94,6 @@ func (hm *TransactionList) data(index *core.QModelIndex, role int) *core.QVarian
 	case transactions.Amount:
 		{
 			return core.NewQVariant1(transaction.Amount())
-		}
-	case transactions.HoursTraspassed:
-		{
-			return core.NewQVariant1(transaction.HoursTraspassed())
-		}
-	case transactions.HoursBurned:
-		{
-			return core.NewQVariant1(transaction.HoursBurned())
 		}
 	case transactions.TransactionID:
 		{

@@ -16,7 +16,9 @@ Page {
     property string walletSelectedName
     property bool walletEncrypted: false 
     property string amount
+    property string currency
     property string destinationAddress
+//    property string currency
     function getSelectedWallet(){
         return walletSelected
     }
@@ -41,7 +43,16 @@ Page {
             }
         }
     }
-
+    function getDelegateText(wallet){
+        if (!wallet){
+            return "N/A"
+        }
+        let text = wallet.name;
+        for ( let i = 0 ; i < wallet.coinOptions.getKeys().length ; i++ ){
+            text+= ` ${ wallet.coinOptions.getValue(wallet.coinOptions.getKeys()[i])}`;
+        }
+        return text
+    }
 
     onQrCodeRequested: {
         dialogQR.setVars(data)
@@ -106,8 +117,7 @@ Page {
 
                 Layout.fillWidth: true
                 textRole: "name"
-                displayText: comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].sky ? comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].name + " - " + comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].sky + " SKY (" + comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].coinHours + " CoinHours)": "Select a wallet"
-
+                displayText: currentText ?  getDelegateText(this.model.wallets[this.currentIndex]) : "Select a wallet"
                 model: WalletModel {
                     Component.onCompleted: {
                         loadModel(walletManager.getWallets())
@@ -117,7 +127,7 @@ Page {
                 // Taken from Qt 5.13.0 source code:
                 delegate: MenuItem {
                     width: parent.width
-                    text: comboBoxWalletsSendFrom.textRole ? (Array.isArray(comboBoxWalletsSendFrom.model) ? modelData[comboBoxWalletsSendFrom.textRole] : model[comboBoxWalletsSendFrom.textRole] + " - "+model["sky"] + " SKY (" + model["coinHours"] + " CoinHours)") : " --- " + modelData
+                    text: getDelegateText(comboBoxWalletsSendFrom.model.wallets[index])
                     Material.foreground: comboBoxWalletsSendFrom.currentIndex === index ? parent.Material.accent : parent.Material.foreground
                     highlighted: comboBoxWalletsSendFrom.highlightedIndex === index
                     hoverEnabled: comboBoxWalletsSendFrom.hoverEnabled
@@ -128,6 +138,7 @@ Page {
                 onActivated: {
                     root.walletSelected = comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].fileName
                     root.walletSelectedName = comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].name
+                    root.currency = comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].currency
                     root.walletEncrypted = comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.currentIndex].encryptionEnabled
                 }
             } // ComboBox
@@ -147,7 +158,7 @@ Page {
                 highlighted: true
 
                 onClicked: {
-                    if(abm.getSecType()!=2){
+                    if(abm.getSecType()!= 2 ){
                         abm.loadContacts()
                         dialogSelectAddressByAddressBook.open()
                     }else{
@@ -178,10 +189,9 @@ Page {
                     selectByMouse: true
                     Layout.fillWidth: true
                     Layout.topMargin: -5
-                    Material.accent: abm.addressIsValid(text) ? parent.Material.accent : Material.color(Material.Red)
+                    Material.accent: abm.addressIsValid(text, utils.getTicketOfCurrency(root.currency) ) ? parent.Material.accent : Material.color(Material.Red)
                     onTextChanged:{
                         root.destinationAddress = text
-
                     }
                 }
             } // RowLayout

@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import Qt.labs.settings 1.0
 import WalletsManager 1.0
 import Config 1.0
+import ModelUtils 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Dialogs"
@@ -141,6 +142,9 @@ ApplicationWindow {
        
         WalletManager {
             id: walletManager
+        }
+        Utils{
+        id: utils
         }
     }
 

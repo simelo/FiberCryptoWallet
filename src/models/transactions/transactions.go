@@ -20,8 +20,6 @@ const (
 	Status
 	Type
 	Amount
-	HoursTraspassed
-	HoursBurned
 	TransactionID
 	BlockHeight
 	Addresses
@@ -51,8 +49,6 @@ type TransactionDetails struct {
 	_   int                  `property:"type"`
 	_   uint64               `property:"blockHeight"`
 	_   string               `property:"amount"`
-	_   string               `property:"hoursTraspassed"`
-	_   string               `property:"hoursBurned"`
 	_   string               `property:"transactionID"`
 	_   *address.AddressList `property:"addresses"`
 	_   *address.AddressList `property:"inputs"`
@@ -123,6 +119,12 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	txnCoinOptions := modelUtil.NewMap(nil)
 	for _, v := range transaction.GetCoinTraits() {
 		txnCoinOptions.SetValue(v.GetTrait(), v.GetValue())
+	}
+
+	if len(txnCoinOptions.GetKeys()) > 0 {
+		txnDetails.SetAmount(txnCoinOptions.GetValue(txnCoinOptions.GetKeys()[0]))
+	} else {
+		txnDetails.SetAmount("")
 	}
 
 	txnDetails.SetCoinOptions(txnCoinOptions)

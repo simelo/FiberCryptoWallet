@@ -12,6 +12,7 @@ ItemDelegate {
     property date modelTimestamp
     property string modelStatus
     property string modelType
+    property string modelAmount
     property QAddressList modelInputs
     property QAddressList modelOutputs
     property Map coinOpts

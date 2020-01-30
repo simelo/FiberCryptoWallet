@@ -2,9 +2,9 @@ package addressBook
 
 import (
 	"github.com/SkycoinProject/skycoin/src/util/file"
-	skycoin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/data"
+	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtcore "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
@@ -42,7 +42,7 @@ type AddrsBookModel struct {
 	_ func() bool                                                `slot:"hasInit"`
 	_ func(value, coinType string)                               `slot:"addAddress"`
 	_ func(newSecType int, oldPassword, newPassword string) bool `slot:"changeSecType"`
-	_ func(value string) bool                                    `slot:"addressIsValid"`
+	_ func(value, coinTicket string) bool                        `slot:"addressIsValid"`
 	_ func(row int, name string) bool                            `slot:"nameExist"`
 	_ func(row int, address string, coinType string) bool        `slot:"addressExist"`
 }
@@ -302,8 +302,8 @@ func (*AddrsBookModel) addAddress(value, coinType string) {
 	addresses = append(addresses, &data.Address{Value: []byte(value), Coin: []byte(coinType)})
 }
 
-func (*AddrsBookModel) addressIsValid(value string) bool {
-	if _, err := skycoin.NewSkycoinAddress(value); err != nil {
+func (*AddrsBookModel) addressIsValid(value, coinTicket string) bool {
+	if _, err := util.AddressFromString(value, coinTicket); err != nil {
 		return false
 	}
 	return true

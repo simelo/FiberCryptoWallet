@@ -61,7 +61,7 @@ Item {
 
                     Image {
                         id: coinIcon
-                        source: "qrc:/images/resources/images/icons/"+coin+"-Icon.svg"
+                        source: "qrc:/images/resources/images/icons/"+currency+"-Icon.svg"
                         sourceSize: "24x24"
                     }
                 }
@@ -86,8 +86,8 @@ Item {
                 }
 
                 Label {
-                    id: labelSky
-                    text: sky === qsTr("N/A") ? "" : coinOpts.getValue(coinOpts.getKeys()[0]) // a role of the model
+                    id: labelBalance
+                    text:  !coinOpts ? "N/A" : coinOpts.getValue(coinOpts.getKeys()[0])==""? "N/A" : coinOpts.getValue(coinOpts.getKeys()[0]) // a role of the model
                     color: Material.accent
                     horizontalAlignment: Text.AlignRight
                     Layout.preferredWidth: internalLabelsWidth
@@ -103,17 +103,14 @@ Item {
             } // RowLayout
 
             onClicked: {
-                console.log(addresses.addresses.length)
-                console.log(encryptionEnabled)
                 drawerWalletDetail.walletName = Qt.binding(function(){return name})
-                drawerWalletDetail.walletCoin = coin
-                drawerWalletDetail.walletCoinOpts = coinOpts
+                drawerWalletDetail.walletCoin = Qt.binding(function(){return currency})
+                drawerWalletDetail.walletCoinOpts = Qt.binding(function(){return coinOpts})
                 drawerWalletDetail.walletAddressList = Qt.binding(function(){return addresses})
                 drawerWalletDetail.walletStatus = Qt.binding(function(){return encryptionEnabled})
-                drawerWalletDetail.walletFileName = fileName
+                drawerWalletDetail.walletFileName = Qt.binding(function(){return fileName})
                 drawerWalletDetail.walletIndex = index
                 drawerWalletDetail.visible = true
-//                expanded = !expanded
             }
         } // ItemDelegate
     } //ColumnLayout
@@ -133,9 +130,4 @@ Item {
 //            }
 //        }
 //    }
-    Component.onCompleted: {
-
-//        walletManager.updateModel(fileName,listAddresses);
-//    console.log(addresses.addresses[0].address)
-    }
 }

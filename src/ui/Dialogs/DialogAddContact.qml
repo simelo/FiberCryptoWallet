@@ -45,7 +45,7 @@ updateAcceptButtonStatus()
 
 function enableOkBtn(){
 for(var i=0;i<listModelAddresses.count;i++){
-if (!(abm.addressIsValid(listModelAddresses.get(i).value))||
+if (!(abm.addressIsValid(listModelAddresses.get(i).value,listModelAddresses.get(i).coinType))||
      name.text==""|| abm.nameExist(menu.index,name.text)||
      abm.addressExist(menu.index,listModelAddresses.get(i).value,listModelAddresses.get(i).coinType)){
 standardButton(Dialog.Ok).enabled=false

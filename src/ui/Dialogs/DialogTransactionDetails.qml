@@ -14,12 +14,9 @@ Dialog {
     property alias date: transactionDetails.date
     property alias status: transactionDetails.status
     property alias type: transactionDetails.type
-    property alias amount: transactionDetails.amount
-    property alias hoursReceived: transactionDetails.hoursReceived
-    property alias hoursBurned: transactionDetails.hoursBurned
     property alias transactionID: transactionDetails.transactionID
     property alias blockHeight: transactionDetails.blockHeight
-
+    property alias modelAmount: transactionDetails.amount
     property alias coinOpts: transactionDetails.modelCoinOpts
     property alias modelInputs: transactionDetails.modelInputs
     property alias modelOutputs: transactionDetails.modelOutputs

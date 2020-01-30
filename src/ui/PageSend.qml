@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import Transaction 1.0
 import Utils 1.0
+import WalletsManager 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Dialogs"
@@ -14,9 +15,10 @@ Page {
 
     property alias advancedMode: switchAdvancedMode.checked
     property string walletSelected
-    property string walletEncrypted
+    property bool walletEncrypted
     property string destinationAddress
     property string amount
+    property string walletCurrency
     property QTransactionDetail txn
 
     footer: ToolBar {
@@ -34,9 +36,7 @@ Page {
 
             onClicked: {
 
-                var isEncrypted
-//                var walletSelected
-                var walletSelecteds
+
                 if (advancedMode){
                     var outs = stackView.currentItem.advancedPage.getSelectedOutputsWithWallets()
                     var addrs = stackView.currentItem.advancedPage.getSelectedAddressesWithWallets()
@@ -49,36 +49,37 @@ Page {
                         txn = walletManager.sendFromOutputs(outs[1], outs[0], destinationSummary[0], destinationSummary[1], destinationSummary[2], changeAddress, automaticCoinHours, burnFactor)
                     } else {
                         if (addrs[0].length == 0){
-                            addrs = stackView.currentItem.advancedPage.getAllAddressesWithWallets()                            
+                            addrs = stackView.currentItem.advancedPage.getAllAddressesWithWallets()
                         }
                         txn = walletManager.sendFromAddresses(addrs[1], addrs[0], destinationSummary[0], destinationSummary[1], destinationSummary[2], changeAddress, automaticCoinHours, burnFactor)
-                    } 
-                    
-                    isEncrypted = stackView.currentItem.advancedPage.walletIsEncrypted()
+                    }
+
+                    walletEncrypted = stackView.currentItem.advancedPage.walletIsEncrypted()
                 } else{
                     walletSelected = stackView.currentItem.simplePage.getSelectedWallet()
-                    isEncrypted = stackView.currentItem.simplePage.walletIsEncrypted()
+                    walletEncrypted = stackView.currentItem.simplePage.walletIsEncrypted()
+                    walletCurrency = stackView.currentItem.simplePage.currency
                     let addrs = [[],[]]
 
                     addrs[0].push(stackView.currentItem.simplePage.getDestinationAddress())
                     addrs[1].push(walletSelected)
 
-                    console.log(addrs)
-                    txn = walletManager.sendTo(walletSelected, stackView.currentItem.simplePage.getDestinationAddress(), stackView.currentItem.simplePage.getAmount())
+                    txn = walletManager.sendTo(walletSelected, stackView.currentItem.simplePage.getDestinationAddress(), stackView.currentItem.simplePage.getAmount(), walletCurrency)
+                    dialogTransactionDetails.walletsAddresses = addrs
                 }
-                dialogSendTransaction.showPasswordField =  false//isEncrypted// get if the current wallet is encrypted
-                //dialogSendTransaction.previewDate = "2019-02-26 15:27"
-                dialogSendTransaction.previewType = TransactionDetails.Type.Send
-//                dialogSendTransaction.previewAmount = txn.amount
-//                dialogSendTransaction.previewHoursReceived = txn.hoursTraspassed
-//                dialogSendTransaction.previewHoursBurned = txn.hoursBurned
-                dialogSendTransaction.previewtransactionID = txn.transactionID
-                dialogSendTransaction.inputs = txn.inputs
-                dialogSendTransaction.outputs = txn.outputs
-                dialogSendTransaction.walletsAddresses = addrs
-                dialogSendTransaction.open()
-                
-                
+
+                if(txn){
+                    dialogTransactionDetails.date = txn !== null ? txn.date : ""
+                    dialogTransactionDetails.status = txn !== null ? txn.status : 0
+                    dialogTransactionDetails.type = txn !== null ? txn.type : 0
+                    dialogTransactionDetails.modelAmount = txn !== null ? txn.amount : 0
+                    dialogTransactionDetails.transactionID = txn !== null ? txn.transactionID : ""
+                    dialogTransactionDetails.modelInputs = txn !== null ? txn.inputs : null
+                    dialogTransactionDetails.modelOutputs = txn !== null ? txn.outputs : null
+                    dialogTransactionDetails.blockHeight = "N/A"
+                    dialogTransactionDetails.coinOpts = txn !== null ? txn.coinOptions : null
+                    dialogTransactionDetails.open()
+                }
             }
         }
     }
@@ -96,34 +97,51 @@ Page {
         implicitWidth: stackView.width
         clip: true
 
-        label: SwitchDelegate {
-            id: switchAdvancedMode
+        label: RowLayout{
+//            width: parent.width
+            SwitchDelegate {
+                id: switchAdvancedMode
 
-            text: qsTr("Advanced mode")
+                text: qsTr("Advanced mode")
 
-            onToggled: {
-                if (checked) {
-                    stackView.push(componentAdvanced)
-                } else {
-                    stackView.pop()
+                onToggled: {
+                    if (checked) {
+                        stackView.push(componentAdvanced)
+                    } else {
+                        stackView.pop()
+                    }
                 }
             }
+//            ComboBox {
+//                id: comboBoxCurrencySelect
+//                Layout.fillWidth:true
+//                displayText: "Select currency to send"
+//                model: walletManager.getCurrencyList()
+//                delegate: MenuItem {
+//                    width: parent.width
+//                    text: modelData
+//                    Behavior on leftPadding { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } } // added
+//                }
+//                onActivated: {
+//                    currency = comboBoxCurrencySelect.model[comboBoxCurrencySelect.currentIndex]
+//                    comboBoxCurrencySelect.displayText = comboBoxCurrencySelect.model[comboBoxCurrencySelect.currentIndex]
+//                }
+//            } // ComboBox
         }
-
         StackView {
             id: stackView
 
             property string walletSelected
             property string destinationAddress
             property string amount
-            
+
             anchors.fill: parent
             initialItem: componentSimple
-            clip: true            
+            clip: true
 
             Component {
                 id: componentSimple
-                
+
                 ScrollView {
                     id: scrollViewSimple
                     property alias simplePage: simple
@@ -133,7 +151,7 @@ Page {
 
                     SubPageSendSimple {
                         id: simple
-
+//                        currency:Qt.binding(function(){return currency})
                         width: stackView.width
                         onWalletSelectedChanged: {
                             root.walletSelected = walletSelected
@@ -144,9 +162,9 @@ Page {
                         onDestinationAddressChanged: {
                             root.destinationAddress = destinationAddress
                         }
-						onWalletEncryptedChanged: {
-							root.walletEncrypted = walletEncrypted
-						}
+                        onWalletEncryptedChanged: {
+                            root.walletEncrypted = walletEncrypted
+                        }
                     }
                 }
             }
@@ -170,21 +188,31 @@ Page {
         } // StackView
     } // GroupBox
 
-    DialogSendTransaction {
-        id: dialogSendTransaction
-        anchors.centerIn: Overlay.overlay
+    DialogTransactionDetails {
+        id: dialogTransactionDetails
+
+        readonly property real maxHeight: expanded ? 650 : 450
         property var walletsAddresses
-        readonly property real maxHeight: (expanded ? 490 : 340) + (showPasswordField ? 140 : 0)
-        width: applicationWindow.width > 640 - 40 ? 640 - 40 : applicationWindow.width - 40
-        height: applicationWindow.height > maxHeight - 40 ? maxHeight - 40 : applicationWindow.height - 40
+
+        title: qsTr("Confirm transaction")
+        standardButtons: Dialog.Ok | Dialog.Cancel
+
+
+        anchors.centerIn: Overlay.overlay
+        width: applicationWindow.width > 640 ? 640 - 40 : applicationWindow.width - 40
+        height: applicationWindow.height > maxHeight ? maxHeight - 40 : applicationWindow.height - 40
         Behavior on height { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
-        
+
         modal: true
         focus: true
-		onAccepted: {
+        onAccepted:{
             walletManager.signAndBroadcastTxnAsync(walletsAddresses[1], walletsAddresses[0],"", bridgeForPassword, [], txn)
+            if (walletEncrypted){
+                getPasswordDialog.open()
+            }
         }
     }
+
 
     DialogGetPassword{
         id: getPasswordDialog

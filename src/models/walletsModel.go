@@ -3,10 +3,6 @@ package models
 import (
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
-	"strconv"
-
-	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
@@ -15,12 +11,10 @@ import (
 const (
 	Name = int(core.Qt__UserRole) + iota + 1
 	EncryptionEnabled
-	Sky
-	CoinHours
 	FileName
 	Expand
 	Addresses
-	Coin
+	Currency
 	CoinOptions
 )
 
@@ -39,6 +33,7 @@ type WalletModel struct {
 	_ func(row int)                                                                    `slot:"removeWallet"`
 	_ func([]*QWallet)                                                                 `slot:"loadModel"`
 	_ func([]*QWallet)                                                                 `slot:"updateModel"`
+	_ func([]*QWallet, string)                                                         `slot:"filterWalletByCurrency"`
 	_ int                                                                              `property:"count"`
 }
 
@@ -47,9 +42,8 @@ type QWallet struct {
 	_ string               `property:"name"`
 	_ int                  `property:"encryptionEnabled"`
 	_ string               `property:"sky"`
-	_ string               `property:"coinHours"`
 	_ string               `property:"fileName"`
-	_ string               `property:"coin"`
+	_ string               `property:"currency"`
 	_ *address.AddressList `property:"addresses"`
 	_ *modelUtil.Map       `property:"coinOptions"`
 	_ bool                 `property:"expand"`
@@ -60,12 +54,10 @@ func (walletModel *WalletModel) init() {
 	walletModel.SetRoles(map[int]*core.QByteArray{
 		Name:              core.NewQByteArray2("name", -1),
 		EncryptionEnabled: core.NewQByteArray2("encryptionEnabled", -1),
-		Sky:               core.NewQByteArray2("sky", -1),
-		CoinHours:         core.NewQByteArray2("coinHours", -1),
 		FileName:          core.NewQByteArray2("fileName", -1),
 		Expand:            core.NewQByteArray2("expand", -1),
 		Addresses:         core.NewQByteArray2("addresses", -1),
-		Coin:              core.NewQByteArray2("coin", -1),
+		Currency:          core.NewQByteArray2("currency", -1),
 		CoinOptions:       core.NewQByteArray2("coinOpts", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(walletModel, qml.QQmlEngine__CppOwnership)
@@ -76,6 +68,7 @@ func (walletModel *WalletModel) init() {
 	walletModel.ConnectRoleNames(walletModel.roleNames)
 
 	walletModel.ConnectAddWallet(walletModel.addWallet)
+	walletModel.ConnectFilterWalletByCurrency(walletModel.filterWalletByCurrency)
 	walletModel.ConnectEditWallet(walletModel.editWallet)
 	walletModel.ConnectRemoveWallet(walletModel.removeWallet)
 	walletModel.ConnectLoadModel(walletModel.loadModel)
@@ -106,20 +99,6 @@ func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QV
 			return core.NewQVariant1(w.EncryptionEnabled())
 		}
 
-	case Sky:
-		{
-			return core.NewQVariant1(w.Sky())
-		}
-
-	case CoinHours:
-		{
-			accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-			if err != nil {
-				logWalletsModel.WithError(err).Warn("Couldn't get " + coin.CoinHoursTicker + " coins quotient")
-			}
-			val, err := strconv.ParseUint(w.CoinHours(), 10, 64)
-			return core.NewQVariant1(util.FormatCoins(val, accuracy))
-		}
 	case FileName:
 		{
 			return core.NewQVariant1(w.FileName())
@@ -132,9 +111,9 @@ func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QV
 		{
 			return core.NewQVariant1(w.Addresses())
 		}
-	case Coin:
+	case Currency:
 		{
-			return core.NewQVariant1(w.Coin())
+			return core.NewQVariant1(w.Currency())
 		}
 	case CoinOptions:
 		{
@@ -167,14 +146,6 @@ func (walletModel *WalletModel) setData(index *core.QModelIndex, value *core.QVa
 	case EncryptionEnabled:
 		{
 			w.SetEncryptionEnabled(value.ToInt(nil))
-		}
-	case Sky:
-		{
-			w.SetSky(value.ToString())
-		}
-	case CoinHours:
-		{
-			w.SetCoinHours(value.ToString())
 		}
 	case FileName:
 		{
@@ -231,8 +202,6 @@ func (walletModel *WalletModel) editWallet(row int, name string, encrypted bool,
 	} else {
 		walletModel.setData(pIndex, core.NewQVariant1(0), EncryptionEnabled)
 	}
-	// walletModel.setData(pIndex, core.NewQVariant1(sky), Sky)
-	// walletModel.setData(pIndex, core.NewQVariant1(coinHours), CoinHours)
 }
 
 func (walletModel *WalletModel) removeWallet(row int) {
@@ -259,11 +228,26 @@ func (walletModel *WalletModel) loadModel(wallets []*QWallet) {
 	logWalletsModel.Info("Loading wallets")
 
 	for _, wlt := range wallets {
-		// wallets[i].SetSky(58)
 		qml.QQmlEngine_SetObjectOwnership(wlt, qml.QQmlEngine__CppOwnership)
 	}
 	walletModel.BeginResetModel()
 	walletModel.SetWallets(wallets)
+
+	walletModel.EndResetModel()
+	walletModel.SetCount(len(walletModel.Wallets()))
+}
+
+func (walletModel *WalletModel) filterWalletByCurrency(wallets []*QWallet, currency string) {
+	logWalletsModel.Info("Loading wallets")
+	qWalletList := make([]*QWallet, 0)
+	for _, wlt := range wallets {
+		if wlt.Currency() == currency {
+			qml.QQmlEngine_SetObjectOwnership(wlt, qml.QQmlEngine__CppOwnership)
+			qWalletList = append(qWalletList, wlt)
+		}
+	}
+	walletModel.BeginResetModel()
+	walletModel.SetWallets(qWalletList)
 
 	walletModel.EndResetModel()
 	walletModel.SetCount(len(walletModel.Wallets()))

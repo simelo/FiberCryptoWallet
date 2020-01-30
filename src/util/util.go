@@ -103,3 +103,15 @@ func AddressFromString(addrs, coinTicket string) (core.Address, error) {
 	}
 	return altPlugin.AddressFromString(addrs)
 }
+
+func GetOptionForCurrencyTxn(currency string) core.KeyValueStore {
+	opt := NewKeyValueMap()
+
+	switch currency {
+	case "skycoin":
+		opt.SetValue("BurnFactor", "0.5")
+		opt.SetValue("CoinHoursSelectionType", "auto")
+	}
+
+	return opt
+}

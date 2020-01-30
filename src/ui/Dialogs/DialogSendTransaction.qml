@@ -14,11 +14,10 @@ Dialog {
     property bool showPasswordField: false
     property string passwordText
 
-    property alias previewDate: transactionDetails.date                    
+    property alias blockHeight: transactionDetails.blockHeight
+    property alias coinOpts: transactionDetails.modelCoinOpts
+    property alias previewDate: transactionDetails.date
     property alias previewType: transactionDetails.type                  
-//    property alias previewAmount: transactionDetails.amount
-    property alias previewHoursReceived: transactionDetails.hoursReceived
-    property alias previewHoursBurned: transactionDetails.hoursBurned    
     property alias previewtransactionID: transactionDetails.transactionID
     property alias inputs : transactionDetails.modelInputs
     property alias outputs : transactionDetails.modelOutputs

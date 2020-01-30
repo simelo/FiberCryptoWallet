@@ -19,11 +19,9 @@ Item {
     property int type: TransactionDetails.Type.Send
     property int status: TransactionDetails.Status.Preview
     property var statusString: [ qsTr("Confirmed"), qsTr("Pending"), qsTr("Preview") ]
-    property real amount: 0
-    property string hoursReceived
-    property string hoursBurned
     property string transactionID
     property string blockHeight
+    property string amount
     property QAddressList modelInputs
     property QAddressList modelOutputs
     property Map modelCoinOpts
@@ -62,14 +60,14 @@ Item {
     function setMainBalance(){
         let text = "";
         if (type === TransactionDetails.Type.Recive || type === TransactionDetails.Type.Send){
-        text+= type === TransactionDetails.Type.Recive ? "Recive" : "Send"
+        text+= type === TransactionDetails.Type.Recive ? "Recive " : "Send "
         }
 
         if(!coinOpts){
              return text
         }
 
-        return text + coinOpts.getValue(coinOpts.getKeys()[0]) + " " + coinOpts.getKeys()[0]
+        return text + amount + " " + coinOpts.getKeys()[0]
     }
 
     ColumnLayout {
