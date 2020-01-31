@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/fibercrypto/fibercryptowallet/src/core"

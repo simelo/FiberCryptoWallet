@@ -2,8 +2,6 @@ package addressBook
 
 import (
 	"github.com/SkycoinProject/skycoin/src/util/file"
-	skycoin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
-	"github.com/SkycoinProject/skycoin/src/util/file"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/data"
 	"github.com/fibercrypto/fibercryptowallet/src/util"

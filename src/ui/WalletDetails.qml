@@ -169,6 +169,7 @@ Item {
                         model: addressList
                         clip: true
                         delegate: InputOutputDelegate {
+                            copyOn: true
                             Component.onCompleted : {
                             let keyList = coinOptions.getKeys()
                             var isEmpty = true
