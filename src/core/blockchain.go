@@ -14,10 +14,12 @@ const (
 type BlockchainStatus interface {
 	// GeCoinValue retrieves value of a blockchain metric
 	GetCoinValue(coinvalue CoinValueMetric, ticker string) (uint64, error)
-	// GetLastBlock retrieves block at the tip of he block chain
+	// GetLastBlock retrieves block at the tip of he blockchain
 	GetLastBlock() (Block, error)
 	// GetNumberOfBlocks determine number of blocks in the blockchain
 	GetNumberOfBlocks() (uint64, error)
+	// Crypto assets involved in or supported by this blockchain
+	SupportedAssets() []string
 }
 
 // BlockchainAPI abstract interface for transactions management and utility functions for specific blockchain.

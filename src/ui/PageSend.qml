@@ -151,7 +151,6 @@ Page {
 
                     SubPageSendSimple {
                         id: simple
-//                        currency:Qt.binding(function(){return currency})
                         width: stackView.width
                         onWalletSelectedChanged: {
                             root.walletSelected = walletSelected
@@ -231,7 +230,6 @@ Page {
 
     QBridge{
         id: bridgeForPassword
-
         onGetPassword:{
             getPasswordDialog.title = message
             getPasswordDialog.clear()

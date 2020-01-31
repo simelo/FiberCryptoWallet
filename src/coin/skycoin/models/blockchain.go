@@ -14,7 +14,7 @@ import (
 
 var logBlockchain = logging.MustGetLogger("Skycoin Blockchain")
 
-type SkycoinBlock struct { //implements core.Block interface
+type SkycoinBlock struct { // implements core.Block interface
 	Block *readable.Block
 }
 
@@ -54,7 +54,7 @@ func (sb *SkycoinBlock) GetHeight() (uint64, error) {
 	if sb.Block == nil {
 		return 0, errors.ErrBlockNotSet
 	}
-	return 0, nil //TODO ???
+	return 0, nil // TODO ???
 }
 
 func (sb *SkycoinBlock) GetFee(ticker string) (uint64, error) {
@@ -85,8 +85,8 @@ type SkycoinBlockchainInfo struct {
 	NumberOfBlocks        *readable.BlockchainProgress
 }
 
-type SkycoinBlockchain struct { //Implements BlockchainStatus interface
-	lastTimeStatusRequested uint64 //nolint structcheck TODO: Not used
+type SkycoinBlockchain struct { // Implements BlockchainStatus interface
+	lastTimeStatusRequested uint64 // nolint structcheck TODO: Not used
 	lastTimeSupplyRequested uint64
 	CacheTime               uint64
 	cachedStatus            *SkycoinBlockchainInfo
@@ -119,7 +119,7 @@ func (ss *SkycoinBlockchain) GetCoinValue(coinvalue core.CoinValueMetric, ticker
 		}
 		return ss.cachedStatus.TotalCoinHourSupply, nil
 	default:
-		return 0, errorTickerInvalid{} //TODO: Customize error
+		return 0, errorTickerInvalid{} // TODO: Customize error
 	}
 }
 
@@ -135,6 +135,10 @@ func (ss *SkycoinBlockchain) GetLastBlock() (core.Block, error) {
 		}
 	}
 	return ss.cachedStatus.LastBlockInfo, nil
+}
+
+func (ss *SkycoinBlockchain) SupportedAssets() []string {
+	return []string{Sky, CoinHour}
 }
 
 func (ss *SkycoinBlockchain) GetNumberOfBlocks() (uint64, error) {

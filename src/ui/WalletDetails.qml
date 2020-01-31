@@ -30,7 +30,6 @@ Item {
 
 
     readonly property real basicHeight: 80 + rowLayoutBasicDetails.height
-//    implicitHeight: Math.min( basicHeight + (expanded ? listViewInputs.height : 0), maxHeight)
     Behavior on implicitHeight { NumberAnimation { duration: 1000; easing.type: Easing.OutQuint } }
 
     function updateWalletEncryption(){

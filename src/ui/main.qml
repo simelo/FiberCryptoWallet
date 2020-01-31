@@ -77,7 +77,7 @@ ApplicationWindow {
             enableBlockchain = false
             enableNetworking = true
             enableSettings = true
-                    enableAddrsBook = true
+            enableAddrsBook = true
 
         }
 

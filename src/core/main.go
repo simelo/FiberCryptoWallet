@@ -42,15 +42,17 @@ type AltcoinPlugin interface {
 	LoadWalletEnvs() []WalletEnv
 	// LoadPEX instantiates proxy object to interact with nodes nodes of the P2P network
 	LoadPEX(netType string) (PEX, error)
-	// LoadTransactionAPI blockchain transaction API entry poiny
+	// LoadTransactionAPI blockchain transaction API entry point
 	LoadTransactionAPI(netType string) (BlockchainTransactionAPI, error)
 	// LoadSignService sign service entry point
 	LoadSignService() (BlockchainSignService, error)
-	// AddressFromString retrieves address correspoding to readable representation
+	// AddressFromString retrieves address corresponding to readable representation
 	AddressFromString(string) (Address, error)
-	// PubKeyFromBytes retrieves address correspoding to readable representation
+	// PubKeyFromBytes retrieves address corresponding to readable representation
 	PubKeyFromBytes([]byte) (PubKey, error)
-	// SecKeyFromBytes retrieves address correspoding to readable representation
+	// LoadBlockchainStatus retrieves the blockchainStatus corresponding to readable representation
+	LoadBlockchainStatus(invalidCacheTime uint64) BlockchainStatus
+	// SecKeyFromBytes retrieves address corresponding to readable representation
 	SecKeyFromBytes([]byte) (SecKey, error)
 }
 

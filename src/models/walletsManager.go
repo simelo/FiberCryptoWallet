@@ -588,7 +588,7 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 	if !isPwdReader {
 		return nil
 	}
-	logWalletManager.Info("Signig transaction")
+	logWalletManager.Info("Signing transaction")
 
 	if len(wltIds) != len(address) {
 		logWalletManager.Error("Wallets and addresses provided are incorrect")

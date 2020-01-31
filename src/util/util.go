@@ -1,9 +1,7 @@
 package util
 
 import (
-	"errors"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
-	local "github.com/fibercrypto/fibercryptowallet/src/main"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"strconv"
 )
@@ -92,16 +90,6 @@ func StringInList(s string, list []string) bool {
 		}
 	}
 	return false
-}
-
-// AddressFromString returns a core.Address if match with string address.
-// If the coinTicket parameter not match with any address type returns 'coinTicket not match' error.
-func AddressFromString(addrs, coinTicket string) (core.Address, error) {
-	altPlugin, ok := local.LoadAltcoinManager().LookupAltcoinPlugin(coinTicket)
-	if !ok {
-		return nil, errors.New("coinTicket not match")
-	}
-	return altPlugin.AddressFromString(addrs)
 }
 
 func GetOptionForCurrencyTxn(currency string) core.KeyValueStore {

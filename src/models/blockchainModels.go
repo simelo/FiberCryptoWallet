@@ -1,12 +1,12 @@
 package models
 
 import (
-	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
-
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models" //callable as skycoin
+	"fmt"
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models" // callable as skycoin
 	"github.com/fibercrypto/fibercryptowallet/src/core"
-	"github.com/fibercrypto/fibercryptowallet/src/params"
+	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
+	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 
 	qtcore "github.com/therecipe/qt/core"
 )
@@ -24,12 +24,9 @@ type BlockchainStatusModel struct {
 	_ bool              `property:"loading"`
 	_ *qtcore.QDateTime `property:"timestampLastBlock"`
 	_ string            `property:"hashLastBlock"`
-	_ string            `property:"currentSkySupply"`
-	_ string            `property:"totalSkySupply"`
-	_ string            `property:"currentCoinHoursSupply"`
-	_ string            `property:"totalCoinHoursSupply"`
+	_ *modelUtil.Map    `property:"coinOpts"`
 
-	_ func() `signal:"update,auto"`
+	_ func(ticket string) `signal:"update,auto"`
 }
 
 func (blockchainStatus *BlockchainStatusModel) init() {
@@ -37,17 +34,19 @@ func (blockchainStatus *BlockchainStatusModel) init() {
 	blockchainStatus.SetNumberOfBlocksDefault("0")
 	blockchainStatus.SetTimestampLastBlockDefault(qtcore.NewQDateTime3(qtcore.NewQDate3(2000, 1, 1), qtcore.NewQTime3(0, 0, 0, 0), qtcore.Qt__LocalTime))
 	blockchainStatus.SetHashLastBlockDefault("")
-	// sky details
-	blockchainStatus.SetCurrentSkySupplyDefault("0")
-	blockchainStatus.SetTotalSkySupplyDefault("0")
-	blockchainStatus.SetCurrentCoinHoursSupplyDefault("0")
-	blockchainStatus.SetTotalCoinHoursSupplyDefault("0")
+
 	blockchainStatus.SetLoading(true)
-	blockchainStatus.infoRequester = skycoin.NewSkycoinBlockchain(params.DataRefreshTimeout)
 }
 
-func (blockchainStatus *BlockchainStatusModel) update() {
-	// update info
+func (blockchainStatus *BlockchainStatusModel) update(ticket string) {
+	logBlockchain.Info("Updating blockchain")
+	var err error
+	blockchainStatus.infoRequester, err = util.LoadBlockchainStatus(ticket)
+	if err != nil {
+		logBlockchain.WithError(err).Warn("Couldn't can load the blockchain status")
+		return
+	}
+
 	if err := blockchainStatus.updateInfo(); err != nil {
 		logBlockchain.WithError(err).Warn("Couldn't update blockchain Info")
 		return
@@ -59,7 +58,6 @@ func (blockchainStatus *BlockchainStatusModel) update() {
 func (blockchainStatus *BlockchainStatusModel) updateInfo() error {
 	logBlockchain.Info("Updating Blockchain Status")
 	blockchainStatus.SetLoading(true)
-
 	block, err := blockchainStatus.infoRequester.GetLastBlock()
 	if err != nil {
 		logBlockchain.WithError(err).Warn("Couldn't get last block")
@@ -83,46 +81,34 @@ func (blockchainStatus *BlockchainStatusModel) updateInfo() error {
 	}
 	year, month, day, h, m, s := util.ParseDate(int64(timestamp))
 
-	currentSkySupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinCurrentSupply, skycoin.Sky)
-	if err != nil {
-		logBlockchain.WithError(err).Warn("Couldn't get current coin supply of Skycoins")
-		return err
+	coinOpts := modelUtil.NewMap(nil)
+	for _, asset := range blockchainStatus.infoRequester.SupportedAssets() {
+		currentSupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinCurrentSupply, skycoin.Sky)
+		if err != nil {
+			logBlockchain.WithError(err).Warnf("Couldn't get current coin supply of %s", asset)
+			return err
+		}
+		accuracy, err := util.AltcoinQuotient(asset)
+		if err != nil {
+			logWalletsModel.WithError(err).Warn("Couldn't get " + asset + " coins quotient")
+		}
+
+		coinOpts.SetValue(fmt.Sprintf("Current %s supply:", asset), util.FormatCoins(currentSupply, accuracy)+" "+asset)
+
+		totalSupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinTotalSupply, skycoin.Sky)
+		if err != nil {
+			logBlockchain.WithError(err).Warnf("Couldn't get total coin supply of %s", asset)
+			return err
+		}
+		coinOpts.SetValue(fmt.Sprintf("Total %s supply:", asset), util.FormatCoins(totalSupply, accuracy)+" "+asset)
 	}
-	totalSkySupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinTotalSupply, skycoin.Sky)
-	if err != nil {
-		logBlockchain.WithError(err).Warn("Couldn't get total coin supply of Skycoins")
-		return err
-	}
-	currentCoinHoursSupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinCurrentSupply, skycoin.CoinHour)
-	if err != nil {
-		logBlockchain.WithError(err).Warn("Couldn't get current coin supply of Coin Hours")
-		return err
-	}
-	totalCoinHoursSupply, err := blockchainStatus.infoRequester.GetCoinValue(core.CoinTotalSupply, skycoin.CoinHour)
-	if err != nil {
-		logBlockchain.WithError(err).Warn("Couldn't get total coin supply of coin hours")
-		return err
-	}
+
+	blockchainStatus.SetCoinOpts(coinOpts)
 
 	// block details
 	blockchainStatus.SetNumberOfBlocks(util.FormatCoins(numberOfBlocks, 1))
 	blockchainStatus.SetTimestampLastBlock(qtcore.NewQDateTime3(qtcore.NewQDate3(year, month, day), qtcore.NewQTime3(h, m, s, 0), qtcore.Qt__LocalTime))
 	blockchainStatus.SetHashLastBlock(string(lastBlockHash))
-	
-	// sky details
-	accuracy, err := util.AltcoinQuotient(skycoin.SkycoinTicker)
-	if err != nil {
-		logWalletsModel.WithError(err).Warn("Couldn't get " + skycoin.SkycoinTicker + " coins quotient")
-	}
-	blockchainStatus.SetCurrentSkySupply(util.FormatCoins(currentSkySupply, accuracy))
-	blockchainStatus.SetTotalSkySupply(util.FormatCoins(totalSkySupply, accuracy))
-
-	accuracy, err = util.AltcoinQuotient(skycoin.CoinHoursTicker)
-	if err != nil {
-		logWalletsModel.WithError(err).Warn("Couldn't get " + skycoin.CoinHoursTicker + " coins quotient")
-	}
-	blockchainStatus.SetCurrentCoinHoursSupply(util.FormatCoins(currentCoinHoursSupply, accuracy))
-	blockchainStatus.SetTotalCoinHoursSupply(util.FormatCoins(totalCoinHoursSupply, accuracy))
 	blockchainStatus.SetLoading(false)
 
 	return nil

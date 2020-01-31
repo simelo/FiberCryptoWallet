@@ -5,7 +5,7 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
-	//local "github.com/fibercrypto/fibercryptowallet/src/main"
+	// local "github.com/fibercrypto/fibercryptowallet/src/main"
 )
 
 // SkyFiberPlugin provide support for SkyFiber coins
@@ -124,6 +124,10 @@ func (p *SkyFiberPlugin) PubKeyFromBytes(b []byte) (core.PubKey, error) {
 // SecKeyFromBytes retrieves address corresponding to readable representation
 func (p *SkyFiberPlugin) SecKeyFromBytes(b []byte) (core.SecKey, error) {
 	return skySecKeyFromBytes(b)
+}
+
+func (p *SkyFiberPlugin) LoadBlockchainStatus(invalidCacheTime uint64) core.BlockchainStatus {
+	return NewSkycoinBlockchain(invalidCacheTime)
 }
 
 // NewSkyFiberPlugin instantiate SkyFiber plugin entry point
