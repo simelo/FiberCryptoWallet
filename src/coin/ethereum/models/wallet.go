@@ -112,6 +112,17 @@ func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.Pass
 	return nil
 }
 
+func (walletDir *WalletsDirectory) IsEncrypted(walletName string) (bool, error) {
+	_, exist := walletDir.wallets[walletName]
+	if !exist {
+		logWallet.WithError(errors.ErrNotFound).Error("Couldn't check if wallet is encrypted")
+		return false, errors.ErrNotFound
+	}
+	_, decrypt := walletDir.walletsPasswords[walletName]
+
+	return decrypt, nil
+}
+
 func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 	tempDir, err := ioutil.TempDir("", "ethWlt")
 	if err != nil {
