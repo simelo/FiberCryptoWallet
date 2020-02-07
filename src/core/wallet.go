@@ -29,7 +29,7 @@ type WalletStorage interface {
 	// Encrypt protects wallet data using cryptography
 	Encrypt(walletName string, password PasswordReader) error
 	// Decrypt unlocks wallet for accessing internal data
-	Decrypt(walletName string, password PasswordReader)
+	Decrypt(walletName string, password PasswordReader) error
 	// IsEncrypted queries whether wallet data is encrypted or not
 	IsEncrypted(walletName string) (bool, error)
 }
