@@ -15,7 +15,17 @@ Page {
     readonly property real listOutputsRightMargin: 50
     readonly property real listOutputsSpacing: 20
     readonly property real internalLabelsWidth: 60
+    property alias model: listOutputs
     property QOutputs outputModel
+
+    function changeVisibilityByWltName( wltName ){
+        for( let i=0; i<model.count; i++ ){
+            if ( model.itemAtIndex(i).walletLbl === wltName ){
+                model.itemAtIndex(i).visible = !model.itemAtIndex(i).visible
+            }
+        }
+    }
+
     Component.onCompleted:{
         outputModel = walletManager.loadOutputs()
     }
@@ -60,13 +70,18 @@ Page {
                 model: outputModel
                 section.property: "walletOwner"
                 section.criteria: ViewSection.FullString
-                section.delegate: ItemDelegate{
+
+                section.delegate: OutputSectionDelegate{
                     width: parent.width
-                    text: section
                 }
 
                 delegate: OutputDelegate{
+                    visible: false
                     width: parent.width
+                    outId: outputID
+                    address: addressOwner
+                    traits: coinOpts
+                    walletLbl: walletOwner
                 }
             }//ListView
 

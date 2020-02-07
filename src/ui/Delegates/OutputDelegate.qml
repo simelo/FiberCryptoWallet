@@ -2,42 +2,34 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
-import OutputsModels 1.0
-
+import ModelUtils 1.0
 
 Item {
     id: outputDelegate
     property bool expanded: false
     property bool animateDisplacement: false
+    property string outId: ""
+    property string address: ""
+    property Map traits
+    property string walletLbl
 
     implicitHeight: delegate.height + (expanded ? gridLayoutBasicInfo.height + 10 : 0)
     Behavior on implicitHeight { NumberAnimation { duration: expanded ? 500 : 250 ; easing.type: Easing.OutQuint; onRunningChanged: animateDisplacement = false } }
     Layout.fillWidth: true
 
     Component.onCompleted:{
-        coinOpts.getKeys().forEach(optKey=>{
+        traits.getKeys().forEach(optKey=>{
             Qt.createQmlObject(`import QtQuick 2.12;
                                         import QtQuick.Controls 2.12;
                                         import QtQuick.Controls.Material 2.12
                                         import QtQuick.Layouts 1.12
 
                                         Label {
-                                            text: qsTr("${optKey}")
+                                            text: qsTr("${optKey}: ${traits.getValue(optKey)}")
+                                            Layout.leftMargin: 10
                                             font.pointSize: Qt.application.font.pointSize * 0.9
                                             font.bold: true
                                         }`, gridLayoutBasicInfo)
-
-            Qt.createQmlObject(`import QtQuick 2.12;
-                                        import QtQuick.Controls 2.12;
-                                        import QtQuick.Controls.Material 2.12
-                                        import QtQuick.Layouts 1.12
-
-                                        Label {
-                                            text: qsTr("${coinOpts.getValue(optKey)}")
-                                            font.pointSize: Qt.application.font.pointSize * 0.9
-                                            font.bold: true
-                                        }`, gridLayoutBasicInfo)
-
         })
 
     }
@@ -58,10 +50,10 @@ Item {
                 wrapMode: Label.WrapAnywhere
                 Layout.fillWidth: true
                 Layout.minimumWidth: implicitWidth/2 // As the font is monospaced, this should work fine
-                text: outputID
+                text: outId
             }
             Label{
-                text: addressOwner
+                text: address
                 Layout.fillWidth: true
                 Layout.preferredWidth: 150
                 Layout.alignment: Qt.AlignRight
@@ -70,16 +62,19 @@ Item {
         }//delegateRowLayout
         onClicked:{
         expanded= !expanded
-
         }
     }//delegate
 
+//    RowLayout {
+//        width: parent.width
+//        Label{}
+//    }
     GridLayout {
         id: gridLayoutBasicInfo
         Material.foreground: Material.Grey
-        columns: 4
+        columns: 2
         visible: expanded
-        columnSpacing: 10
+        columnSpacing: 30
         anchors.top: delegate.bottom
         Layout.fillWidth: true
 
