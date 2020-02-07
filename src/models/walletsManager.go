@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
+	"github.com/fibercrypto/fibercryptowallet/src/models/outputs"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"sort"
@@ -41,6 +42,7 @@ type WalletManager struct {
 	_ func(wltId, address string)                                                                                                                           `slot:"updateOutputs"`
 	_ func(string)                                                                                                                                          `slot:"updateAddresses"`
 	_ func()                                                                                                                                                `slot:"updateWallets"`
+	_ func() *outputs.ModelOutputs                                                                                                                          `slot:"loadOutputs"`
 	_ func(seed string, label string, walletType string, password string, scanN int) *QWallet                                                               `slot:"createEncryptedWallet"`
 	_ func(seed string, label string, walletType string, scanN int) *QWallet                                                                                `slot:"createUnencryptedWallet"`
 	_ func(entropy int) string                                                                                                                              `slot:"getNewSeed"`
@@ -97,6 +99,7 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectGetDefaultWalletType(walletM.getDefaultWalletType)
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
 		walletM.ConnectUpdateModel(walletM.updateModel)
+		walletM.ConnectLoadOutputs(walletM.loadOutputs)
 		walletM.addresseseByWallets = make(map[string][]*address.AddressDetails, 0)
 		walletM.outputsByAddress = make(map[string][]*QOutput, 0)
 		walletM.altManager = local.LoadAltcoinManager()
@@ -961,4 +964,21 @@ func (walletM *WalletManager) updateModel(fileName string, list *address.Address
 	}()
 	<-wait
 	go list.LoadModel(walletM.getAddresses(fileName))
+}
+
+func (walletM *WalletManager) loadOutputs() *outputs.ModelOutputs {
+	walletIter := walletM.WalletEnv.GetWalletSet().ListWallets()
+	var outputList = make([]*outputs.QOutput, 0)
+
+	for walletIter.Next() {
+		unspendOutIter := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+		for unspendOutIter.Next() {
+			outputList = append(outputList,
+				outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel()))
+		}
+	}
+	modelOutputs := outputs.NewModelOutputs(nil)
+	modelOutputs.InsertOutputs(outputList)
+
+	return modelOutputs
 }

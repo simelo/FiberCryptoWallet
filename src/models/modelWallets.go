@@ -118,7 +118,7 @@ func (m *ModelWallets) loadModel() {
 		}
 		ma := NewModelAddresses(nil)
 		ma.SetName(wallets.Value().GetLabel())
-		oModels := make([]*ModelOutputs, 0)
+		oModels := make([]*ModelOutput, 0)
 
 		for addresses.Next() {
 			a := addresses.Value()
@@ -127,7 +127,7 @@ func (m *ModelWallets) loadModel() {
 			if outputs == nil {
 				continue
 			}
-			mo := NewModelOutputs(nil)
+			mo := NewModelOutput(nil)
 			mo.SetAddress(a.String())
 			qOutputs := make([]*QOutput, 0)
 

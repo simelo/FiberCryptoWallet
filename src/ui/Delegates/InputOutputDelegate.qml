@@ -10,7 +10,7 @@ Item {
     property bool copyOn: false
     Component.onCompleted:{
             let keyList=coinOptions.getKeys()
-            for (var i=0;i<keyList.length;i++){
+            for (let i=0;i<keyList.length;i++){
 
                 Qt.createQmlObject("import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;

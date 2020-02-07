@@ -12,7 +12,7 @@ const (
 	WalletOwner
 )
 
-type ModelOutputs struct {
+type ModelOutput struct {
 	core.QAbstractListModel
 
 	_ func() `constructor:"init"`
@@ -39,7 +39,7 @@ type QOutput struct {
 	_ string `property:"walletOwner"`
 }
 
-func (m *ModelOutputs) init() {
+func (m *ModelOutput) init() {
 	m.SetRoles(map[int]*core.QByteArray{
 		OutputID:         core.NewQByteArray2("outputID", -1),
 		AddressSky:       core.NewQByteArray2("addressSky", -1),
@@ -59,7 +59,7 @@ func (m *ModelOutputs) init() {
 	m.ConnectRemoveOutputsFromWallet(m.removeOutputsFromWallet)
 }
 
-func (m *ModelOutputs) removeOutputsFromAddress(addr string) {
+func (m *ModelOutput) removeOutputsFromAddress(addr string) {
 	old := m.Outputs()
 	new := make([]*QOutput, 0)
 	for _, out := range old {
@@ -70,7 +70,7 @@ func (m *ModelOutputs) removeOutputsFromAddress(addr string) {
 	m.loadModel(new)
 }
 
-func (m *ModelOutputs) removeOutputsFromWallet(wltId string) {
+func (m *ModelOutput) removeOutputsFromWallet(wltId string) {
 	old := m.Outputs()
 	new := make([]*QOutput, 0)
 	for _, out := range old {
@@ -81,15 +81,15 @@ func (m *ModelOutputs) removeOutputsFromWallet(wltId string) {
 	m.loadModel(new)
 }
 
-func (m *ModelOutputs) rowCount(*core.QModelIndex) int {
+func (m *ModelOutput) rowCount(*core.QModelIndex) int {
 	return len(m.Outputs())
 }
 
-func (m *ModelOutputs) roleNames() map[int]*core.QByteArray {
+func (m *ModelOutput) roleNames() map[int]*core.QByteArray {
 	return m.Roles()
 }
 
-func (m *ModelOutputs) data(index *core.QModelIndex, role int) *core.QVariant {
+func (m *ModelOutput) data(index *core.QModelIndex, role int) *core.QVariant {
 	if !index.IsValid() {
 		return core.NewQVariant()
 	}
@@ -128,13 +128,13 @@ func (m *ModelOutputs) data(index *core.QModelIndex, role int) *core.QVariant {
 	}
 }
 
-func (m *ModelOutputs) insertRows(row int, count int) bool {
+func (m *ModelOutput) insertRows(row int, count int) bool {
 	m.BeginInsertRows(core.NewQModelIndex(), row, row+count)
 	m.EndInsertRows()
 	return true
 }
 
-func (m *ModelOutputs) addOutputs(mo []*QOutput) {
+func (m *ModelOutput) addOutputs(mo []*QOutput) {
 	m.SetOutputs(mo)
 	m.insertRows(len(m.Outputs()), len(mo))
 }
@@ -150,7 +150,7 @@ func contains(outputs []*QOutput, output *QOutput) bool {
 	return false
 }
 
-func (m *ModelOutputs) insertOutputs(mo []*QOutput) {
+func (m *ModelOutput) insertOutputs(mo []*QOutput) {
 	toInsert := m.Outputs()
 	for _, outputToInsert := range mo {
 		if !contains(toInsert, outputToInsert) {
@@ -160,13 +160,13 @@ func (m *ModelOutputs) insertOutputs(mo []*QOutput) {
 	m.loadModel(toInsert)
 }
 
-func (m *ModelOutputs) loadModel(mo []*QOutput) {
+func (m *ModelOutput) loadModel(mo []*QOutput) {
 	m.BeginResetModel()
 	m.SetOutputs(mo)
 	m.EndResetModel()
 }
 
-func (m *ModelOutputs) cleanModel() {
+func (m *ModelOutput) cleanModel() {
 	m.BeginResetModel()
 	m.SetOutputs(make([]*QOutput, 0))
 	m.EndResetModel()

@@ -16,10 +16,10 @@ type ModelAddresses struct {
 	_ func() `constructor:"init"`
 
 	_ map[int]*core.QByteArray `property:"roles"`
-	_ []*ModelOutputs          `property:"outputs"`
+	_ []*ModelOutput           `property:"outputs"`
 	_ string                   `property:"name"`
 
-	_ func([]*ModelOutputs) `slot:"addOutputs"`
+	_ func([]*ModelOutput) `slot:"addOutputs"`
 }
 
 func (m *ModelAddresses) init() {
@@ -75,7 +75,7 @@ func (m *ModelAddresses) insertRows(row int, count int) bool {
 	return true
 }
 
-func (m *ModelAddresses) addOutputs(mo []*ModelOutputs) {
+func (m *ModelAddresses) addOutputs(mo []*ModelOutput) {
 	m.SetOutputs(mo)
 	m.insertRows(len(m.Outputs()), len(mo))
 }

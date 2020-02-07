@@ -11,6 +11,6 @@ func init() {
 	ModelManager_QmlRegisterType2("WalletsManager", 1, 0, "ModelManager")
 	ModelWallets_QmlRegisterType2("OutputsModels", 1, 0, "QWallets")
 	ModelAddresses_QmlRegisterType2("OutputsModels", 1, 0, "QAddresses")
-	ModelOutputs_QmlRegisterType2("OutputsModels", 1, 0, "QOutputs")
+	ModelOutput_QmlRegisterType2("OutputsModels", 1, 0, "QOutputs")
 	QBridge_QmlRegisterType2("Utils", 1, 0, "QBridge")
 }
