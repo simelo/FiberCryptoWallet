@@ -177,8 +177,41 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 
 }
 
+//WalletSet methods set
+func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
+
+}
+
 type KeystoreWallet struct {
 	*keystore.KeyStore
 	name    string
 	dirName string
+}
+
+func NewKeyStoreWalletIterator(wallets []core.Wallet) *KeystoreWalletIterator {
+	return &KeystoreWalletIterator{
+		wallets: wallets,
+		current: -1,
+	}
+}
+
+type KeystoreWalletIterator struct {
+	current int
+	wallets []core.Wallet
+}
+
+func (it *KeystoreWalletIterator) Value() core.Wallet {
+	return it.wallets[it.current]
+}
+
+func (it *KeystoreWalletIterator) Next() bool {
+	if it.HasNext() {
+		it.current++
+		return true
+	}
+	return false
+}
+
+func (it *KeystoreWalletIterator) HasNext() bool {
+	return !((it.current + 1) >= len(it.wallets))
 }
