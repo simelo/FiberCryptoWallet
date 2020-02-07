@@ -27,7 +27,7 @@ type WalletSet interface {
 // WalletStorage provides access to the underlying wallets data store
 type WalletStorage interface {
 	// Encrypt protects wallet data using cryptography
-	Encrypt(walletName string, password PasswordReader)
+	Encrypt(walletName string, password PasswordReader) error
 	// Decrypt unlocks wallet for accessing internal data
 	Decrypt(walletName string, password PasswordReader)
 	// IsEncrypted queries whether wallet data is encrypted or not
