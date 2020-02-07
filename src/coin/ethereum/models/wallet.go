@@ -179,7 +179,11 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 
 //WalletSet methods set
 func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
-
+	wallets := make([]core.Wallet, 0)
+	for _, wlt := range walletDir.wallets {
+		wallets = append(wallets, wlt)
+	}
+	return NewKeyStoreWalletIterator(wallets)
 }
 
 type KeystoreWallet struct {
