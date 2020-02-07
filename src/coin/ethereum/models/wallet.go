@@ -80,7 +80,36 @@ func (walletDir *WalletsDirectory) Encrypt(walletName string, password core.Pass
 	}
 
 	delete(walletDir.walletsPasswords, walletName)
+	return nil
+}
 
+func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.PasswordReader) error {
+	wlt, exist := walletDir.wallets[walletName]
+	if !exist {
+		logWallet.WithError(errors.ErrWalletNotFound).Error("Couldn't decrypt wallet")
+		return errors.ErrWalletNotFound
+	}
+
+	pwdCtx := util.NewKeyValueMap()
+	pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
+	pwdCtx.SetValue(core.StrMethodName, "Encrypt")
+	pwdCtx.SetValue(core.StrWalletName, walletName)
+	pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
+	pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
+	if err != nil {
+		logWallet.WithError(err).Error("Error decrypting wallet")
+		return err
+	}
+	for _, acc := range wlt.Accounts() {
+		err = wlt.Unlock(acc, pwd)
+		if err != nil {
+			logWallet.WithError(err).Error("Error decrypting wallet")
+			return err
+		}
+	}
+
+	walletDir.walletsPasswords[walletName] = pwd
+	return nil
 }
 
 func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
@@ -118,7 +147,6 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 			return err
 		}
 	}
-
 	allFiles, err := ioutil.ReadDir(wlt.dirName)
 	if err != nil {
 		return err
@@ -132,7 +160,7 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 			}
 		}
 		if !founded {
-			os.Remove(file)
+			os.Remove(file.Name())
 		}
 	}
 
