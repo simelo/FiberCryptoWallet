@@ -41,3 +41,12 @@ var (
 	_ core.WalletOutput  = &SimpleWalletOutput{}
 	_ core.WalletAddress = &SimpleWalletAddress{}
 )
+
+func IsValidWalletType(walletType string, walletSet core.WalletSet) bool {
+	for _, validWalletType := range walletSet.SupportedWalletTypes() {
+		if walletType == validWalletType {
+			return true
+		}
+	}
+	return false
+}
