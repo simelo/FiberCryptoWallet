@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"io/ioutil"
 
@@ -96,7 +97,7 @@ func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.Pass
 
 	pwdCtx := util.NewKeyValueMap()
 	pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
-	pwdCtx.SetValue(core.StrMethodName, "Encrypt")
+	pwdCtx.SetValue(core.StrMethodName, "Decrypt")
 	pwdCtx.SetValue(core.StrWalletName, walletName)
 	pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
 	pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
@@ -203,8 +204,84 @@ func (walletDir *WalletsDirectory) GetWallet(id string) (core.Wallet, error) {
 func (walletDir *WalletsDirectory) SupportedWalletType() []string {
 	return []string{WalletTypeStandard}
 }
-func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, isEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
 
+func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, isEncrypted bool, password core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
+	if !util.IsValidWalletType(walletType, walletDir) {
+		logWallet.WithError(errors.ErrInvalidWalletType).Error("Error creating wallet")
+		return nil, errors.ErrInvalidWalletType
+	}
+
+	wltId := walletDir.generateUniqueId(name)
+
+	pwd := ""
+	if isEncrypted {
+		pwdCtx := util.NewKeyValueMap()
+		pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
+		pwdCtx.SetValue(core.StrMethodName, "CreateWallet")
+		pwdCtx.SetValue(core.StrWalletName, walletName)
+		pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
+		pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
+		if err != nil {
+			logWallet.WithError(err).Error("Error creating wallet")
+			return nil, err
+		}
+	}
+
+	wltDir := filepath.Join(walletDir.path)
+	// Review file mode
+	err = os.Mkdir(wltDir, 0755)
+	if err != nil {
+		logWallet.WithError(err).Error("Error creating wallet")
+		return nil, err
+	}
+
+	nWlt := NewKeystoreWallet(wltDir, name)
+	walletDir.wallets[wltId] = nWlt
+
+	_, err := nWlt.NewAccount(pwd)
+	if err != nil {
+		logWallet.WithError(err).Error("Error creating wallet")
+		os.RemoveAll(wltDir)
+		delete(walletDir.wallets, wltId)
+		return nil, err
+	}
+
+	if !isEncrypted {
+		walletDir.walletsPasswords[wltId] = ""
+	}
+
+	return nWlt, nil
+}
+
+func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
+	idBase := fmt.Sprintf("%s_%d", name, time.Now().UTC().UnixNano())
+	id := idBase
+	cont = 0
+	for {
+		validId := true
+		for wltId, _ := range walletDir.wallets {
+			if wltId == id {
+				validId = false
+				break
+			}
+		}
+		if !validId {
+			cont++
+			id := fmt.Sprintf("%s_%d", idBase, cont)
+			continue
+		}
+		break
+	}
+	return id
+}
+
+func NewKeystoreWallet(dir, name string) *KeystoreWallet {
+	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
+	return &KeystoreWallet{
+		KeyStore: ks,
+		name:     name,
+		dirName:  dir,
+	}
 }
 
 type KeystoreWallet struct {

@@ -60,5 +60,7 @@ var (
 	//ErrWalletNotFound wallet is not found
 	ErrWalletNotFound = errors.New("Wallet not found")
 	//ErrWalletIsNotDecrypted wallet is not decrypted
-	ErrWalletIsNotDecrypted = errors.New("WalletIsNotDecrypted")
+	ErrWalletIsNotDecrypted = errors.New("Wallet is not decrypted")
+	//ErrInvalidWalletType the wallet type specified is not supported
+	ErrInvalidWalletType = errors.New("Wallet type specified is not supported")
 )
