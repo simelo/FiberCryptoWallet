@@ -15,7 +15,7 @@ type WalletSet interface {
 	// ListWallets returns an iterator over wallets in the set
 	ListWallets() WalletIterator
 	// GetWallet to lookup wallet by ID
-	GetWallet(id string) Wallet
+	GetWallet(id string) (Wallet, error)
 	// CreateWallet instantiates a new wallet given account seed
 	CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd PasswordReader, scanAddressesN int) (Wallet, error)
 	// DefaultWalletType default wallet type

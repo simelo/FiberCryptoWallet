@@ -174,6 +174,7 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 			os.Remove(file.Name())
 		}
 	}
+	return nil
 
 }
 
