@@ -294,6 +294,19 @@ type KeystoreWallet struct {
 	dirName string
 }
 
+//Wallet methods set
+func (kw *KeystoreWallet) GetId() string {
+	return kw.dirName
+}
+
+func (kw *KeystoreWallet) GetLabel() string {
+	return kw.name
+}
+
+func (kw *KeystoreWallet) SetLabel(name string) {
+	return
+}
+
 func NewKeyStoreWalletIterator(wallets []core.Wallet) *KeystoreWalletIterator {
 	return &KeystoreWalletIterator{
 		wallets: wallets,
