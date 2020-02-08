@@ -8,6 +8,8 @@ Item {
     property alias depth: stackView.depth
     property alias busy: stackView.busy
 
+    signal backRequested()
+
     function openOutputsPage() {
         if (stackView.depth > 1) {
             stackView.replace(componentOutputs)
@@ -75,13 +77,17 @@ Item {
         }
     }
 
+    function openSettingsAddressBookPage() {
+        stackView.push(componentSettingsAddressBook)
+    }
+
     function openAddressBookPage() {
-            if (stackView.depth > 1) {
-                stackView.replace(componentAddressBook)
-            } else {
-                stackView.push(componentAddressBook)
-            }
+        if (stackView.depth > 1) {
+            stackView.replace(componentAddressBook)
+        } else {
+            stackView.push(componentAddressBook)
         }
+    }
 
     function pop() {
         stackView.pop()
@@ -157,6 +163,18 @@ Item {
     }
 
     Component {
+        id: componentAddressBook
+
+        AddressBook {
+            id: addressBook
+
+            onCanceled: {
+                backRequested()
+            }
+        }
+    }
+
+    Component {
         id: componentSettings
 
         Settings {
@@ -165,12 +183,10 @@ Item {
     }
 
     Component {
-            id: componentAddressBook
+        id: componentSettingsAddressBook
 
-            AddressBook {
-                id: addressBook
-            }
+        SettingsAddressBook {
+            id: settingsAddressBook
         }
-
-    
+    }
 }

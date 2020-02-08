@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
+import QtQuick.Window 2.12
 import Qt.labs.settings 1.0
 import WalletsManager 1.0
 import Config 1.0
@@ -24,7 +25,6 @@ ApplicationWindow {
         }
     }
 
-    visible: true
     width: 680
     height: 580
     title: Qt.application.name + ' v' + Qt.application.version
@@ -38,6 +38,10 @@ ApplicationWindow {
     menuBar: CustomMenuBar {
         id: customMenuBar
 
+        ConfigManager{
+            id: configManager
+        }
+
         onOutputsRequested: {
             generalStackView.openOutputsPage()
             customHeader.text = qsTr("Outputs")
@@ -47,13 +51,9 @@ ApplicationWindow {
             enableBlockchain = true
             enableNetworking = true
             enableSettings = true
-                    enableAddrsBook = true
-
+            enableSettingsAddressBook = false
+            enableAddrsBook = true
         }
-        ConfigManager{
-            id: configManager
-        }
-        
 
         onPendingTransactionsRequested: {
             generalStackView.openPendingTransactionsPage()
@@ -64,7 +64,8 @@ ApplicationWindow {
             enableBlockchain = true
             enableNetworking = true
             enableSettings = true
-                    enableAddrsBook = true
+            enableSettingsAddressBook = false
+            enableAddrsBook = true
 
         }
 
@@ -77,6 +78,7 @@ ApplicationWindow {
             enableBlockchain = false
             enableNetworking = true
             enableSettings = true
+            enableSettingsAddressBook = false
             enableAddrsBook = true
 
         }
@@ -90,8 +92,21 @@ ApplicationWindow {
             enableBlockchain = true
             enableNetworking = false
             enableSettings = true
-                    enableAddrsBook = true
+            enableSettingsAddressBook = false
+            enableAddrsBook = true
+        }
 
+        onAddressBookRequested: {
+            generalStackView.openAddressBookPage()
+            customHeader.text = qsTr("Address book")
+
+            enableOutputs = true
+            enablePendingTransactions = true
+            enableBlockchain = true
+            enableNetworking = true
+            enableSettings = true
+            enableSettingsAddressBook = true
+            enableAddrsBook = false
         }
 
         onSettingsRequested: {
@@ -103,27 +118,23 @@ ApplicationWindow {
             enableBlockchain = true
             enableNetworking = true
             enableSettings = false
-                    enableAddrsBook = true
+            enableSettingsAddressBook = false
+            enableAddrsBook = true
         }
 
-        onAddressBookRequested: {
-                    generalStackView.openAddressBookPage()
-                    customHeader.text = qsTr("Address book")
+        onSettingsAddressBookRequested: {
+            generalStackView.openSettingsAddressBookPage()
+            customHeader.text = qsTr("Address Book Settings")
 
-                    enableOutputs = true
-                    enablePendingTransactions = true
-                    enableBlockchain = true
-                    enableNetworking = true
-                    enableSettings = true
-                    enableAddrsBook = false
-                }
+            // The back button must be used to go back to the Address Book
+            enableOutputs = enablePendingTransactions = enableBlockchain = enableNetworking = enableSettings = enableSettingsAddressBook = enableAddrsBook = false
+        }
 
         onAboutRequested: {
             dialogAbout.open()
         }
 
         onAboutQtRequested: {
-            
             dialogAboutQt.open()
         }
 
@@ -132,26 +143,50 @@ ApplicationWindow {
         }
     } // CustomMenuBar
 
+    Action {
+        id: actionFullScreen
+
+        property int previous: applicationWindow.visibility
+
+        shortcut: StandardKey.FullScreen
+        onTriggered: {
+            if (applicationWindow.visibility !== Window.FullScreen) {
+                previous = applicationWindow.visibility
+            }
+            if (applicationWindow.visibility === Window.FullScreen) {
+                applicationWindow.showNormal() // Cannot show maximized directly due to a bug in some X11 managers
+                if (previous === Window.Maximized) {
+                    applicationWindow.showMaximized()
+                }
+            } else {
+                applicationWindow.showFullScreen()
+            }
+        }
+    }
+
     CustomHeader {
         id: customHeader
-    } // CustomHeader
+    }
 
     GeneralStackView {
         id: generalStackView
         anchors.fill: parent
-       
+
+        onBackRequested: {
+            customMenuBar.back()
+        }
+
         WalletManager {
             id: walletManager
         }
         Utils{
-        id: utils
+            id: utils
         }
     }
 
     //! Settings
     Settings {
         id: settings
-        
     }
 
     //! Dialogs
@@ -205,7 +240,7 @@ ApplicationWindow {
         width: applicationWindow.width > 440 ? 440 - 40 : applicationWindow.width - 40
         height: applicationWindow.height > 540 ? 540 - 40 : applicationWindow.height - 40
 
-        focus: true
+        focus: visible
         modal: true
     }
 
@@ -215,7 +250,7 @@ ApplicationWindow {
         width: applicationWindow.width > 460 ? 460 - 40 : applicationWindow.width - 40
         height: applicationWindow.height > 340 ? 340 - 40 : applicationWindow.height - 40
 
-        focus: true
+        focus: visible
         modal: true
     }
 
@@ -225,7 +260,7 @@ ApplicationWindow {
         width: applicationWindow.width > 640 ? 640 - 40 : applicationWindow.width - 40
         height: (applicationWindow.height > 590 ? 590 - 40 : applicationWindow.height - 40) - (enableBackupWarning ^ enablePINWarning ? 100 : 0) - (!enableBackupWarning && !enablePINWarning ? 240 : 0)
         
-        focus: true
+        focus: visible
         modal: true
     }
 
@@ -237,7 +272,7 @@ ApplicationWindow {
         width: applicationWindow.width > 540 ? 540 - 40 : applicationWindow.width - 40
         height: applicationWindow.height > 360 ? 360 - 40 : applicationWindow.height - 40
         
-        focus: true
+        focus: visible
         modal: true
     }
 
@@ -274,7 +309,7 @@ ApplicationWindow {
         width: applicationWindow.width - 40
         height: applicationWindow.height - 40
         
-        focus: true
+        focus: visible
         modal: true
     }
 

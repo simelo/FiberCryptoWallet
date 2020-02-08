@@ -1,16 +1,16 @@
 package models
 
 import (
+	"sync"
+
 	"fmt"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"github.com/fibercrypto/fibercryptowallet/src/models/outputs"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
-	"sort"
-	"sync"
-
 	"github.com/fibercrypto/fibercryptowallet/src/util"
+	"sort"
 
 	"github.com/therecipe/qt/qml"
 
@@ -942,7 +942,7 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 				logWalletManager.WithError(err).Warnf("Couldn't get accuracy for %s asset", asset)
 			}
 
-			addressCoinOption.SetValue(asset, fmt.Sprint(float64(balance)/float64(accuracy)))
+			addressCoinOption.SetValue(asset, util.FormatCoins(balance, accuracy))
 		}
 
 		addrsDetail.SetCoinOptions(addressCoinOption)
