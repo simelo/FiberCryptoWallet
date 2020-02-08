@@ -16,6 +16,10 @@ import (
 
 var logWallet = logging.MustGetLogger("Ethereum Wallet")
 
+const (
+	WalletTypeStandard = "standard"
+)
+
 func NewWalletDirectory(path string) *WalletsDirectory {
 	return &WalletsDirectory{
 		path: path,
@@ -194,6 +198,13 @@ func (walletDir *WalletsDirectory) GetWallet(id string) (core.Wallet, error) {
 		return nil, errors.ErrNotFound
 	}
 	return wlt, nil
+}
+
+func (walletDir *WalletsDirectory) SupportedWalletType() []string {
+	return []string{WalletTypeStandard}
+}
+func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, isEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
+
 }
 
 type KeystoreWallet struct {
