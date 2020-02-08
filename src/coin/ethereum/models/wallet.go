@@ -253,6 +253,10 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	return nWlt, nil
 }
 
+func (walletDir *WalletsDirectory) DefaultWalletType() string {
+	return WalletTypeStandard
+}
+
 func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
 	idBase := fmt.Sprintf("%s_%d", name, time.Now().UTC().UnixNano())
 	id := idBase
