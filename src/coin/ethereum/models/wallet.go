@@ -437,6 +437,45 @@ func (kw *KeystoreWallet) Spend(unspent, new []core.TransactionOutput, change co
 func (kw *KeystoreWallet) Transfer(to core.TransactionOutput, options core.KeyValueStore) (core.Transaction, error) {
 	return nil, errors.ErrNotImplemented
 }
+
+//FIXME change returned value
+func (kw *KeystoreWallet) GenAddresses(addrType core.AddressType, startIndex, count uint32, password core.PasswordReader) core.AddressIterator {
+	actualNumberOfAddresses := len(kw.Accounts())
+	var n uint32 = startIndex - actualNumberOfAddresses
+	n += count
+	if n <= 0 {
+		return kw.Accounts()[startIndex : startIndex+count]
+	}
+
+	var pwd string
+	if password == nil {
+		pwd = ""
+	} else {
+		pwdCtx := util.NewKeyValueMap()
+		pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
+		pwdCtx.SetValue(core.StrMethodName, "GenAddresses")
+		pwdCtx.SetValue(core.StrWalletName, kw.dirName)
+		pwdCtx.SetValue(core.StrWalletLabel, kw.name)
+		pwd, err := password(fmt.Sprintf("Enter password for %s", kw.GetName()), pwdCtx)
+		if err != nil {
+			logWallet.WithError(err).Error("Error generating addresses")
+			return nil, err
+		}
+	}
+
+	_, err := kw.TimedUnlock(kw.Accounts()[0], pwd, time.Second*1)
+	if err != nil {
+		logWallet.WithError(err).Error("Error generating addresses")
+		return nil, err
+	}
+
+	for i := 0; i <= n; i++ {
+		kw.NewAccount(pwd)
+	}
+	return kw.Accounts()[startIndex : startIndex+count]
+
+}
+
 func NewKeyStoreWalletIterator(wallets []core.Wallet) *KeystoreWalletIterator {
 	return &KeystoreWalletIterator{
 		wallets: wallets,
