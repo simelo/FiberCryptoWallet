@@ -476,6 +476,21 @@ func (kw *KeystoreWallet) GenAddresses(addrType core.AddressType, startIndex, co
 
 }
 
+//TODO
+func (kw *KeystoreWallet) GetCryptoAccount() core.CryptoAccount {
+	return nil
+}
+
+//FIXME: change returned value
+func (kw *KeystoreWallet) GetLoadedAddresses() (core.AddressIterator, error) {
+	return kw.Accounts(), nil
+}
+
+//TODO
+func (kw *KeystoreWallet) Sign(txn core.Transaction, signer, core.TxnSigner, password core.PasswordReader, index []string) (core.Transaction, error){
+	return nil, nil
+}
+
 func NewKeyStoreWalletIterator(wallets []core.Wallet) *KeystoreWalletIterator {
 	return &KeystoreWalletIterator{
 		wallets: wallets,
