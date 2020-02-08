@@ -5,16 +5,16 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SkycoinProject/skycoin/src/api"
+	"github.com/SkycoinProject/skycoin/src/cipher"
+	"github.com/SkycoinProject/skycoin/src/coin"
+	"github.com/SkycoinProject/skycoin/src/readable"
+	"github.com/SkycoinProject/skycoin/src/visor"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/skytypes"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
-	"github.com/skycoin/skycoin/src/api"
-	"github.com/skycoin/skycoin/src/cipher"
-	"github.com/skycoin/skycoin/src/coin"
-	"github.com/skycoin/skycoin/src/readable"
-	"github.com/skycoin/skycoin/src/visor"
 )
 
 var logCoin = logging.MustGetLogger("Skycoin coin")
@@ -25,12 +25,12 @@ var logCoin = logging.MustGetLogger("Skycoin coin")
 	Implements Transaction interface
 */
 type SkycoinPendingTransaction struct {
-	Transaction readable.UnconfirmedTransactionVerbose
+	Transaction *readable.UnconfirmedTransactionVerbose
 }
 
 func (txn *SkycoinPendingTransaction) SupportedAssets() []string {
 	logCoin.Info("Getting supported assets")
-	return []string{Sky, CoinHour, CalculatedHour}
+	return []string{Sky, CoinHour}
 }
 
 func (txn *SkycoinPendingTransaction) GetTimestamp() core.Timestamp {
@@ -70,10 +70,12 @@ func (txn *SkycoinPendingTransaction) ComputeFee(ticker string) (uint64, error) 
 	logCoin.Info("Computing fee for " + ticker + " ticket")
 	if ticker == CoinHour {
 		return txn.Transaction.Transaction.Fee, nil
-	} else if util.StringInList(ticker, txn.SupportedAssets()) {
+	} else if ticker == Sky {
 		return uint64(0), nil
+	} else if ticker == CalculatedHour {
+		return uint64(0), errors.ErrNotImplemented
 	}
-	logCoin.Errorf("Invalid ticker %v\n", ticker)
+	logCoin.Warningf("Invalid ticker %v\n", ticker)
 	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
 
@@ -172,7 +174,7 @@ func (txn *SkycoinPendingTransaction) EncodeSkycoinTransaction() ([]byte, error)
 
 func verifyReadableTransaction(rTxn skytypes.ReadableTxn, checkSigned bool) error {
 	var createdTxn *api.CreatedTransaction
-	if cTxn, err := rTxn.ToCreatedTransaction(); err != nil {
+	if cTxn, err := rTxn.ToCreatedTransaction(); err == nil {
 		createdTxn = cTxn
 	} else {
 		return err
@@ -225,7 +227,7 @@ func (txn *SkycoinPendingTransaction) IsFullySigned() (bool, error) {
 /**
  * SkycoinTransactionIterator
  */
-type SkycoinTransactionIterator struct { //Implements TransactionIterator interface
+type SkycoinTransactionIterator struct { // Implements TransactionIterator interface
 	Current      int
 	Transactions []core.Transaction
 }
@@ -253,7 +255,7 @@ func NewSkycoinTransactionIterator(transactions []core.Transaction) *SkycoinTran
 /**
  * SkycoinTransactionOutputIterator
  */
-type SkycoinTransactionOutputIterator struct { //Implements TransactionOutputIterator interface
+type SkycoinTransactionOutputIterator struct { // Implements TransactionOutputIterator interface
 	Current int
 	Outputs []core.TransactionOutput
 }
@@ -314,7 +316,7 @@ func (skyTxn *SkycoinUninjectedTransaction) GetInputs() []core.TransactionInput 
 	if skyTxn.inputs == nil {
 		inputs, err := getSkycoinTransactionInputsFromInputsHashes(skyTxn.txn.In)
 		if err != nil {
-			//TODO: This method should also returns error
+			// TODO: This method should also returns error
 			return nil
 		}
 		skyTxn.inputs = inputs
@@ -345,8 +347,13 @@ func (skyTxn *SkycoinUninjectedTransaction) ComputeFee(ticker string) (uint64, e
 	logCoin.Info("Computing fee for un injected transaction with" + ticker + " ticker")
 	if ticker == CoinHour {
 		return skyTxn.fee, nil
+	} else if ticker == Sky {
+		return uint64(0), nil
+	} else if ticker == CalculatedHour {
+		return uint64(0), errors.ErrNotImplemented
 	}
-	return 0, nil
+	logCoin.Warningf("Invalid ticker %v\n", ticker)
+	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
 
 func (skyTxn *SkycoinUninjectedTransaction) GetId() string {
@@ -386,7 +393,7 @@ type SkycoinTransaction struct {
 
 func (txn *SkycoinTransaction) SupportedAssets() []string {
 	logCoin.Info("Getting supported assets from transactions")
-	return []string{Sky, CoinHour, CalculatedHour}
+	return []string{Sky, CoinHour}
 }
 
 func (txn *SkycoinTransaction) GetTimestamp() core.Timestamp {
@@ -455,10 +462,12 @@ func (txn *SkycoinTransaction) ComputeFee(ticker string) (uint64, error) {
 	logCoin.Info("Compute fee for transaction with " + ticker + "ticker")
 	if ticker == CoinHour {
 		return txn.skyTxn.Fee, nil
-	} else if util.StringInList(ticker, txn.SupportedAssets()) {
+	} else if ticker == Sky {
 		return uint64(0), nil
+	} else if ticker == CalculatedHour {
+		return uint64(0), errors.ErrNotImplemented
 	}
-	logCoin.Errorf("Invalid ticker %v\n", ticker)
+	logCoin.Warningf("Invalid ticker %v\n", ticker)
 	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
 
@@ -630,9 +639,8 @@ func (in *SkycoinTransactionInput) GetCoins(ticker string) (uint64, error) {
 	} else if ticker == CalculatedHour {
 		return in.skyIn.CalculatedHours * accuracy, nil
 	}
-	//TODO: The program never reach here because util.AltcoinQuotient(ticker) throws an error when a invalid ticker is supplied 
 	logCoin.Errorf("Invalid ticker %v\n", ticker)
-	return uint64(0), errors.ErrInvalidAltcoinTicker 
+	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
 
 /**
@@ -680,7 +688,12 @@ func (out *SkycoinTransactionOutput) GetId() string {
 
 func (out *SkycoinTransactionOutput) GetAddress() core.Address {
 	logCoin.Info("Getting address for transaction output")
-	return &SkycoinAddress{address: out.skyOut.Address}
+	skyAddrs, err := NewSkycoinAddress(out.skyOut.Address)
+	if err != nil {
+		logCoin.Error(err)
+		return nil
+	}
+	return &skyAddrs
 }
 
 // SupportedAssets enumerates tickers of crypto assets supported by this output
@@ -706,7 +719,6 @@ func (out *SkycoinTransactionOutput) GetCoins(ticker string) (uint64, error) {
 	} else if ticker == CalculatedHour {
 		return out.calculatedHours * accuracy, nil
 	}
-	//TODO: The program never reach here because util.AltcoinQuotient(ticker) throws an error when a invalid ticker is supplied
 	logCoin.Errorf("Invalid ticker %v\n", ticker)
 	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
@@ -759,7 +771,7 @@ func (in *SkycoinCreatedTransactionInput) GetId() string {
 func (in *SkycoinCreatedTransactionInput) GetSpentOutput() core.TransactionOutput {
 	if in.spentOutput == nil {
 
-		calculatedHours, err := in.GetCoins(in.skyIn.CalculatedHours)
+		calculatedHours, err := in.GetCoins(CalculatedHour)
 		if err != nil {
 			calculatedHours = 0
 		}
@@ -837,7 +849,12 @@ func (out *SkycoinCreatedTransactionOutput) GetId() string {
 }
 
 func (out *SkycoinCreatedTransactionOutput) GetAddress() core.Address {
-	return &SkycoinAddress{address: out.skyOut.Address}
+	skyAddrs, err := NewSkycoinAddress(out.skyOut.Address)
+	if err != nil {
+		logCoin.Error(err)
+		return nil
+	}
+	return &skyAddrs
 }
 
 // SupportedAssets enumerates tickers of crypto assets supported by this output
@@ -914,7 +931,7 @@ type SkycoinCreatedTransaction struct {
 
 // SupportedAssets are SKY, SKYCH, and accumulated SKYCH
 func (txn *SkycoinCreatedTransaction) SupportedAssets() []string {
-	return []string{Sky, CoinHour, CalculatedHour}
+	return []string{Sky, CoinHour}
 }
 
 // GetTimestamp will return zero
@@ -953,10 +970,12 @@ func (txn *SkycoinCreatedTransaction) ComputeFee(ticker string) (uint64, error) 
 			return uint64(0), err
 		}
 		return uint64(fee), nil
-	} else if util.StringInList(ticker, txn.SupportedAssets()) {
+	} else if ticker == Sky {
 		return uint64(0), nil
+	} else if ticker == CalculatedHour {
+		return uint64(0), errors.ErrNotImplemented
 	}
-	logCoin.Errorf("Invalid ticker %v\n", ticker)
+	logCoin.Warningf("Invalid ticker %v\n", ticker)
 	return uint64(0), errors.ErrInvalidAltcoinTicker
 }
 

@@ -10,6 +10,29 @@ type AltcoinPlugin struct {
 	mock.Mock
 }
 
+// AddressFromString provides a mock function with given fields: _a0
+func (_m *AltcoinPlugin) AddressFromString(_a0 string) (core.Address, error) {
+	ret := _m.Called(_a0)
+
+	var r0 core.Address
+	if rf, ok := ret.Get(0).(func(string) core.Address); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.Address)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetDescription provides a mock function with given fields:
 func (_m *AltcoinPlugin) GetDescription() string {
 	ret := _m.Called()
@@ -93,6 +116,52 @@ func (_m *AltcoinPlugin) LoadPEX(netType string) (core.PEX, error) {
 	return r0, r1
 }
 
+// LoadSignService provides a mock function with given fields:
+func (_m *AltcoinPlugin) LoadSignService() (core.BlockchainSignService, error) {
+	ret := _m.Called()
+
+	var r0 core.BlockchainSignService
+	if rf, ok := ret.Get(0).(func() core.BlockchainSignService); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.BlockchainSignService)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// LoadTransactionAPI provides a mock function with given fields: netType
+func (_m *AltcoinPlugin) LoadTransactionAPI(netType string) (core.BlockchainTransactionAPI, error) {
+	ret := _m.Called(netType)
+
+	var r0 core.BlockchainTransactionAPI
+	if rf, ok := ret.Get(0).(func(string) core.BlockchainTransactionAPI); ok {
+		r0 = rf(netType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.BlockchainTransactionAPI)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(netType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // LoadWalletEnvs provides a mock function with given fields:
 func (_m *AltcoinPlugin) LoadWalletEnvs() []core.WalletEnv {
 	ret := _m.Called()
@@ -109,7 +178,53 @@ func (_m *AltcoinPlugin) LoadWalletEnvs() []core.WalletEnv {
 	return r0
 }
 
+// PubKeyFromBytes provides a mock function with given fields: _a0
+func (_m *AltcoinPlugin) PubKeyFromBytes(_a0 []byte) (core.PubKey, error) {
+	ret := _m.Called(_a0)
+
+	var r0 core.PubKey
+	if rf, ok := ret.Get(0).(func([]byte) core.PubKey); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.PubKey)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RegisterTo provides a mock function with given fields: manager
 func (_m *AltcoinPlugin) RegisterTo(manager core.AltcoinManager) {
 	_m.Called(manager)
+}
+
+// SecKeyFromBytes provides a mock function with given fields: _a0
+func (_m *AltcoinPlugin) SecKeyFromBytes(_a0 []byte) (core.SecKey, error) {
+	ret := _m.Called(_a0)
+
+	var r0 core.SecKey
+	if rf, ok := ret.Get(0).(func([]byte) core.SecKey); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.SecKey)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }

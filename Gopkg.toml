@@ -33,9 +33,13 @@ ignored = [
   version = "1.4.2"
 
 [[constraint]]
-  name = "github.com/skycoin/skycoin"
-  branch = "develop"
+  name = "github.com/SkycoinProject/skycoin"
+  version = "0.27.0"
 
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"

@@ -98,7 +98,7 @@ func (_m *FullWallet) SendFromAddress(from []core.Address, to []core.Transaction
 	ret := _m.Called(from, to, change, options)
 
 	var r0 core.Transaction
-	if rf, ok := ret.Get(0).(func([]core.Address, []core.TransactionOutput, core.Address, core.KeyValueStorage) core.Transaction); ok {
+	if rf, ok := ret.Get(0).(func([]core.Address, []core.TransactionOutput, core.Address, core.KeyValueStore) core.Transaction); ok {
 		r0 = rf(from, to, change, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -107,7 +107,7 @@ func (_m *FullWallet) SendFromAddress(from []core.Address, to []core.Transaction
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]core.Address, []core.TransactionOutput, core.Address, core.KeyValueStorage) error); ok {
+	if rf, ok := ret.Get(1).(func([]core.Address, []core.TransactionOutput, core.Address, core.KeyValueStore) error); ok {
 		r1 = rf(from, to, change, options)
 	} else {
 		r1 = ret.Error(1)
@@ -149,7 +149,7 @@ func (_m *FullWallet) Spend(unspent []core.TransactionOutput, new []core.Transac
 	ret := _m.Called(unspent, new, change, options)
 
 	var r0 core.Transaction
-	if rf, ok := ret.Get(0).(func([]core.TransactionOutput, []core.TransactionOutput, core.Address, core.KeyValueStorage) core.Transaction); ok {
+	if rf, ok := ret.Get(0).(func([]core.TransactionOutput, []core.TransactionOutput, core.Address, core.KeyValueStore) core.Transaction); ok {
 		r0 = rf(unspent, new, change, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -158,7 +158,7 @@ func (_m *FullWallet) Spend(unspent []core.TransactionOutput, new []core.Transac
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]core.TransactionOutput, []core.TransactionOutput, core.Address, core.KeyValueStorage) error); ok {
+	if rf, ok := ret.Get(1).(func([]core.TransactionOutput, []core.TransactionOutput, core.Address, core.KeyValueStore) error); ok {
 		r1 = rf(unspent, new, change, options)
 	} else {
 		r1 = ret.Error(1)
@@ -172,7 +172,7 @@ func (_m *FullWallet) Transfer(to core.TransactionOutput, options core.KeyValueS
 	ret := _m.Called(to, options)
 
 	var r0 core.Transaction
-	if rf, ok := ret.Get(0).(func(core.TransactionOutput, core.KeyValueStorage) core.Transaction); ok {
+	if rf, ok := ret.Get(0).(func(core.TransactionOutput, core.KeyValueStore) core.Transaction); ok {
 		r0 = rf(to, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -181,7 +181,7 @@ func (_m *FullWallet) Transfer(to core.TransactionOutput, options core.KeyValueS
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(core.TransactionOutput, core.KeyValueStorage) error); ok {
+	if rf, ok := ret.Get(1).(func(core.TransactionOutput, core.KeyValueStore) error); ok {
 		r1 = rf(to, options)
 	} else {
 		r1 = ret.Error(1)
