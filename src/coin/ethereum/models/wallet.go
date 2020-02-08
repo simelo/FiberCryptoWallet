@@ -1,11 +1,15 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"io/ioutil"
 
@@ -21,6 +25,10 @@ var logWallet = logging.MustGetLogger("Ethereum Wallet")
 
 const (
 	WalletTypeStandard = "standard"
+	StrGasLimit        = "gasLimit"
+	StrAmount          = "amount"
+	StrGasPrice        = "gasPrice"
+	StrData            = "data"
 )
 
 func NewWalletDirectory(path string) *WalletsDirectory {
@@ -247,13 +255,13 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	}
 
 	wltId := walletDir.generateUniqueId(name)
-
+	wltDir := filepath.Join(walletDir.path, wltId)
 	pwd := ""
 	if isEncrypted {
 		pwdCtx := util.NewKeyValueMap()
 		pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
 		pwdCtx.SetValue(core.StrMethodName, "CreateWallet")
-		pwdCtx.SetValue(core.StrWalletName, walletName)
+		pwdCtx.SetValue(core.StrWalletName, wltDir)
 		pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
 		pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
 		if err != nil {
@@ -262,7 +270,6 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 		}
 	}
 
-	wltDir := filepath.Join(walletDir.path)
 	// Review file mode
 	err = os.Mkdir(wltDir, 0755)
 	if err != nil {
@@ -344,12 +351,82 @@ func (kw *KeystoreWallet) SetLabel(name string) {
 	return
 }
 
+//FIXME: change returned value
 func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
 	if len(from) != 1 {
-		logWallet.WithError(errors.ErrInvalidFromAddresses).Error("Couldn't send transaction")
+		logWallet.WithError(errors.ErrInvalidFromAddresses).Error("Error sending transaction")
+		return nil, errors.ErrInvalidFromAddresses
+	}
+	if len(to) != 1 {
+		logWallet.WithError(errors.ErrInvalidToAddresses).Error("Error sending transaction")
+		return nil, errors.ErrInvalidToAddresses
 	}
 
-	types.NewTransa
+	clt, err := NewEthereumApiClient(PoolSection)
+	if err != nil {
+		logWallet.WithError(err).Error("Error sending transaction")
+		return nil, err
+	}
+	addrFrom := common.HexToAddress(from[0].String())
+	addrTo := common.HexToAddress(to[0].GetAddress().String())
+	nCtx := context.Background()
+
+	nonce, err := clt.NonceAt(nCtx, addrFrom, nil)
+	if err != nil {
+		logWallet.WithError(err).Error("Error sending transaction")
+		return nil, err
+	}
+	var gasLimit uint64
+	var gasPrice, amount *big.Int
+	var data []byte
+
+	gasLimitTmp := options.GetValue(StrGasLimit)
+	if gasLimitTmp == nil {
+		gasLimit = 0
+	} else {
+		gasLimit, ok = gasLimitTmp.(uint64)
+		if !ok {
+			logWallet.WithError(errors.ErrInvalidOptions).Error("Error sending transactions")
+			return nil, errors.ErrInvalidOptions
+		}
+	}
+
+	gasPriceTmp := options.GetValue(StrGasPrice)
+	if gasPrice == nil {
+		gasPrice = new(big.Int).SetInt64(0)
+	} else {
+		gasPrice, ok = gasPriceTmp.(*big.Int)
+		if !ok {
+			logWallet.WithError(errors.ErrInvalidOptions).Error("Error sending transactions")
+			return nil, errors.ErrInvalidOptions
+		}
+	}
+
+	amountTmp := options.GetValue(StrAmount)
+	if amountTmp == nil {
+		amount = new(big.Int).SetInt64(0)
+	} else {
+		amount, ok = amountTmp.(*big.Int)
+		if !ok {
+			logWallet.WithError(errors.ErrInvalidOptions).Error("Error sending transactions")
+			return nil, errors.ErrInvalidOptions
+		}
+	}
+
+	dataTmp := options.GetValue(StrData)
+	if dataTmp == nil {
+		data = []byte{}
+	} else {
+		data, ok = dataTmp.([]byte)
+		if !ok {
+			logWallet.WithError(errors.ErrInvalidOptions).Error("Error sending transactions")
+			return nil, errors.ErrInvalidOptions
+		}
+	}
+
+	txn := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, data)
+	//FIXME return a type that implements core.Transactions with data of txn
+	return nil
 
 }
 

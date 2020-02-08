@@ -65,4 +65,6 @@ var (
 	ErrInvalidWalletType = errors.New("Wallet type specified is not supported")
 	//ErrInvalidFromAddresses from addresses are invalid for the transaction
 	ErrInvalidFromAddresses = errors.New("From addresses are invalid for the transaction")
+	//ErrInvalidToAddresses to addresses are invalid for the transaction
+	ErrInvalidToAddresses = errors.New("To addresses are invalid for the transaction")
 )
