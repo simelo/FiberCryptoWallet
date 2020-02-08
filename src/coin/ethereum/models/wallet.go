@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"io/ioutil"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
@@ -29,9 +31,11 @@ func NewWalletDirectory(path string) *WalletsDirectory {
 
 // Implements WalletEnv, WalletStorage and WalletSet interfaces
 type WalletsDirectory struct {
-	path             string
-	wallets          map[string]*KeystoreWallet
-	walletsPasswords map[string]string
+	path              string
+	wallets           map[string]*KeystoreWallet
+	mutexForWallets   sync.Mutex
+	walletsPasswords  map[string]string
+	mutexForPasswords sync.Mutex
 }
 
 //WalletEnv methods set
@@ -43,14 +47,43 @@ func (walletDir *WalletsDirectory) GetWalletSet() core.WalletSet {
 	return walletDir
 }
 
+//Remove unecessary line
+func (walletDir *WalletsDirectory) getWallet(wltId string) (*KeystoreWallet, bool) {
+	walletDir.mutexForWallets.Lock()
+	defer walletDir.mutexForWallets.Unlock()
+	wlt, exist := walletDir[wltId]
+	return wlt, exist
+}
+
+func (walletDir *WalletsDirectory) setWallet(wltId string, wlt *KeystoreWallet) {
+	walletDir.mutexForWallets.Lock()
+	defer walletDir.mutexForWallets.Unlock()
+	walletDir.wallets[wltId] = wlt
+}
+
+//Remove unecessary line
+func (walletDir *WalletsDirectory) getPassword(wltId string) (string, bool) {
+	walletDir.mutexForPasswords.Lock()
+	defer walletDir.mutexForPasswords.Unlock()
+	pass, exist := walletDir.walletsPasswords[wltId]
+	return pass, exist
+}
+
+func (walletDir *WalletsDirectory) setPassword(wltId, passowrd string) {
+	walletDir.mutexForWallets.Lock()
+	defer walletDir.mutexForWallets.Unlock()
+	walletDir.walletsPasswords[wltId] = passowrd
+}
+
 //WalletStorage methods set
 func (walletDir *WalletsDirectory) Encrypt(walletName string, password core.PasswordReader) error {
-	wlt, exist := walletDir.wallets[walletName]
+	wlt, exist := walletDir.getWallet(walletName)
 	if !exist {
 		logWallet.WithError(errors.ErrWalletNotFound).Error("Error encrypting wallet")
 		return errors.ErrWalletNotFound
 	}
-	actualPassword, decrypt := walletDir.walletsPasswords[walletName]
+
+	actualPassword, decrypt := walletDir.getPassword(walletName)
 	if !decrypt {
 		logWallet.WithError(errors.ErrWalletIsNotDecrypted).Error("Error encrypting wallet")
 		return errors.ErrWalletIsNotDecrypted
@@ -89,7 +122,7 @@ func (walletDir *WalletsDirectory) Encrypt(walletName string, password core.Pass
 }
 
 func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.PasswordReader) error {
-	wlt, exist := walletDir.wallets[walletName]
+	wlt, exist := walletDir.getWallet(walletName)
 	if !exist {
 		logWallet.WithError(errors.ErrWalletNotFound).Error("Couldn't decrypt wallet")
 		return errors.ErrWalletNotFound
@@ -113,17 +146,17 @@ func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.Pass
 		}
 	}
 
-	walletDir.walletsPasswords[walletName] = pwd
+	walletDir.setPassword(walletName, pwd)
 	return nil
 }
 
 func (walletDir *WalletsDirectory) IsEncrypted(walletName string) (bool, error) {
-	_, exist := walletDir.wallets[walletName]
+	_, exist := walletDir.getWallet(walletName)
 	if !exist {
 		logWallet.WithError(errors.ErrNotFound).Error("Couldn't check if wallet is encrypted")
 		return false, errors.ErrNotFound
 	}
-	_, decrypt := walletDir.walletsPasswords[walletName]
+	_, decrypt := walletDir.getPassword(walletName)
 
 	return decrypt, nil
 }
@@ -186,14 +219,16 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 //WalletSet methods set
 func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
 	wallets := make([]core.Wallet, 0)
+	walletDir.mutexForWallets.Lock()
 	for _, wlt := range walletDir.wallets {
 		wallets = append(wallets, wlt)
 	}
+	walletDir.mutexForWallets.Unlock()
 	return NewKeyStoreWalletIterator(wallets)
 }
 
 func (walletDir *WalletsDirectory) GetWallet(id string) (core.Wallet, error) {
-	wlt, exist := walletDir.wallets[id]
+	wlt, exist := walletDir.getWallet(id)
 	if !exist {
 		logWallet.WithError(errors.ErrNotFound).Error("Error getting wallet")
 		return nil, errors.ErrNotFound
@@ -236,7 +271,7 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	}
 
 	nWlt := NewKeystoreWallet(wltDir, name)
-	walletDir.wallets[wltId] = nWlt
+	walletDir.setWallet(wltId, nWlt)
 
 	_, err := nWlt.NewAccount(pwd)
 	if err != nil {
@@ -247,7 +282,7 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	}
 
 	if !isEncrypted {
-		walletDir.walletsPasswords[wltId] = ""
+		walletDir.setPassword(wltId, "")
 	}
 
 	return nWlt, nil
@@ -263,12 +298,14 @@ func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
 	cont = 0
 	for {
 		validId := true
+		walletDir.mutexForWallets.Lock()
 		for wltId, _ := range walletDir.wallets {
 			if wltId == id {
 				validId = false
 				break
 			}
 		}
+		walletDir.mutexForWallets.Unlock()
 		if !validId {
 			cont++
 			id := fmt.Sprintf("%s_%d", idBase, cont)
@@ -307,6 +344,22 @@ func (kw *KeystoreWallet) SetLabel(name string) {
 	return
 }
 
+func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
+	if len(from) != 1 {
+		logWallet.WithError(errors.ErrInvalidFromAddresses).Error("Couldn't send transaction")
+	}
+
+	types.NewTransa
+
+}
+
+func (kw *KeystoreWallet) Spend(unspent, new []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+func (kw *KeystoreWallet) Transfer(to core.TransactionOutput, options core.KeyValueStore) (core.Transaction, error) {
+	return nil, errors.ErrNotImplemented
+}
 func NewKeyStoreWalletIterator(wallets []core.Wallet) *KeystoreWalletIterator {
 	return &KeystoreWalletIterator{
 		wallets: wallets,

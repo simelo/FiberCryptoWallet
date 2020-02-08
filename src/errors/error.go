@@ -63,4 +63,6 @@ var (
 	ErrWalletIsNotDecrypted = errors.New("Wallet is not decrypted")
 	//ErrInvalidWalletType the wallet type specified is not supported
 	ErrInvalidWalletType = errors.New("Wallet type specified is not supported")
+	//ErrInvalidFromAddresses from addresses are invalid for the transaction
+	ErrInvalidFromAddresses = errors.New("From addresses are invalid for the transaction")
 )
