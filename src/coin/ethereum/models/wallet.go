@@ -187,6 +187,15 @@ func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
 	return NewKeyStoreWalletIterator(wallets)
 }
 
+func (walletDir *WalletsDirectory) GetWallet(id string) (core.Wallet, error) {
+	wlt, exist := walletDir.wallets[id]
+	if !exist {
+		logWallet.WithError(errors.ErrNotFound).Error("Error getting wallet")
+		return nil, errors.ErrNotFound
+	}
+	return wlt, nil
+}
+
 type KeystoreWallet struct {
 	*keystore.KeyStore
 	name    string
