@@ -7,7 +7,6 @@ import (
 	_ "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/addressBook"
-	_ "github.com/fibercrypto/fibercryptowallet/src/models/explorer"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/history"
 	_ "github.com/fibercrypto/fibercryptowallet/src/models/pending"
 	"github.com/therecipe/qt/core"
@@ -40,7 +39,7 @@ func main() {
 	url := core.NewQUrl3("src/ui/splash.qml", 0) // disable this to make a release
 
 	engine.ConnectSignal(engine.ConnectObjectCreated, func(object *core.QObject, objUrl *core.QUrl) {
-		if object.Pointer() == nil && url.ToString(0) == objUrl.ToString(0)[len(objUrl.ToString(0)) - len(url.ToString(0)):] {
+		if object.Pointer() == nil && url.ToString(0) == objUrl.ToString(0)[len(objUrl.ToString(0))-len(url.ToString(0)):] {
 			app.Exit(-1)
 		}
 	}, core.Qt__QueuedConnection)

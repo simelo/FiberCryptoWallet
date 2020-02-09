@@ -1,90 +1,96 @@
 package ethereum
 
 import (
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/config"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
-	"github.com/ethereum/go-ethereum/core/types"
-
 )
 
 const (
-	EtherName = "ether"
-	EtherTicker = "eth"
+	EtherName    = "ether"
+	EtherTicker  = "eth"
 	EthereFamily = "ethereum"
 )
 
-type EthereumPlugin struct{
-
+type EthereumPlugin struct {
 }
-func (p *EthereumPlugin) ListSupportedAltcoins() []core.AltcoinMetadata{
+
+func (p *EthereumPlugin) ListSupportedAltcoins() []core.AltcoinMetadata {
 	return []core.AltcoinMetadata{
 		core.AltcoinMetadata{
-			Name:EtherName,
-			Ticker:EtherTicker,
-			Family:EthereFamily,
-			HasBip44:false,
+			Name:     EtherName,
+			Ticker:   EtherTicker,
+			Family:   EthereFamily,
+			HasBip44: false,
 			Accuracy: 18,
-		}
+		},
 	}
 }
 
-func (p *EthereumPlugin) ListSupportedFamilies() []string{
+func (p *EthereumPlugin) ListSupportedFamilies() []string {
 	return []string{EthereFamily}
 }
 
-func (p *EthereumPlugin) RegisterTo(manager core.AltcoinManager){
-	for _, info := range p.ListSupportedAltcoins(){
+func (p *EthereumPlugin) RegisterTo(manager core.AltcoinManager) {
+	for _, info := range p.ListSupportedAltcoins() {
 		manager.RegisterAltcoin(info, p)
 	}
 }
 
-func (p *EthereumPlugin) GetName() string{
+func (p *EthereumPlugin) GetName() string {
 	return "Ethereum"
 }
 
-func (p *EthereumPlugin) GetDescription() string{
+func (p *EthereumPlugin) GetDescription() string {
 	return "FiberCrypto wallet connector for Ethereum"
 }
 
-func (p *EthereumPlugin) LoadWalletEnvs []core.WalletEnv{
+func (p *EthereumPlugin) LoadWalletEnvs() []core.WalletEnv {
 	wltSources, err := config.GetWalletSources()
-	if err != nil{
+	if err != nil {
 		return nil
 	}
 	wltEnvs := make([]core.WalletEnv, 0)
 
-	for _, wltS := range wltSources{
+	for _, wltS := range wltSources {
 		tp := wltS.Tp
 		source := wltS.Source
-		if tp == string(config.LocalWallet){
-			wltsEnvs = append(wltsEnv, NewWalletDirectory(source))
+		if tp == string(config.LocalWallet) {
+			wltEnvs = append(wltEnvs, NewWalletDirectory(source))
 		}
 	}
 	return wltEnvs
 }
 
 //TODO waiting for PEX implementation in ethereum plugin
-func (p *EthereumPlugin) LoadPEX(netType string) (core.PEX, error){
+func (p *EthereumPlugin) LoadPEX(netType string) (core.PEX, error) {
 	return nil, nil
 }
 
 //TODO waiting for Address implementation in ethereum plugin
-func (p *EthereumPlugin) AddressFromString(addrStr) (core.Address, error){
+func (p *EthereumPlugin) AddressFromString(addrStr string) (core.Address, error) {
 	return nil, nil
 }
 
-
 //TODO waiting for PubKey implementation in ethereum plugin
-func (p *EthereumPlugin) PubKeyFromBytes(b []byte) (core.PubKey, error){
+func (p *EthereumPlugin) PubKeyFromBytes(b []byte) (core.PubKey, error) {
 	return nil, nil
 }
 
 //TODO waiting for SecKey implementation in ethereum plugin
-func (p *EthereumPlugin) SecKeyFromBytes(b []byte) (core.SecKey, error){
+func (p *EthereumPlugin) SecKeyFromBytes(b []byte) (core.SecKey, error) {
 	return nil, nil
 }
 
-func NewEthereumPlugin() core.AltcoinPlugin{
+//TODO waiting for BlockchainSignService implementation in ethereum plugin
+func (p *EthereumPlugin) LoadSignService() (core.BlockchainSignService, error) {
+	return nil, nil
+}
+
+//TODO waiting for BlockchainTransactionAPI implementation in ethereum plugin
+func (p *EthereumPlugin) LoadTransactionAPI(netType string) (core.BlockchainTransactionAPI, error) {
+	return nil, nil
+}
+
+func NewEthereumPlugin() core.AltcoinPlugin {
 	return &EthereumPlugin{}
 }
