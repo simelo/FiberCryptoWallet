@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/config"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 )
 
@@ -44,5 +45,18 @@ func (p *EthereumPlugin) GetDescription() string{
 }
 
 func (p *EthereumPlugin) LoadWalletEnvs []core.WalletEnv{
-	
+	wltSources, err := config.GetWalletSources()
+	if err != nil{
+		return nil
+	}
+	wltEnvs := make([]core.WalletEnv, 0)
+
+	for _, wltS := range wltSources{
+		tp := wltS.Tp
+		source := wltS.Source
+		if tp == string(config.LocalWallet){
+			wltsEnvs = append(wltsEnv, NewWalletDirectory(source))
+		}
+	}
+	return wltEnvs
 }
