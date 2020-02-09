@@ -31,7 +31,7 @@ func init() {
 		logEthereum.WithError(err).Warn("Couldn't unmarshal option values")
 	}
 
-	err := core.GetMultiPool().CreateSection(eth.PoolSection, eth.NewEthereumConnectionFactory(node["address"]))
+	err = core.GetMultiPool().CreateSection(eth.PoolSection, eth.NewEthereumConnectionFactory(node["address"]))
 	if err != nil {
 		logEthereum.Warn("Couldn't create section for Ethereum")
 	}

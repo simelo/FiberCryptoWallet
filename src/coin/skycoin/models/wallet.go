@@ -186,6 +186,7 @@ func (wltSrv *SkycoinRemoteWallet) Encrypt(walletName string, pwd core.PasswordR
 		logWallet.WithError(err).Warn("Couldn't POST /api/v1/wallet/encrypt")
 		return err
 	}
+	return nil
 }
 
 func (wltSrv *SkycoinRemoteWallet) Decrypt(walletName string, pwd core.PasswordReader) error {
@@ -211,6 +212,7 @@ func (wltSrv *SkycoinRemoteWallet) Decrypt(walletName string, pwd core.PasswordR
 		logWallet.WithError(err).Warn("Couldn't POST /api/v1/wallet/decrypt")
 		return err
 	}
+	return nil
 }
 
 func (wltSrv *SkycoinRemoteWallet) IsEncrypted(walletName string) (bool, error) {
@@ -1005,6 +1007,7 @@ func (wltSrv *SkycoinLocalWallet) Encrypt(walletName string, password core.Passw
 		logWallet.WithError(err).WithField("dir", wltSrv.walletDir).Error("Call to wallet.Save(wlt, dir) inside Encrypt failed")
 		return err
 	}
+	return nil
 
 }
 
@@ -1041,6 +1044,7 @@ func (wltSrv *SkycoinLocalWallet) Decrypt(walletName string, password core.Passw
 		logWallet.WithError(err).WithField("dir", wltSrv.walletDir).Error("Call to wallet.Save(wlt, dir) inside Decrypt failed")
 		return err
 	}
+	return nil
 }
 
 func (wltSrv *SkycoinLocalWallet) IsEncrypted(walletName string) (bool, error) {
