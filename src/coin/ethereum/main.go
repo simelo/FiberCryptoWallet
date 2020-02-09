@@ -3,6 +3,8 @@ package ethereum
 import (
 	"encoding/json"
 
+	"github.com/fibercrypto/fibercryptowallet/src/util"
+
 	"github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/config"
 	eth "github.com/fibercrypto/fibercryptowallet/src/coin/ethereum/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
@@ -33,5 +35,7 @@ func init() {
 	if err != nil {
 		logEthereum.Warn("Couldn't create section for Ethereum")
 	}
+
+	util.RegisterAltcoin(eth.NewEthereumPlugin())
 
 }
