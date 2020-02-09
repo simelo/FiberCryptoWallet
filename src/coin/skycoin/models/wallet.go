@@ -233,23 +233,23 @@ func (wltSrv *SkycoinRemoteWallet) IsEncrypted(walletName string) (bool, error) 
 }
 
 // GetWallet to lookup wallet by ID
-func (wltSrv *SkycoinRemoteWallet) GetWallet(id string) core.Wallet {
+func (wltSrv *SkycoinRemoteWallet) GetWallet(id string) (core.Wallet, error) {
 	logWallet.Info("Getting remote wallet")
 	c, err := NewSkycoinApiClient(wltSrv.poolSection)
 	if err != nil {
 		logWallet.WithError(err).Error("Couldn't get API client")
-		return nil
+		return nil, err
 	}
 	defer ReturnSkycoinClient(c)
 	logWallet.Info("GET /api/v1/wallet")
 	wltR, err := c.Wallet(id)
 	if err != nil {
 		logWallet.WithError(err).WithField("id", id).Error("Couldn't GET /api/v1/wallet")
-		return nil
+		return nil, err
 	}
 	nwlt := walletResponseToWallet(*wltR)
 	nwlt.poolSection = wltSrv.poolSection
-	return nwlt
+	return nwlt, nil
 }
 
 func NewWalletNode(nodeAddress string) *WalletNode {
@@ -874,13 +874,13 @@ func (wltSrv *SkycoinLocalWallet) ListWallets() core.WalletIterator {
 	return NewSkycoinWalletIterator(wallets)
 }
 
-func (wltSrv *SkycoinLocalWallet) GetWallet(id string) core.Wallet {
+func (wltSrv *SkycoinLocalWallet) GetWallet(id string) (core.Wallet, error) {
 	logWallet.Info("Getting Skycoin local wallet")
 	path := filepath.Join(wltSrv.walletDir, id)
 	w, err := wallet.Load(path)
 	if err != nil {
 		logWallet.WithError(err).WithField("filename", path).Error("Call to wallet.Load(filename) inside GetWallet failed.")
-		return nil
+		return nil, err
 	}
 	return &LocalWallet{
 		Id:        id,
@@ -889,7 +889,7 @@ func (wltSrv *SkycoinLocalWallet) GetWallet(id string) core.Wallet {
 		Type:      w.Type(),
 		CoinType:  string(w.Coin()),
 		WalletDir: wltSrv.walletDir,
-	}
+	}, nil
 }
 
 func (wltSrv *SkycoinLocalWallet) CreateWallet(label string, seed string, wltType string, IsEncrypted bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
@@ -964,7 +964,8 @@ func (wltSrv *SkycoinLocalWallet) newUnicWalletFilename() string {
 		timestamp := time.Now().Format(WalletTimestampFormat)
 		padding := hex.EncodeToString((cipher.RandByte(2)))
 		name = fmt.Sprintf("%s_%s.%s", timestamp, padding, walletExt[1:])
-		if w := wltSrv.GetWallet(name); w == nil {
+		_, err := wltSrv.GetWallet(name)
+		if err != nil {
 			break
 		}
 	}

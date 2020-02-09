@@ -59,7 +59,7 @@ func (walletDir *WalletsDirectory) GetWalletSet() core.WalletSet {
 func (walletDir *WalletsDirectory) getWallet(wltId string) (*KeystoreWallet, bool) {
 	walletDir.mutexForWallets.Lock()
 	defer walletDir.mutexForWallets.Unlock()
-	wlt, exist := walletDir[wltId]
+	wlt, exist := walletDir.wallets[wltId]
 	return wlt, exist
 }
 
@@ -244,7 +244,7 @@ func (walletDir *WalletsDirectory) GetWallet(id string) (core.Wallet, error) {
 	return wlt, nil
 }
 
-func (walletDir *WalletsDirectory) SupportedWalletType() []string {
+func (walletDir *WalletsDirectory) SupportedWalletTypes() []string {
 	return []string{WalletTypeStandard}
 }
 
@@ -257,13 +257,14 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	wltId := walletDir.generateUniqueId(name)
 	wltDir := filepath.Join(walletDir.path, wltId)
 	pwd := ""
+	var err error
 	if isEncrypted {
 		pwdCtx := util.NewKeyValueMap()
 		pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
 		pwdCtx.SetValue(core.StrMethodName, "CreateWallet")
 		pwdCtx.SetValue(core.StrWalletName, wltDir)
-		pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
-		pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
+		pwdCtx.SetValue(core.StrWalletLabel, name)
+		pwd, err = password(fmt.Sprintf("Enter password for %s", name), pwdCtx)
 		if err != nil {
 			logWallet.WithError(err).Error("Error creating wallet")
 			return nil, err
@@ -280,7 +281,7 @@ func (walletDir *WalletsDirectory) CreateWallet(name, seed, walletType string, i
 	nWlt := NewKeystoreWallet(wltDir, name)
 	walletDir.setWallet(wltId, nWlt)
 
-	_, err := nWlt.NewAccount(pwd)
+	_, err = nWlt.NewAccount(pwd)
 	if err != nil {
 		logWallet.WithError(err).Error("Error creating wallet")
 		os.RemoveAll(wltDir)
@@ -302,7 +303,7 @@ func (walletDir *WalletsDirectory) DefaultWalletType() string {
 func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
 	idBase := fmt.Sprintf("%s_%d", name, time.Now().UTC().UnixNano())
 	id := idBase
-	cont = 0
+	cont := 0
 	for {
 		validId := true
 		walletDir.mutexForWallets.Lock()
@@ -315,7 +316,7 @@ func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
 		walletDir.mutexForWallets.Unlock()
 		if !validId {
 			cont++
-			id := fmt.Sprintf("%s_%d", idBase, cont)
+			id = fmt.Sprintf("%s_%d", idBase, cont)
 			continue
 		}
 		break
@@ -379,7 +380,7 @@ func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.Transac
 	var gasLimit uint64
 	var gasPrice, amount *big.Int
 	var data []byte
-
+	var ok bool
 	gasLimitTmp := options.GetValue(StrGasLimit)
 	if gasLimitTmp == nil {
 		gasLimit = 0
@@ -424,9 +425,9 @@ func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.Transac
 		}
 	}
 
-	txn := types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, data)
+	_ = types.NewTransaction(nonce, addrTo, amount, gasLimit, gasPrice, data)
 	//FIXME return a type that implements core.Transactions with data of txn
-	return nil
+	return nil, nil
 
 }
 
@@ -440,14 +441,15 @@ func (kw *KeystoreWallet) Transfer(to core.TransactionOutput, options core.KeyVa
 
 //FIXME change returned value
 func (kw *KeystoreWallet) GenAddresses(addrType core.AddressType, startIndex, count uint32, password core.PasswordReader) core.AddressIterator {
-	actualNumberOfAddresses := len(kw.Accounts())
+	actualNumberOfAddresses := uint32(len(kw.Accounts()))
 	var n uint32 = startIndex - actualNumberOfAddresses
 	n += count
 	if n <= 0 {
-		return kw.Accounts()[startIndex : startIndex+count]
+		return nil //kw.Accounts()[startIndex : startIndex+count]
 	}
 
 	var pwd string
+	var err error
 	if password == nil {
 		pwd = ""
 	} else {
@@ -456,23 +458,23 @@ func (kw *KeystoreWallet) GenAddresses(addrType core.AddressType, startIndex, co
 		pwdCtx.SetValue(core.StrMethodName, "GenAddresses")
 		pwdCtx.SetValue(core.StrWalletName, kw.dirName)
 		pwdCtx.SetValue(core.StrWalletLabel, kw.name)
-		pwd, err := password(fmt.Sprintf("Enter password for %s", kw.GetName()), pwdCtx)
+		pwd, err = password(fmt.Sprintf("Enter password for %s", kw.name), pwdCtx)
 		if err != nil {
 			logWallet.WithError(err).Error("Error generating addresses")
-			return nil, err
+			return nil
 		}
 	}
 
-	_, err := kw.TimedUnlock(kw.Accounts()[0], pwd, time.Second*1)
+	err = kw.TimedUnlock(kw.Accounts()[0], pwd, time.Second*1)
 	if err != nil {
 		logWallet.WithError(err).Error("Error generating addresses")
-		return nil, err
+		return nil
 	}
-
-	for i := 0; i <= n; i++ {
+	var i uint32 = 0
+	for ; i <= n; i++ {
 		kw.NewAccount(pwd)
 	}
-	return kw.Accounts()[startIndex : startIndex+count]
+	return nil //kw.Accounts()[startIndex : startIndex+count]
 
 }
 
@@ -483,11 +485,11 @@ func (kw *KeystoreWallet) GetCryptoAccount() core.CryptoAccount {
 
 //FIXME: change returned value
 func (kw *KeystoreWallet) GetLoadedAddresses() (core.AddressIterator, error) {
-	return kw.Accounts(), nil
+	return nil, nil //kw.Accounts(), nil
 }
 
 //TODO
-func (kw *KeystoreWallet) Sign(txn core.Transaction, signer, core.TxnSigner, password core.PasswordReader, index []string) (core.Transaction, error){
+func (kw *KeystoreWallet) Sign(txn core.Transaction, signer core.TxnSigner, password core.PasswordReader, index []string) (core.Transaction, error) {
 	return nil, nil
 }
 

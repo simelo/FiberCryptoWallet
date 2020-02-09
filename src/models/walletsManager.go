@@ -170,7 +170,10 @@ func (walletM *WalletManager) updateWalletEnvs() {
 
 func (walletM *WalletManager) updateAddresses(wltId string) {
 	logWalletManager.Info("Updating Addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	if err != nil {
+		return
+	}
 	qAddresses := make([]*QAddress, 0)
 	it, err := wlt.GetLoadedAddresses()
 	if err != nil {
@@ -225,7 +228,13 @@ func (walletM *WalletManager) updateAddresses(wltId string) {
 
 func (walletM *WalletManager) updateOutputs(wltId, address string) {
 	outs := make([]*QOutput, 0)
-	addressIterator, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId).GetLoadedAddresses()
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	if err != nil {
+		logWalletManager.WithError(err).Warn("Couldn't get an addresses iterator")
+		walletM.outputsByAddress[address] = outs
+		return
+	}
+	addressIterator, err := wlt.GetLoadedAddresses()
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Couldn't get an addresses iterator")
 		walletM.outputsByAddress[address] = outs
@@ -358,9 +367,9 @@ func (walletM *WalletManager) sendFromOutputs(wltIds []string, from, addrTo, sky
 		var wlt core.Wallet
 		wlt, exist := wltCache[wltId]
 		if !exist {
-			wlt = walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-			if wlt == nil {
-				logWalletManager.Warn("Couldn't load wallet to create transaction")
+			wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+			if err != nil {
+				logWalletManager.WithError(err).Warn("Couldn't load wallet to create transaction")
 				return nil
 			}
 			wltCache[wltId] = wlt
@@ -437,9 +446,9 @@ func (walletM *WalletManager) sendFromAddresses(wltIds []string, from, addrTo, s
 		var wlt core.Wallet
 		wlt, exist := wltCache[wltId]
 		if !exist {
-			wlt = walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-			if wlt == nil {
-				logWalletManager.Warn("Couldn't load wallet to create transaction")
+			wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+			if err != nil {
+				logWalletManager.WithError(err).Warn("Couldn't load wallet to create transaction")
 				return nil
 			}
 			wltCache[wltId] = wlt
@@ -524,7 +533,12 @@ func (walletM *WalletManager) getOutputs(wltId, address string) []*QOutput {
 func (walletM *WalletManager) getOutputsFromWallet(wltId string) []*QOutput {
 	logWalletManager.Info("Getting Outputs from wallet by Id")
 	outs := make([]*QOutput, 0)
-	addrIter, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId).GetLoadedAddresses()
+	mWlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	if err != nil {
+		logWalletManager.WithError(err).Warn("Couldn't load addresses iterator")
+		return nil
+	}
+	addrIter, err := mWlt.GetLoadedAddresses()
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Couldn't load addresses iterator")
 		return nil
@@ -538,18 +552,18 @@ func (walletM *WalletManager) getOutputsFromWallet(wltId string) []*QOutput {
 
 func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount string) *QTransaction {
 	logWalletManager.Info("Creating Transaction")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
 	addr := util.NewGenericAddress(destinationAddress)
 	opt := util.NewKeyValueMap()
 	opt.SetValue("BurnFactor", "0.5")
 	opt.SetValue("CoinHoursSelectionType", "auto")
-	if wlt == nil {
-		logWalletManager.Warn("Couldn't load wallet to create transaction")
+	if err != nil {
+		logWalletManager.WithError(err).Warn("Couldn't load wallet to create transaction")
 		return nil
 	}
 	txOut := util.NewGenericOutput(&addr, "")
 	// FIXME: Remove explicit reference to Skycoin
-	err := txOut.PushCoins(sky.Sky, amount)
+	err = txOut.PushCoins(sky.Sky, amount)
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Error parsing value for %s", sky.Sky)
 		return nil
@@ -588,9 +602,9 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 		var wlt core.Wallet
 		wlt, exist := wltCache[wltId]
 		if !exist {
-			wlt = walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-			if wlt == nil {
-				logWalletManager.Warn("Couldn't load wallet to Sign transaction")
+			wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+			if err != nil {
+				logWalletManager.WithError(err).Warn("Couldn't load wallet to Sign transaction")
 				return nil
 			}
 			wltCache[wltId] = wlt
@@ -763,7 +777,11 @@ func (walletM *WalletManager) decryptWallet(id, password string) int {
 
 func (walletM *WalletManager) newWalletAddress(id string, n int, password string) {
 	logWalletManager.Info("Creating new wallet addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(id)
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(id)
+	if err != nil {
+		logWalletManager.WithError(err).Error("Couldn't load addresses")
+		return
+	}
 	pwd := util.ConstantPassword(password)
 	// NOTE: No easy way to get plain passwords in memory
 	password = ""
@@ -822,9 +840,12 @@ func (walletM *WalletManager) getWallets() []*QWallet {
 func (walletM *WalletManager) editWallet(id, label string) *QWallet {
 	logWalletManager.Info("Editing wallet")
 
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(id)
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(id)
+	if err != nil {
+		logWalletManager.WithError(err).Error("Couldn't edit wallet")
+		return nil
+	}
 	wlt.SetLabel(label)
-	wlt = walletM.WalletEnv.GetWalletSet().GetWallet(id)
 	encrypted, err := walletM.WalletEnv.GetStorage().IsEncrypted(wlt.GetId())
 	if err != nil {
 		logWalletManager.WithError(err).Error("Couldn't edit wallet")
