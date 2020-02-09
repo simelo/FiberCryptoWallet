@@ -2,13 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"os"
-	"os/user"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	local "github.com/fibercrypto/fibercryptowallet/src/main"
+	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 )
 
@@ -26,15 +24,6 @@ var (
 	log            = logging.MustGetLogger("Skycoin Config")
 )
 
-func getMultiPlatformUserDirectory() string {
-	usr, err := user.Current()
-	if err != nil {
-		log.WithError(err).Error()
-		return ""
-	}
-	return filepath.Join(usr.HomeDir, string(os.PathSeparator), ".skycoin", string(os.PathSeparator), "wallets")
-}
-
 func RegisterConfig() error {
 	cm := local.GetConfigManager()
 	node := map[string]string{"address": "https://staging.node.skycoin.net"}
@@ -43,7 +32,7 @@ func RegisterConfig() error {
 		return err
 	}
 	nodeOpt := local.NewOption(SettingPathToNode, []string{}, false, string(nodeBytes))
-	walletsDefaultDirectory := getMultiPlatformUserDirectory()
+	walletsDefaultDirectory := util.GetMultiPlatformUserDirectory([]string{".skycoin", "wallets"})
 	wltSrc := &walletSource{
 		id:     "1",
 		Tp:     string(LocalWallet),

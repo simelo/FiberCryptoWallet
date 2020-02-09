@@ -2,6 +2,9 @@ package util
 
 import (
 	"errors"
+	"os"
+	"os/user"
+	"path/filepath"
 	"strconv"
 
 	"github.com/fibercrypto/fibercryptowallet/src/core"
@@ -100,4 +103,17 @@ func AddressFromString(addrs, coinTicket string) (core.Address, error) {
 		return nil, errors.New("coinTicket not match")
 	}
 	return altPlugin.AddressFromString(addrs)
+}
+
+func GetMultiPlatformUserDirectory(FoldersSuffix []string) string {
+	usr, err := user.Current()
+	if err != nil {
+		log.WithError(err).Error()
+		return ""
+	}
+	path := usr.HomeDir
+	for _, folder := range FoldersSuffix {
+		path = filepath.Join(path, string(os.PathSeparator), folder)
+	}
+	return path
 }
