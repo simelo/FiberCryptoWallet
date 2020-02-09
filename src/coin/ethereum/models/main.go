@@ -55,7 +55,7 @@ func (p *EthereumPlugin) LoadWalletEnvs() []core.WalletEnv {
 		tp := wltS.Tp
 		source := wltS.Source
 		if tp == string(config.LocalWallet) {
-			wltEnvs = append(wltEnv, NewWalletDirectory(source))
+			wltEnvs = append(wltEnvs, NewWalletDirectory(source))
 		}
 	}
 	return wltEnvs
@@ -78,6 +78,11 @@ func (p *EthereumPlugin) PubKeyFromBytes(b []byte) (core.PubKey, error) {
 
 //TODO waiting for SecKey implementation in ethereum plugin
 func (p *EthereumPlugin) SecKeyFromBytes(b []byte) (core.SecKey, error) {
+	return nil, nil
+}
+
+//TODO waiting for BlockchainSignService implementation in ethereum plugin
+func (p *EthereumPlugin) LoadSignService() (core.BlockchainSignService, error) {
 	return nil, nil
 }
 
