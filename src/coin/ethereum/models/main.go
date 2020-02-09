@@ -86,6 +86,11 @@ func (p *EthereumPlugin) LoadSignService() (core.BlockchainSignService, error) {
 	return nil, nil
 }
 
+//TODO waiting for BlockchainTransactionAPI implementation in ethereum plugin
+func (p *EthereumPlugin) LoadTransactionAPI(netType string) (core.BlockchainTransactionAPI, error) {
+	return nil, nil
+}
+
 func NewEthereumPlugin() core.AltcoinPlugin {
 	return &EthereumPlugin{}
 }

@@ -123,8 +123,6 @@ func (walletDir *WalletsDirectory) IsEncrypted(walletName string) (bool, error) 
 	return decrypt, nil
 }
 
-func (walletDir *WalletsDirectory)
-
 func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 	tempDir, err := ioutil.TempDir("", "ethWlt")
 	if err != nil {
@@ -180,29 +178,29 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 }
 
 //TODO
-func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator{
+func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
 	return nil
 }
+
 //TODO
-func (walletDir *WalletsDirectory) GetWallet(id string) core.Wallet{
+func (walletDir *WalletsDirectory) GetWallet(id string) core.Wallet {
 	return nil
 }
+
 //TODO
-func (walletDir *WalletsDirectory) CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error){
+func (walletDir *WalletsDirectory) CreateWallet(name string, seed string, walletType string, isEncryptrd bool, pwd core.PasswordReader, scanAddressesN int) (core.Wallet, error) {
 	return nil, nil
 }
+
 //TODO
-func (walletDir *WalletsDirectory) DefaultWalletType() string{
+func (walletDir *WalletsDirectory) DefaultWalletType() string {
 	return ""
 }
+
 //TODO
-func (walletDir *WalletsDirectory) SupportedWalletTypes() []string{
+func (walletDir *WalletsDirectory) SupportedWalletTypes() []string {
 	return nil
 }
-
-
-
-
 
 type KeystoreWallet struct {
 	*keystore.KeyStore
