@@ -54,8 +54,8 @@ func (walletDir *WalletsDirectory) Encrypt(walletName string, password core.Pass
 	pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
 	pwdCtx.SetValue(core.StrMethodName, "Encrypt")
 	pwdCtx.SetValue(core.StrWalletName, walletName)
-	pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
-	newPassword, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
+	pwdCtx.SetValue(core.StrWalletLabel, wlt.name)
+	newPassword, err := password(fmt.Sprintf("Enter password for %s", wlt.name), pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Error("Error encrypting wallet")
 		return err
@@ -94,8 +94,8 @@ func (walletDir *WalletsDirectory) Decrypt(walletName string, password core.Pass
 	pwdCtx.SetValue(core.StrTypeName, core.TypeNameWalletStorage)
 	pwdCtx.SetValue(core.StrMethodName, "Encrypt")
 	pwdCtx.SetValue(core.StrWalletName, walletName)
-	pwdCtx.SetValue(core.StrWalletLabel, wlt.GetName())
-	pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.GetName()), pwdCtx)
+	pwdCtx.SetValue(core.StrWalletLabel, wlt.name)
+	pwd, err := password(fmt.Sprintf("Enter password for %s", wlt.name), pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Error("Error decrypting wallet")
 		return err
@@ -174,7 +174,7 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 			os.Remove(file.Name())
 		}
 	}
-
+	return nil
 }
 
 type KeystoreWallet struct {
