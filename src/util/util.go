@@ -108,7 +108,6 @@ func AddressFromString(addrs, coinTicket string) (core.Address, error) {
 func GetMultiPlatformUserDirectory(FoldersSuffix []string) string {
 	usr, err := user.Current()
 	if err != nil {
-		log.WithError(err).Error()
 		return ""
 	}
 	path := usr.HomeDir

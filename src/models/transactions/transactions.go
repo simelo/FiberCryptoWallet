@@ -1,21 +1,8 @@
 package transactions
 
 import (
-<<<<<<< HEAD
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	qtcore "github.com/therecipe/qt/core"
-=======
-	"strconv"
-	"time"
-
-	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
-	"github.com/fibercrypto/fibercryptowallet/src/core"
-	"github.com/fibercrypto/fibercryptowallet/src/models/address"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
-	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
-	qtCore "github.com/therecipe/qt/core"
->>>>>>> c6fca981... [eth][config] Add config package for register ethereum plugin settings
 )
 
 func init() {

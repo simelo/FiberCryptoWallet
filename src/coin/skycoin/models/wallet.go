@@ -163,12 +163,12 @@ func (wltSrv *SkycoinRemoteWallet) SupportedWalletTypes() []string {
 	}
 }
 
-func (wltSrv *SkycoinRemoteWallet) Encrypt(walletName string, pwd core.PasswordReader) {
+func (wltSrv *SkycoinRemoteWallet) Encrypt(walletName string, pwd core.PasswordReader) error {
 	logWallet.Info("Encrypting remote wallet")
 	c, err := NewSkycoinApiClient(wltSrv.poolSection)
 	if err != nil {
 		logWallet.WithError(err).Error("Couldn't get API client")
-		return
+		return err
 	}
 	defer ReturnSkycoinClient(c)
 	pwdCtx := util.NewKeyValueMap()
@@ -178,22 +178,22 @@ func (wltSrv *SkycoinRemoteWallet) Encrypt(walletName string, pwd core.PasswordR
 	password, err := pwd("Enter password to encrypt wallet", pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Fatal("Something was wrong entering the password")
-		return
+		return err
 	}
 	logWallet.Info("POST /api/v1/wallet/encrypt")
 	_, err = c.EncryptWallet(walletName, password)
 	if err != nil {
 		logWallet.WithError(err).Warn("Couldn't POST /api/v1/wallet/encrypt")
-		return
+		return err
 	}
 }
 
-func (wltSrv *SkycoinRemoteWallet) Decrypt(walletName string, pwd core.PasswordReader) {
+func (wltSrv *SkycoinRemoteWallet) Decrypt(walletName string, pwd core.PasswordReader) error {
 	logWallet.Info("Decrypting remote wallet")
 	c, err := NewSkycoinApiClient(wltSrv.poolSection)
 	if err != nil {
 		logWallet.WithError(err).Error("Couldn't get API client")
-		return
+		return err
 	}
 	defer ReturnSkycoinClient(c)
 	pwdCtx := util.NewKeyValueMap()
@@ -203,13 +203,13 @@ func (wltSrv *SkycoinRemoteWallet) Decrypt(walletName string, pwd core.PasswordR
 	password, err := pwd("Enter password to decrypt wallet", pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Fatal("Something was wrong entering the password")
-		return
+		return err
 	}
 	logWallet.Info("POST /api/v1/wallet/decrypt")
 	_, err = c.DecryptWallet(walletName, password)
 	if err != nil {
 		logWallet.WithError(err).Warn("Couldn't POST /api/v1/wallet/decrypt")
-		return
+		return err
 	}
 }
 
@@ -970,18 +970,18 @@ func (wltSrv *SkycoinLocalWallet) newUnicWalletFilename() string {
 
 }
 
-func (wltSrv *SkycoinLocalWallet) Encrypt(walletName string, password core.PasswordReader) {
+func (wltSrv *SkycoinLocalWallet) Encrypt(walletName string, password core.PasswordReader) error {
 	logWallet.Info("Encrypt Skycoin local wallet")
 	wltName := filepath.Join(wltSrv.walletDir, walletName)
 	wlt, err := wallet.Load(wltName)
 	if err != nil {
 		logWallet.WithError(err).WithField("filename", wltName).Error("Call to wallet.Load(filename) inside Encrypt failed.")
-		return
+		return err
 	}
 
 	wltLabel := wlt.Label()
 	if wlt.IsEncrypted() {
-		return
+		return errors.ErrWalletIsNotDecrypted
 	}
 
 	pwdCtx := util.NewKeyValueMap()
@@ -992,32 +992,32 @@ func (wltSrv *SkycoinLocalWallet) Encrypt(walletName string, password core.Passw
 	pwd, err := password("Enter Password", pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Fatal("Something was wrong entering the password")
-		return
+		return err
 	}
 	pwdBytes := []byte(pwd)
 
 	if err := wallet.Lock(wlt, pwdBytes, "scrypt-chacha20poly1305"); err != nil {
 		logWallet.WithError(err).Error("Call to wallet.Lock() inside Encrypt failed")
-		return
+		return err
 	}
 
 	if err := wallet.Save(wlt, wltSrv.walletDir); err != nil {
 		logWallet.WithError(err).WithField("dir", wltSrv.walletDir).Error("Call to wallet.Save(wlt, dir) inside Encrypt failed")
-		return
+		return err
 	}
 
 }
 
-func (wltSrv *SkycoinLocalWallet) Decrypt(walletName string, password core.PasswordReader) {
+func (wltSrv *SkycoinLocalWallet) Decrypt(walletName string, password core.PasswordReader) error {
 	logWallet.Info("Decrypt Skycoin local wallet")
 	wltName := filepath.Join(wltSrv.walletDir, walletName)
 	wlt, err := wallet.Load(wltName)
 	if err != nil {
 		logWallet.WithError(err).WithField("filename", wltName).Error("Call to wallet.Load(filename) inside Decrypt failed.")
-		return
+		return err
 	}
 	if !wlt.IsEncrypted() {
-		return
+		return nil
 	}
 	wltLabel := wlt.Label()
 	pwdCtx := util.NewKeyValueMap()
@@ -1028,18 +1028,18 @@ func (wltSrv *SkycoinLocalWallet) Decrypt(walletName string, password core.Passw
 	pwd, err := password("Enter Password", pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Fatal("Something was wrong entering the password")
-		return
+		return err
 	}
 	pwdBytes := []byte(pwd)
 
 	unlockedWallet, err := wallet.Unlock(wlt, pwdBytes)
 	if err != nil {
 		logWallet.WithError(err).Error("Call to wallet.Unlock() inside Decrypt failed")
-		return
+		return err
 	}
 	if err := wallet.Save(unlockedWallet, wltSrv.walletDir); err != nil {
 		logWallet.WithError(err).WithField("dir", wltSrv.walletDir).Error("Call to wallet.Save(wlt, dir) inside Decrypt failed")
-		return
+		return err
 	}
 }
 
