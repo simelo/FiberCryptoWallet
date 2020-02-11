@@ -53,8 +53,10 @@ type AddressIterator interface {
 
 // TxnSigner defines the contract enforced upon objects able to sin transacions.
 type TxnSigner interface {
-	// ReadyForTxn determines whether this signer instance can be used by wallet to sign given transaction
-	ReadyForTxn(FullWallet, Transaction) (bool, error)
+	// ReadyForTxn determines whether this signer instance can be used to sign given transaction
+	ReadyForTxn(Transaction) (bool, error)
+	// DeriveParentPubKey generate watch-only wallet with parent token to derive child public keys
+	DeriveParentPubKey(chainCode []byte) (WatchWallet, error)
 	// SignTransaction partially or in full
 	SignTransaction(Transaction, PasswordReader, []string) (Transaction, error)
 	// GetSignerUID provides the key identifying this signer among peer strategies supported by an object
