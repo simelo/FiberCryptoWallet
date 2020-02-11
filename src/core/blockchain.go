@@ -33,3 +33,11 @@ type BlockchainVisor interface {
 	// ScanOutputs scan the blockchain looking for outputs
 	ScanOutputs(unspentOnly bool) (TransactionOutputIterator, error)
 }
+
+// BlockchainExplorer explore chains of blocks
+type BlockchainExplorer interface {
+	// GetBlockByHash return a block by a hash
+	GetBlockByHash(hash string) (Block, error)
+	// GetBlocksInRange return a list of blocks between start and end height numbers.
+	GetBlocksInRange(start, end uint64) ([]Block, error)
+}
