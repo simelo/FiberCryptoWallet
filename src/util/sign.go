@@ -31,12 +31,12 @@ func EnumerateSignServices() core.TxnSignerIterator {
 }
 
 // SignServicesForTxn returns an object to iterate over strategies supported to sign a given transaction on behalf of a wallet
-func SignServicesForTxn(wlt core.FullWallet, txn core.Transaction) core.TxnSignerIterator {
+func SignServicesForTxn(wlt core.Wallet, txn core.Transaction) core.TxnSignerIterator {
 	return local.LoadAltcoinManager().SignServicesForTxn(wlt, txn)
 }
 
 // ReadyForTxn determines whether global signer identified by UID can be used by wallet to sign given transaction
-func ReadyForTxn(signerID core.UID, wallet core.FullWallet, txn core.Transaction) (bool, error) {
+func ReadyForTxn(signerID core.UID, wallet core.Wallet, txn core.Transaction) (bool, error) {
 	signer := LookupSignService(signerID)
 	if signer == nil {
 		return false, errors.ErrInvalidID
@@ -112,7 +112,7 @@ func GenericMultiWalletSign(txn core.Transaction, signSpec []core.InputSignDescr
 			logUtil.WithError(err).Errorf("Unknown signer %s specified for signing inputs %v of wallet %v", string(signPair.signerID), indices, signPair.wallet)
 			return nil, errors.ErrInvalidID
 		}
-		signedTxn, err = signPair.wallet.Sign(signedTxn, signer, pwd, indices)
+		signedTxn, err = signer.SignTransaction(signedTxn, pwd, indices)
 		if err != nil {
 			logUtil.WithError(err).Errorf("Error signing inputs %v of wallet %v with signer %s", indices, signPair.wallet, string(signPair.signerID))
 			return nil, err

@@ -43,7 +43,7 @@ type AltcoinPlugin interface {
 	// LoadPEX instantiates proxy object to interact with nodes nodes of the P2P network
 	LoadPEX(netType string) (PEX, error)
 	// LoadTransactionAPI blockchain transaction API entry poiny
-	LoadTransactionAPI(netType string) (BlockchainTransactionAPI, error)
+	LoadTransactionAPI(netType string) (BlockchainVisor, error)
 	// LoadSignService sign service entry point
 	LoadSignService() (BlockchainSignService, error)
 	// AddressFromString retrieves address correspoding to readable representation
@@ -75,5 +75,5 @@ type AltcoinManager interface {
 	// EnumerateSignServices returns an object to iterate over global signing srategies
 	EnumerateSignServices() TxnSignerIterator
 	// SignServicesForTxn returns an object to iterate over strategies supported to sign a given transaction on behalf of a wallet
-	SignServicesForTxn(FullWallet, Transaction) TxnSignerIterator
+	SignServicesForTxn(Wallet, Transaction) TxnSignerIterator
 }

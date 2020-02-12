@@ -45,17 +45,12 @@ func TestUnknownPlugin(t *testing.T) {
 }
 
 func TestLookupSignerByUID(t *testing.T) {
-	type WalletSigner struct {
-		mocks.Wallet
-		mocks.TxnSigner
-	}
-
 	emptyUID := core.UID("")
 	uid := core.UID("walletid")
 	other := core.UID("otherid")
 
-	ws := new(WalletSigner)
-	ws.TxnSigner.On("GetSignerUID").Return(uid)
+	ws := new(mocks.FullWallet)
+	ws.On("GetSignerUID").Return(uid)
 	var signer core.TxnSigner = ws
 	err := AttachSignService(signer)
 	defer RemoveSignService(uid) // nolint gosec

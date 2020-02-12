@@ -31,7 +31,7 @@ type WalletManager struct {
 	outputsByAddress    map[string][]*QOutput
 	altManager          core.AltcoinManager
 	signer              core.BlockchainSignService
-	transactionAPI      core.BlockchainTransactionAPI
+	transactionAPI      core.BlockchainVisor
 
 	_ func()                                                                                                                           `slot:"updateWalletEnvs"`
 	_ func(wltId, address string)                                                                                                      `slot:"updateOutputs"`
@@ -143,7 +143,7 @@ func (walletM *WalletManager) updateSigner() {
 
 func (walletM *WalletManager) updateTransactionAPI() {
 	logWalletManager.Info("Updating TransactionAPI")
-	txnAPIS := make([]core.BlockchainTransactionAPI, 0)
+	txnAPIS := make([]core.BlockchainVisor, 0)
 
 	for _, plug := range walletM.altManager.ListRegisteredPlugins() {
 		txnAPI, err := plug.LoadTransactionAPI("MainNet")

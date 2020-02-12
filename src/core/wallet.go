@@ -89,3 +89,8 @@ type WalletEnv interface {
 	// GetWalletSet loads wallets in this environment
 	GetWalletSet() WalletSet
 }
+
+// WalletObject represents the contract implemented by objects managed by wallets
+type WalletObject interface {
+	GetWallet() Wallet
+}

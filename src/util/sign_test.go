@@ -227,7 +227,7 @@ func TestSignTransaction(t *testing.T) {
 }
 
 func TestGenericMultiWalletSign(t *testing.T) {
-	var pwd core.PasswordReader = func(s string, kvs core.KeyValueStore) (string, error){
+	var pwd core.PasswordReader = func(s string, kvs core.KeyValueStore) (string, error) {
 		return s, nil
 	}
 
@@ -253,8 +253,10 @@ func TestGenericMultiWalletSign(t *testing.T) {
 
 	badTxn := new(mocks.Transaction)
 	badTxn.On("GetId").Return("bad_txn_id")
-	wlt.On("Sign", txn, signer, mock.Anything, inputsIdx).Return(txn, nil)
-	wlt.On("Sign", badTxn, signer, mock.Anything, inputsIdx).Return(txn, errors.ErrInvalidTxn)
+
+	signer.On("SignTransaction", txn, mock.Anything, inputsIdx).Return(txn, nil)
+	signer.On("SignTransaction", badTxn, mock.Anything, inputsIdx).Return(nil, errors.ErrInvalidTxn)
+
 	_txn, err := GenericMultiWalletSign(txn, spec, pwd)
 	require.Equal(t, txn, _txn)
 	require.Nil(t, err)
