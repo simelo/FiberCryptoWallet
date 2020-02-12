@@ -63,27 +63,27 @@ func (wa *SimpleWalletAddress) String() string {
 
 // GetCryptoAccount provides access to address transaction history
 func (wa *SimpleWalletAddress) GetCryptoAccount() core.CryptoAccount {
-	return wa.GetCryptoAccount()
+	return wa.Address.GetCryptoAccount()
 }
 
 // Bytes binary representation for address
 func (wa *SimpleWalletAddress) Bytes() []byte {
-	return wa.Bytes()
+	return wa.Address.Bytes()
 }
 
 // Checksum computes address consistency token
 func (wa *SimpleWalletAddress) Checksum() core.Checksum {
-	return wa.Checksum()
+	return wa.Address.Checksum()
 }
 
 // Verify checks that the address appears valid for the public key
 func (wa *SimpleWalletAddress) Verify(pubkey core.PubKey) error {
-	return wa.Verify(pubkey)
+	return wa.Address.Verify(pubkey)
 }
 
 // Null returns true if the address is null
 func (wa *SimpleWalletAddress) Null() bool {
-	return wa.Null()
+	return wa.Address.Null()
 }
 
 // Type assertions
