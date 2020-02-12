@@ -21,7 +21,7 @@ type BlockchainStatus interface {
 }
 
 // BlockchainVisor abstract interface for transactions management and utility functions for specific blockchain.
-// The service should use the blockchain node to implement given interface.
+// The service may either read from blockchain directly or contact some node to implement given interface.
 type BlockchainVisor interface {
 	// Transfer instantiates unsigned transaction to send funds from any wallet address to single destination
 	Transfer(to TransactionOutput, options KeyValueStore) (Transaction, error)

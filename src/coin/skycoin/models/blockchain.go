@@ -238,25 +238,32 @@ func (ss *SkycoinBlockchain) requestStatusInfo() error {
 	return nil
 }
 
+// Transfer is not supported since there is no reference to source addresses
+func (ss *SkycoinBlockchain) Transfer(to core.TransactionOutput, options core.KeyValueStore) (core.Transaction, error) {
+	return nil, errors.ErrNotSupported
+}
+
 // SendFromAddress instantiates a transaction to send funds from specific source addresses
 // to multiple destination addresses
-func (ss *SkycoinBlockchain) SendFromAddress(from []core.WalletAddress, to []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
+func (ss *SkycoinBlockchain) SendFromAddress(from []core.Address, to []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
 	logBlockchain.Info("Sending coins from addresses via blockchain API")
-	addresses := make([]core.Address, len(from))
-	for i, wa := range from {
-		addresses[i] = wa.GetAddress()
-	}
 	createTxnFunc := skyAPICreateTxn
-	return createTransaction(addresses, to, nil, change, options, createTxnFunc)
+	return createTransaction(from, to, nil, change, options, createTxnFunc)
 }
 
 // Spend instantiates a transaction that spends specific outputs to send to multiple destination addresses
-func (ss *SkycoinBlockchain) Spend(unspent []core.WalletOutput, new []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
+func (ss *SkycoinBlockchain) Spend(unspent []core.TransactionOutput, new []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
 	logBlockchain.Info("Spending coins from outputs via blockchain API")
-	uxouts := make([]core.TransactionOutput, len(unspent))
-	for i, wu := range unspent {
-		uxouts[i] = wu.GetOutput()
-	}
 	createTxnFunc := skyAPICreateTxn
-	return createTransaction(nil, new, uxouts, change, options, createTxnFunc)
+	return createTransaction(nil, new, unspent, change, options, createTxnFunc)
 }
+
+// ScanOutputs scan the blockchain looking for outputs
+func (ss *SkycoinBlockchain) ScanOutputs(unspentOnly bool) (core.TransactionOutputIterator, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+// Type assertions
+var (
+	_ core.BlockchainVisor = &SkycoinBlockchain{}
+)
