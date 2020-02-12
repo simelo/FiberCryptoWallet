@@ -10,68 +10,54 @@ type FullWallet struct {
 	mock.Mock
 }
 
-// GenAddresses provides a mock function with given fields: addrType, startIndex, count, pwd
-func (_m *FullWallet) GenAddresses(addrType core.AddressType, startIndex uint32, count uint32, pwd core.PasswordReader) core.AddressIterator {
-	ret := _m.Called(addrType, startIndex, count, pwd)
+// DeriveParentPubKey provides a mock function with given fields: chainCode
+func (_m *FullWallet) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
+	ret := _m.Called(chainCode)
+
+	var r0 core.WatchWallet
+	if rf, ok := ret.Get(0).(func([]byte) core.WatchWallet); ok {
+		r0 = rf(chainCode)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.WatchWallet)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(chainCode)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenAddresses provides a mock function with given fields: accountIndex, addrType, startIndex, count, pwd
+func (_m *FullWallet) GenAddresses(accountIndex uint32, addrType core.AddressType, startIndex uint32, count uint32, pwd core.PasswordReader) (core.AddressIterator, error) {
+	ret := _m.Called(accountIndex, addrType, startIndex, count, pwd)
 
 	var r0 core.AddressIterator
-	if rf, ok := ret.Get(0).(func(core.AddressType, uint32, uint32, core.PasswordReader) core.AddressIterator); ok {
-		r0 = rf(addrType, startIndex, count, pwd)
+	if rf, ok := ret.Get(0).(func(uint32, core.AddressType, uint32, uint32, core.PasswordReader) core.AddressIterator); ok {
+		r0 = rf(accountIndex, addrType, startIndex, count, pwd)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(core.AddressIterator)
 		}
 	}
 
-	return r0
-}
-
-// GetCryptoAccount provides a mock function with given fields:
-func (_m *FullWallet) GetCryptoAccount() core.CryptoAccount {
-	ret := _m.Called()
-
-	var r0 core.CryptoAccount
-	if rf, ok := ret.Get(0).(func() core.CryptoAccount); ok {
-		r0 = rf()
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint32, core.AddressType, uint32, uint32, core.PasswordReader) error); ok {
+		r1 = rf(accountIndex, addrType, startIndex, count, pwd)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(core.CryptoAccount)
-		}
+		r1 = ret.Error(1)
 	}
 
-	return r0
+	return r0, r1
 }
 
-// GetId provides a mock function with given fields:
-func (_m *FullWallet) GetId() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// GetLabel provides a mock function with given fields:
-func (_m *FullWallet) GetLabel() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// GetLoadedAddresses provides a mock function with given fields:
-func (_m *FullWallet) GetLoadedAddresses() (core.AddressIterator, error) {
+// GetAllLoadedAddresses provides a mock function with given fields:
+func (_m *FullWallet) GetAllLoadedAddresses() (core.AddressIterator, error) {
 	ret := _m.Called()
 
 	var r0 core.AddressIterator
@@ -93,8 +79,103 @@ func (_m *FullWallet) GetLoadedAddresses() (core.AddressIterator, error) {
 	return r0, r1
 }
 
+// GetLoadedAddressesForAccount provides a mock function with given fields: accountIndex, addrType
+func (_m *FullWallet) GetLoadedAddressesForAccount(accountIndex uint32, addrType core.AddressType) (core.AddressIterator, error) {
+	ret := _m.Called(accountIndex, addrType)
+
+	var r0 core.AddressIterator
+	if rf, ok := ret.Get(0).(func(uint32, core.AddressType) core.AddressIterator); ok {
+		r0 = rf(accountIndex, addrType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.AddressIterator)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint32, core.AddressType) error); ok {
+		r1 = rf(accountIndex, addrType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSignerDescription provides a mock function with given fields:
+func (_m *FullWallet) GetSignerDescription() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// GetSignerUID provides a mock function with given fields:
+func (_m *FullWallet) GetSignerUID() core.UID {
+	ret := _m.Called()
+
+	var r0 core.UID
+	if rf, ok := ret.Get(0).(func() core.UID); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(core.UID)
+	}
+
+	return r0
+}
+
+// ReadyForTxn provides a mock function with given fields: _a0, _a1
+func (_m *FullWallet) ReadyForTxn(_a0 core.Wallet, _a1 core.Transaction) (bool, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(core.Wallet, core.Transaction) bool); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(core.Wallet, core.Transaction) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ScanOutputs provides a mock function with given fields: unspentOnly
+func (_m *FullWallet) ScanOutputs(unspentOnly bool) (core.TransactionOutputIterator, error) {
+	ret := _m.Called(unspentOnly)
+
+	var r0 core.TransactionOutputIterator
+	if rf, ok := ret.Get(0).(func(bool) core.TransactionOutputIterator); ok {
+		r0 = rf(unspentOnly)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.TransactionOutputIterator)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = rf(unspentOnly)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SendFromAddress provides a mock function with given fields: from, to, change, options
-func (_m *FullWallet) SendFromAddress(from []core.Address, to []core.TransactionOutput, change core.Address, options core.KeyValueStorage) (core.Transaction, error) {
+func (_m *FullWallet) SendFromAddress(from []core.Address, to []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
 	ret := _m.Called(from, to, change, options)
 
 	var r0 core.Transaction
@@ -116,18 +197,18 @@ func (_m *FullWallet) SendFromAddress(from []core.Address, to []core.Transaction
 	return r0, r1
 }
 
-// SetLabel provides a mock function with given fields: wltName
-func (_m *FullWallet) SetLabel(wltName string) {
+// SetWalletLabel provides a mock function with given fields: wltName
+func (_m *FullWallet) SetWalletLabel(wltName string) {
 	_m.Called(wltName)
 }
 
-// Sign provides a mock function with given fields: txn, signer, pwd, index
-func (_m *FullWallet) Sign(txn core.Transaction, signer core.TxnSigner, pwd core.PasswordReader, index []string) (core.Transaction, error) {
-	ret := _m.Called(txn, signer, pwd, index)
+// SignTransaction provides a mock function with given fields: _a0, _a1, _a2
+func (_m *FullWallet) SignTransaction(_a0 core.Transaction, _a1 core.PasswordReader, _a2 []string) (core.Transaction, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 core.Transaction
-	if rf, ok := ret.Get(0).(func(core.Transaction, core.TxnSigner, core.PasswordReader, []string) core.Transaction); ok {
-		r0 = rf(txn, signer, pwd, index)
+	if rf, ok := ret.Get(0).(func(core.Transaction, core.PasswordReader, []string) core.Transaction); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(core.Transaction)
@@ -135,8 +216,8 @@ func (_m *FullWallet) Sign(txn core.Transaction, signer core.TxnSigner, pwd core
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(core.Transaction, core.TxnSigner, core.PasswordReader, []string) error); ok {
-		r1 = rf(txn, signer, pwd, index)
+	if rf, ok := ret.Get(1).(func(core.Transaction, core.PasswordReader, []string) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -145,7 +226,7 @@ func (_m *FullWallet) Sign(txn core.Transaction, signer core.TxnSigner, pwd core
 }
 
 // Spend provides a mock function with given fields: unspent, new, change, options
-func (_m *FullWallet) Spend(unspent []core.TransactionOutput, new []core.TransactionOutput, change core.Address, options core.KeyValueStorage) (core.Transaction, error) {
+func (_m *FullWallet) Spend(unspent []core.TransactionOutput, new []core.TransactionOutput, change core.Address, options core.KeyValueStore) (core.Transaction, error) {
 	ret := _m.Called(unspent, new, change, options)
 
 	var r0 core.Transaction
@@ -168,7 +249,7 @@ func (_m *FullWallet) Spend(unspent []core.TransactionOutput, new []core.Transac
 }
 
 // Transfer provides a mock function with given fields: to, options
-func (_m *FullWallet) Transfer(to core.TransactionOutput, options core.KeyValueStorage) (core.Transaction, error) {
+func (_m *FullWallet) Transfer(to core.TransactionOutput, options core.KeyValueStore) (core.Transaction, error) {
 	ret := _m.Called(to, options)
 
 	var r0 core.Transaction
@@ -188,4 +269,48 @@ func (_m *FullWallet) Transfer(to core.TransactionOutput, options core.KeyValueS
 	}
 
 	return r0, r1
+}
+
+// WalletCryptoAccount provides a mock function with given fields:
+func (_m *FullWallet) WalletCryptoAccount() core.CryptoAccount {
+	ret := _m.Called()
+
+	var r0 core.CryptoAccount
+	if rf, ok := ret.Get(0).(func() core.CryptoAccount); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.CryptoAccount)
+		}
+	}
+
+	return r0
+}
+
+// WalletId provides a mock function with given fields:
+func (_m *FullWallet) WalletId() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// WalletLabel provides a mock function with given fields:
+func (_m *FullWallet) WalletLabel() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
 }

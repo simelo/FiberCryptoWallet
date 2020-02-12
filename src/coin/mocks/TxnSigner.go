@@ -10,6 +10,29 @@ type TxnSigner struct {
 	mock.Mock
 }
 
+// DeriveParentPubKey provides a mock function with given fields: chainCode
+func (_m *TxnSigner) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
+	ret := _m.Called(chainCode)
+
+	var r0 core.WatchWallet
+	if rf, ok := ret.Get(0).(func([]byte) core.WatchWallet); ok {
+		r0 = rf(chainCode)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(core.WatchWallet)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(chainCode)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSignerDescription provides a mock function with given fields:
 func (_m *TxnSigner) GetSignerDescription() string {
 	ret := _m.Called()
@@ -39,18 +62,18 @@ func (_m *TxnSigner) GetSignerUID() core.UID {
 }
 
 // ReadyForTxn provides a mock function with given fields: _a0, _a1
-func (_m *TxnSigner) ReadyForTxn(_a0 core.FullWallet, _a1 core.Transaction) (bool, error) {
+func (_m *TxnSigner) ReadyForTxn(_a0 core.Wallet, _a1 core.Transaction) (bool, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(core.FullWallet, core.Transaction) bool); ok {
+	if rf, ok := ret.Get(0).(func(core.Wallet, core.Transaction) bool); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(core.FullWallet, core.Transaction) error); ok {
+	if rf, ok := ret.Get(1).(func(core.Wallet, core.Transaction) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

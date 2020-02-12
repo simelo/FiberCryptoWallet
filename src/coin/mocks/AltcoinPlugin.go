@@ -140,15 +140,15 @@ func (_m *AltcoinPlugin) LoadSignService() (core.BlockchainSignService, error) {
 }
 
 // LoadTransactionAPI provides a mock function with given fields: netType
-func (_m *AltcoinPlugin) LoadTransactionAPI(netType string) (core.BlockchainTransactionAPI, error) {
+func (_m *AltcoinPlugin) LoadTransactionAPI(netType string) (core.BlockchainVisor, error) {
 	ret := _m.Called(netType)
 
-	var r0 core.BlockchainTransactionAPI
-	if rf, ok := ret.Get(0).(func(string) core.BlockchainTransactionAPI); ok {
+	var r0 core.BlockchainVisor
+	if rf, ok := ret.Get(0).(func(string) core.BlockchainVisor); ok {
 		r0 = rf(netType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(core.BlockchainTransactionAPI)
+			r0 = ret.Get(0).(core.BlockchainVisor)
 		}
 	}
 
