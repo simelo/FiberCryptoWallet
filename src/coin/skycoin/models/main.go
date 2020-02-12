@@ -95,7 +95,7 @@ func (p *SkyFiberPlugin) LoadPEX(netType string) (core.PEX, error) {
 }
 
 // LoadTransactionAPI blockchain transaction API entry poiny
-func (p *SkyFiberPlugin) LoadTransactionAPI(netType string) (core.BlockchainTransactionAPI, error) {
+func (p *SkyFiberPlugin) LoadTransactionAPI(netType string) (core.BlockchainVisor, error) {
 	if netType != "MainNet" {
 		return nil, errors.ErrInvalidNetworkType
 	}
