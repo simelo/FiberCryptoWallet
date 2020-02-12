@@ -91,7 +91,7 @@ Page {
     DialogTransactionDetails {
         id: dialogTransactionDetails
 
-        readonly property real maxHeight: expanded ? 590 : 370
+        readonly property real maxHeight: expanded ? 650 : 450
 
         anchors.centerIn: Overlay.overlay
         width: applicationWindow.width > 640 ? 640 - 40 : applicationWindow.width - 40
@@ -101,16 +101,16 @@ Page {
         modal: true
         focus: true
 
-        date: listTransactions.currentItem !== null ? listTransactions.currentItem.modelDate : ""
-        status: listTransactions.currentItem !== null ? listTransactions.currentItem.modelStatus : 0
-        type: listTransactions.currentItem !== null ? listTransactions.currentItem.modelType : 0
-//        amount: listTransactions.currentItem !== null ? listTransactions.currentItem.modelAmount : ""
-//        hoursReceived: listTransactions.currentItem !== null ? listTransactions.currentItem.modelHoursReceived : 1
-//        hoursBurned: listTransactions.currentItem !== null ?  listTransactions.currentItem.modelHoursBurned : 1
-        transactionID: listTransactions.currentItem !== null ? listTransactions.currentItem.modelTransactionID : "" 
-        modelInputs: listTransactions.currentItem !== null ? listTransactions.currentItem.modelInputs : null
-        modelOutputs: listTransactions.currentItem !== null ? listTransactions.currentItem.modelOutputs : null
-        blockHeight: listTransactions.currentItem !== null ? listTransactions.currentItem.modelBlockHeight : "0"
+        date : listTransactions.currentItem !== null ? listTransactions.currentItem.modelDate : ""
+        status : listTransactions.currentItem !== null ? listTransactions.currentItem.modelStatus : 0
+        type : listTransactions.currentItem !== null ? listTransactions.currentItem.modelType : 0
+        modelAmount  : listTransactions.currentItem !== null ? listTransactions.currentItem.modelAmount : ""
+        transactionID : listTransactions.currentItem !== null ? listTransactions.currentItem.modelTransactionID : ""
+        modelInputs : listTransactions.currentItem !== null ? listTransactions.currentItem.modelInputs : null
+        modelOutputs : listTransactions.currentItem !== null ? listTransactions.currentItem.modelOutputs : null
+        blockHeight : listTransactions.currentItem !== null ? listTransactions.currentItem.modelBlockHeight : "0"
+        coinOpts : listTransactions.currentItem !== null ? listTransactions.currentItem.coinOpts : null
+
     }
 
     QTransactionList {

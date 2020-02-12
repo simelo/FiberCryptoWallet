@@ -1,22 +1,17 @@
 package history
 
 import (
-	util2 "github.com/fibercrypto/fibercryptowallet/src/models/util"
+	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"sort"
-	"strconv"
 	"time"
 
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 
-	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 
 	// local "github.com/fibercrypto/fibercryptowallet/src/main"
 	"github.com/fibercrypto/fibercryptowallet/src/models"
-	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
 	qtCore "github.com/therecipe/qt/core"
 )
 
@@ -69,8 +64,6 @@ func (a ByDate) Less(i, j int) bool {
 func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) []*transactions.TransactionDetails {
 	logHistoryManager.Info("Getting transactions of Addresses")
 	addresses := hm.getAddressesWithWallets()
-	var sent, internally bool
-	var traspassedHoursIn, traspassedHoursOut, skyAmountIn, skyAmountOut uint64
 
 	find := make(map[string]struct{}, len(filterAddresses))
 	for _, addr := range filterAddresses {
@@ -106,250 +99,112 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 					}
 				}
 			}
-
 		}
 	}
 
-	txnsDetails := make([]*transactions.TransactionDetails, 0)
-	for _, txn := range txns {
-		traspassedHoursIn = 0
-		traspassedHoursOut = 0
-		skyAmountIn = 0
-		skyAmountOut = 0
-		internally = true
-		sent = false
-		txnDetails := transactions.NewTransactionDetails(nil)
-		txnAddresses := address.NewAddressList(nil)
-		inAddresses := make(map[string]struct{}, 0)
-		inputs := address.NewAddressList(nil)
-		outputs := address.NewAddressList(nil)
-		txnIns := txn.GetInputs()
+	txnsDetailsList := make([]*transactions.TransactionDetails, 0)
 
-		txnDetails.SetBlockHeight(txn.GetBlockHeight())
-
-		for _, in := range txnIns {
-			qIn := address.NewAddressDetails(nil)
-			qIn.SetAddress(in.GetSpentOutput().GetAddress().String())
-			skyUint64, err := in.GetCoins(params.SkycoinTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins balance")
-				continue
-			}
-			accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-				continue
-			}
-			skyFloat := float64(skyUint64) / float64(accuracy)
-			qIn.SetAddressSky(strconv.FormatFloat(skyFloat, 'f', -1, 64))
-			chUint64, err := in.GetCoins(params.CoinHoursTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
-				continue
-			}
-			qIn.SetCoinOptions(util2.NewMap(nil))
-			accuracy, err = util.AltcoinQuotient(params.CoinHoursTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours quotient")
-				continue
-			}
-			qIn.SetAddressCoinHours(util.FormatCoins(chUint64, accuracy))
-			inputs.AddAddress(qIn)
-			_, ok := addresses[in.GetSpentOutput().GetAddress().String()]
-			if ok {
-				skyAmountOut += skyUint64
-				sent = true
-				_, ok := inAddresses[qIn.Address()]
-				if !ok {
-					txnAddresses.AddAddress(qIn)
-					inAddresses[qIn.Address()] = struct{}{}
-				}
-
+	var getTxnType = func(txn core.Transaction) int {
+		var txnType = transactions.TransactionTypeGeneric
+		for _, input := range txn.GetInputs() {
+			logHistoryManager.Info(input.GetSpentOutput().GetAddress().String())
+			if _, ok := addresses[input.GetSpentOutput().GetAddress().String()]; ok {
+				txnType = transactions.TransactionTypeSend
 			}
 		}
-		txnDetails.SetInputs(inputs)
 
-		for _, out := range txn.GetOutputs() {
-			sky, err := out.GetCoins(params.SkycoinTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins balance")
-				continue
-			}
+		for _, output := range txn.GetOutputs() {
+			if _, ok := addresses[output.GetAddress().String()]; ok {
 
-			qOu := address.NewAddressDetails(nil)
-			qOu.SetAddress(out.GetAddress().String())
-			accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-				continue
-			}
-			qOu.SetCoinOptions(util2.NewMap(nil))
-
-			qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
-			val, err := out.GetCoins(params.CoinHoursTicker)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
-				continue
-			}
-			accuracy, err = util.AltcoinQuotient(coin.CoinHour)
-			if err != nil {
-				logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours quotient")
-				continue
-			}
-			qOu.SetAddressCoinHours(util.FormatCoins(val, accuracy))
-			outputs.AddAddress(qOu)
-			if sent {
-
-				if addresses[txn.GetInputs()[0].GetSpentOutput().GetAddress().String()] == addresses[out.GetAddress().String()] {
-					skyAmountOut -= sky
-
+				if txnType == transactions.TransactionTypeSend {
+					logHistoryManager.Info("internal\n\n\n\n")
+					return transactions.TransactionTypeInternal
 				} else {
-					internally = false
-					val, err = out.GetCoins(params.CoinHoursTicker)
-					if err != nil {
-						logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours send it")
-						continue
-					}
-					traspassedHoursOut += val
+					return transactions.TransactionTypeReceive
 				}
-			} else {
-				_, ok := find[out.GetAddress().String()]
-				if ok {
-					val, err = out.GetCoins(params.CoinHoursTicker)
-					if err != nil {
-						logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
-						continue
-					}
-					traspassedHoursIn += val
-					skyAmountIn += sky
-
-					_, ok := inAddresses[qOu.Address()]
-					if !ok {
-						txnAddresses.AddAddress(qOu)
-						inAddresses[qOu.Address()] = struct{}{}
-					}
-
-				}
-
-			}
-
-		}
-		txnDetails.SetOutputs(outputs)
-		t := time.Unix(int64(txn.GetTimestamp()), 0)
-		txnDetails.SetDate(qtCore.NewQDateTime3(qtCore.NewQDate3(t.Year(), int(t.Month()), t.Day()), qtCore.NewQTime3(t.Hour(), t.Minute(), 0, 0), qtCore.Qt__LocalTime))
-		txnDetails.SetStatus(transactions.TransactionStatusPending)
-
-		if txn.GetStatus() == core.TXN_STATUS_CONFIRMED {
-			txnDetails.SetStatus(transactions.TransactionStatusConfirmed)
-		}
-		txnDetails.SetType(transactions.TransactionTypeReceive)
-		if sent {
-			txnDetails.SetType(transactions.TransactionTypeSend)
-			if internally {
-				txnDetails.SetType(transactions.TransactionTypeInternal)
 			}
 		}
-		// fee, err := txn.ComputeFee(params.CoinHoursTicker)
-		// if err != nil {
-		// 	logHistoryManager.WithError(err).Warn("Couldn't compute fee of the operation")
-		// 	continue
-		// }
-		// accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-		// if err != nil {
-		// 	logHistoryManager.WithError(err).Warn("Couldn't get " + coin.CoinHoursTicker + " coins quotient")
-		// }
-		switch txnDetails.Type() {
-		case transactions.TransactionTypeReceive:
-			{
-				accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get " + coin.CoinHoursTicker + " coins quotient")
-				}
-				val := float64(skyAmountIn)
-				accuracy, err = util.AltcoinQuotient(params.SkycoinTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-					continue
-				}
-				val = val / float64(accuracy)
-				txnDetails.SetAmount(strconv.FormatFloat(val, 'f', -1, 64))
-
-			}
-		case transactions.TransactionTypeInternal:
-			{
-				var traspassedHoursMoved, skyAmountMoved uint64
-				traspassedHoursMoved = 0
-				skyAmountMoved = 0
-				ins := inputs.Addresses()
-				inFind := make(map[string]struct{}, len(ins))
-				for _, addr := range ins {
-					inFind[addr.Address()] = struct{}{}
-				}
-				outs := outputs.Addresses()
-				for _, addr := range outs {
-					_, ok := inFind[addr.Address()]
-					if !ok {
-						hours, err := strconv.ParseUint(addr.AddressCoinHours(), 10, 64)
-						if err != nil {
-							logHistoryManager.WithError(err).Warn("Couldn't parse Coin Hours from address")
-							continue
-						}
-						traspassedHoursMoved += hours
-						skyFloat, err := strconv.ParseFloat(addr.AddressSky(), 64)
-						if err != nil {
-							logHistoryManager.WithError(err).Warn("Couldn't parse Skycoins from addresses")
-							continue
-						}
-						accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-						if err != nil {
-							logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-							continue
-						}
-						sky := uint64(skyFloat * float64(accuracy))
-						skyAmountMoved += sky
-					}
-
-				}
-				accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get " + coin.CoinHoursTicker + " coins quotient")
-				}
-				val := float64(skyAmountMoved)
-				// FIXME: Error here is skipped
-				accuracy, _ = util.AltcoinQuotient(params.SkycoinTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-					continue
-				}
-				val = val / float64(accuracy)
-				txnDetails.SetAmount(strconv.FormatFloat(val, 'f', -1, 64))
-
-			}
-		case transactions.TransactionTypeSend:
-			{
-				accuracy, err := util.AltcoinQuotient(coin.CoinHoursTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get " + coin.CoinHoursTicker + " coins quotient")
-				}
-				val := float64(skyAmountOut)
-				accuracy, err = util.AltcoinQuotient(params.SkycoinTicker)
-				if err != nil {
-					logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-					continue
-				}
-				val = val / float64(accuracy)
-				txnDetails.SetAmount(strconv.FormatFloat(val, 'f', -1, 64))
-
-			}
-		}
-		txnDetails.SetAddresses(txnAddresses)
-		txnDetails.SetTransactionID(txn.GetId())
-
-		txnsDetails = append(txnsDetails, txnDetails)
-
+		return txnType
 	}
-	sort.Sort(ByDate(txnsDetails))
-	return txnsDetails
+
+	var getAmountFromTxn = func(txn core.Transaction, txnType int) string {
+		var mainAsset = txn.SupportedAssets()[0]
+		var amount, accuracy uint64
+
+		getAmountOfOutputs := func() uint64 {
+			var outputAmount uint64
+			for _, output := range txn.GetOutputs() {
+				if _, ok := addresses[output.GetAddress().String()]; ok {
+					coins, err := output.GetCoins(mainAsset)
+					if err != nil {
+						logHistoryManager.WithError(err).Error(
+							"Could't get main balance of output with address %s", output.GetAddress().String())
+					}
+					outputAmount += coins
+				}
+			}
+			return outputAmount
+		}
+
+		accuracy, err := util.AltcoinQuotient(mainAsset)
+		if err != nil {
+			logHistoryManager.WithError(err).Error(
+				"Could't get accuracy for %s asset", mainAsset)
+			return "N/A"
+		}
+
+		switch txnType {
+		case transactions.TransactionTypeReceive:
+			amount += getAmountOfOutputs()
+			break
+
+		case transactions.TransactionTypeSend:
+			for _, input := range txn.GetInputs() {
+				coins, err := input.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Error(
+						"Could't get main balance of input with address %s", input.GetId())
+				}
+				amount += coins
+			}
+			amount -= getAmountOfOutputs()
+			break
+		case transactions.TransactionTypeInternal:
+			isInput := func(addr string) bool {
+				for _, input := range txn.GetInputs() {
+					if input.GetSpentOutput().GetAddress().String() == addr {
+						return true
+					}
+				}
+				return false
+			}
+			for _, output := range txn.GetOutputs() {
+				if !isInput(output.GetAddress().String()) {
+					coins, err := output.GetCoins(mainAsset)
+					if err != nil {
+						logHistoryManager.WithError(err).Error(
+							"Could't get main balance of output with address %s", output.GetAddress().String())
+					}
+					amount += coins
+				}
+			}
+		}
+		return util.FormatCoins(amount, accuracy)
+	}
+
+	for e := range txns {
+		txnDetail, err := transactions.NewTransactionDetailFromCoreTransaction(txns[e], getTxnType(txns[e]))
+		if err != nil {
+			logHistoryManager.WithError(err).Errorf(
+				"Could't get a Transaction Details from the transaction: %s", txns[e].GetId())
+		}
+		txnDetail.SetAmount(getAmountFromTxn(txns[e], getTxnType(txns[e])))
+
+		txnsDetailsList = append(txnsDetailsList, txnDetail)
+	}
+
+	sort.Sort(ByDate(txnsDetailsList))
+	return txnsDetailsList
 }
 func (hm *HistoryManager) loadHistoryWithFilters() []*transactions.TransactionDetails {
 	logHistoryManager.Info("Loading history with some filters")

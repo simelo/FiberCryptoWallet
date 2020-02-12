@@ -33,6 +33,7 @@ Item {
         Pending,
         Preview
     }
+
     enum Type {
         Send,
         Receive,
@@ -48,8 +49,8 @@ Item {
     clip: true
 
     function getIconPath(){
-        if (type === TransactionDetails.Type.Recive || type === TransactionDetails.Type.Send){
-        return "qrc:/images/resources/images/icons/send-" + (type === TransactionDetails.Type.Send ? "blue" : "amber") + ".svg"
+        if (type == TransactionDetails.Type.Receive || type == TransactionDetails.Type.Send){
+        return "qrc:/images/resources/images/icons/send-" + (type == TransactionDetails.Type.Send ? "blue" : "amber") + ".svg"
         }
         if( !coinOpts){
         return "qrc:/images/resources/images/icons/error.svg"
@@ -273,7 +274,6 @@ Item {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Component.onCompleted: console.log("LALALALA", width, height, contentWidth, contentHeight)
 
                     ListView {
                         id: listViewOutputs

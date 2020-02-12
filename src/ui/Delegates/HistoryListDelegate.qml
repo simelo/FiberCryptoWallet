@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import ModelUtils 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/"
@@ -18,14 +19,13 @@ ItemDelegate {
     property int modelStatus: status
     property var modelStatusString: [ qsTr("Confirmed"), qsTr("Pending"), qsTr("Preview") ]
     property string modelAmount: amount
-    property string modelHoursReceived: hoursTraspassed
-    property string modelHoursBurned: hoursBurned
     property string modelTransactionID: transactionID
     property string modelBlockHeight: blockHeight
     property QAddressList modelAddresses: addresses
     property QAddressList modelInputs: inputs
     property QAddressList modelOutputs: outputs
-    
+    property Map coinOpts: coinOptions
+
     signal qrCodeRequested(var data)
     
     onQrCodeRequested: {
@@ -70,7 +70,7 @@ ItemDelegate {
 
                     Label {
                         font.bold: true
-                        text: (modelType == TransactionDetails.Type.Receive ? qsTr("Received") : (modelType == TransactionDetails.Type.Send ? qsTr("Sent") : qsTr("Internal"))) + " SKY"
+                        text: (modelType == TransactionDetails.Type.Receive ? qsTr("Received") : (modelType == TransactionDetails.Type.Send ? qsTr("Sent") : qsTr("Internal")))
                     }
 
                     Label {
@@ -91,7 +91,7 @@ ItemDelegate {
         } // ColumnLayout (main content)
 
         Label {
-            text: (modelType === TransactionDetails.Type.Receive ? "" : "-") + amount + " SKY" // model's role
+            text: amount + " " + coinOpts.getKeys()[0] // model's role
             font.pointSize: Qt.application.font.pointSize * 1.25
             font.bold: true
             Layout.alignment: Qt.AlignTop | Qt.AlignRight

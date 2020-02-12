@@ -57,7 +57,6 @@ type TransactionDetails struct {
 }
 
 func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
-
 	txnDetails := NewTransactionDetails(nil)
 	t := time.Unix(int64(transaction.GetTimestamp()), 0)
 	txnDetails.Txn = transaction
@@ -83,6 +82,15 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	inputList := address.NewAddressList(nil)
 	outputsList := address.NewAddressList(nil)
 
+	var containsAddress = func(addr string) bool {
+		for _, addrDetail := range addresses.Addresses() {
+			if addrDetail.Address() == addr {
+				return true
+			}
+		}
+		return false
+	}
+
 	for _, input := range transaction.GetInputs() {
 
 		qIn := address.NewAddressDetails(nil)
@@ -95,7 +103,10 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 		qIn.SetCoinOptions(inputCoinOptions)
 		inputList.AddAddress(qIn)
-		addresses.AddAddress(qIn)
+
+		if !containsAddress(qIn.Address()) {
+			addresses.AddAddress(qIn)
+		}
 	}
 
 	txnDetails.SetInputs(inputList)
@@ -113,7 +124,10 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 		qOu.SetCoinOptions(outputCoinOptions)
 
 		outputsList.AddAddress(qOu)
-		addresses.AddAddress(qOu)
+
+		if !containsAddress(qOu.Address()) {
+			addresses.AddAddress(qOu)
+		}
 	}
 
 	txnCoinOptions := modelUtil.NewMap(nil)
