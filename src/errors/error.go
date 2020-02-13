@@ -59,4 +59,8 @@ var (
 	ErrNotImplemented = errors.New("Feature not implemented")
 	// ErrNotSupported feature not supported
 	ErrNotSupported = errors.New("Feature not supported")
+	// ErrInvalidAccount reference to invalid account
+	ErrInvalidAccount = errors.New("Unknown account")
+	// ErrInvalidArgument invalid argument value
+	ErrInvalidArgument = errors.New("Invalid argument value")
 )

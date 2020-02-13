@@ -52,7 +52,7 @@ type Wallet interface {
 	WalletLabel() string
 	// SetLabel establishes a label for this wallet
 	SetWalletLabel(wltName string)
-	// GetCryptoAccount instantiate object to determine wallet balance and transaction history
+	// WalletCryptoAccount instantiate object to determine wallet balance and transaction history
 	WalletCryptoAccount() CryptoAccount
 }
 
@@ -60,9 +60,9 @@ type Wallet interface {
 type WatchWallet interface {
 	// GenAddresses discover new addresses based on default hierarchically deterministic derivation sequences
 	GenAddresses(accountIndex uint32, addrType AddressType, startIndex, count uint32, pwd PasswordReader) (AddressIterator, error)
-	// GetLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
+	// GetLoadedAddressesForAccount iterates over wallet addresses discovered and known to have previous history and coins
 	GetLoadedAddressesForAccount(accountIndex uint32, addrType AddressType) (AddressIterator, error)
-	// GetLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
+	// GetAllLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
 	GetAllLoadedAddresses() (AddressIterator, error)
 }
 

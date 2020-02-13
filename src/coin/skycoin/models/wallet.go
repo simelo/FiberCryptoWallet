@@ -623,12 +623,16 @@ func (wlt *RemoteWallet) Spend(unspent, new []core.TransactionOutput, change cor
 	return createTransaction(nil, new, unspent, change, options, createTxnFunc)
 }
 
-func (wlt *RemoteWallet) GenAddresses(addrType core.AddressType, startIndex, count uint32, pwd core.PasswordReader) core.AddressIterator {
+// GenAddresses discover new addresses based on default hierarchically deterministic derivation sequences
+func (wlt *RemoteWallet) GenAddresses(accountIndex uint32, addrType core.AddressType, startIndex, count uint32, pwd core.PasswordReader) (core.AddressIterator, error) {
+	if accountIndex != 0 {
+		return nil, errors.ErrInvalidAccount
+	}
 	logWallet.Info("Generate new addresses in remote wallet")
 	c, err := NewSkycoinApiClient(wlt.poolSection)
 	if err != nil {
 		logWallet.WithError(err).Error("Couldn't get API client")
-		return nil
+		return nil, err
 	}
 	defer ReturnSkycoinClient(c)
 	pwdCtx := util.NewKeyValueMap()
@@ -639,13 +643,13 @@ func (wlt *RemoteWallet) GenAddresses(addrType core.AddressType, startIndex, cou
 	password, err := pwd("Enter password", pwdCtx)
 	if err != nil {
 		logWallet.WithError(err).Fatal("Something was wrong entering the password")
-		return nil
+		return nil, err
 	}
 	logWallet.Info("GET /api/v1/wallet")
 	wltR, err := c.Wallet(wlt.Id)
 	if err != nil {
 		logWallet.WithError(err).WithField("id", wlt.Id).Error("Couldn't GET /api/v1/wallet")
-		return nil
+		return nil, err
 	}
 	// FIXME: Lazy iterator wrapping wallet entries instead of copying to addresses slice
 	addresses := make([]core.Address, 0)
@@ -659,7 +663,7 @@ func (wlt *RemoteWallet) GenAddresses(addrType core.AddressType, startIndex, cou
 		newAddrs, err := c.NewWalletAddress(wlt.Id, int(difference), password)
 		if err != nil {
 			logWallet.WithError(err).Warn("Couldn't POST /api/v1/wallet/newAddress")
-			return nil
+			return nil, err
 		}
 		for _, addr := range newAddrs {
 			skyAddrs, err := NewSkycoinAddress(addr)
@@ -672,7 +676,7 @@ func (wlt *RemoteWallet) GenAddresses(addrType core.AddressType, startIndex, cou
 		}
 	}
 
-	return NewSkycoinAddressIterator(addresses)
+	return NewSkycoinAddressIterator(addresses), nil
 
 }
 
@@ -686,7 +690,13 @@ func (wlt *RemoteWallet) WalletCryptoAccount() core.CryptoAccount {
 	return wlt
 }
 
-func (wlt *RemoteWallet) GetLoadedAddresses() (core.AddressIterator, error) {
+// GetLoadedAddressesForAccount iterates over wallet addresses discovered and known to have previous history and coins
+func (wlt *RemoteWallet) GetLoadedAddressesForAccount(accountIndex uint32, addrType core.AddressType) (core.AddressIterator, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+// GetAllLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
+func (wlt *RemoteWallet) GetAllLoadedAddresses() (core.AddressIterator, error) {
 	logWallet.Info("Loading addresses from remote wallet")
 	c, err := NewSkycoinApiClient(wlt.poolSection)
 	if err != nil {
@@ -709,7 +719,7 @@ func (wlt *RemoteWallet) GetLoadedAddresses() (core.AddressIterator, error) {
 }
 
 // ReadyForTxn determines whether this signer instance can be used by wallet to sign given transaction
-func (wlt *RemoteWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bool, error) {
+func (wlt *RemoteWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool, error) {
 	return checkTxnSupported(wlt, w, txn)
 }
 
@@ -1388,7 +1398,7 @@ func (wlt *LocalWallet) Transfer(to core.TransactionOutput, options core.KeyValu
 	txnOutput.skyOut.Address = to.GetAddress().String()
 	txnOutput.skyOut.Coins = strAmount
 	addresses := make([]core.Address, 0)
-	iterAddr, err := wlt.GetLoadedAddresses()
+	iterAddr, err := wlt.GetAllLoadedAddresses()
 	if err != nil {
 		logWallet.WithError(err).Warn("Couldn't get loaded addresses")
 		return nil, err
@@ -1448,23 +1458,26 @@ func (wlt *LocalWallet) ScanOutputs(unspentOnly bool) (core.TransactionOutputIte
 	return nil, errors.ErrNotImplemented
 }
 
-func (wlt *LocalWallet) GenAddresses(addrType core.AddressType, startIndex, count uint32, pwd core.PasswordReader) core.AddressIterator {
+func (wlt *LocalWallet) GenAddresses(accountIndex uint32, addrType core.AddressType, startIndex, count uint32, pwd core.PasswordReader) (core.AddressIterator, error) {
+	if accountIndex != 0 {
+		return nil, errors.ErrInvalidAccount
+	}
 
 	if addrType != core.AccountAddress && addrType != core.ChangeAddress {
 		logWallet.Errorf("Incorret address type %d", addrType)
-		return nil
+		return nil, errors.ErrInvalidArgument
 	}
 	logWallet.Info("Generating addresses in local wallet")
 	walletName := filepath.Join(wlt.WalletDir, wlt.Id)
 	walletLoaded, err := wallet.Load(walletName)
 	if err != nil {
 		logWallet.WithError(err).WithField("filename", walletName).Error("Call to wallet.Load(filename) inside GenAddresses failed.")
-		return nil
+		return nil, err
 	}
 
 	if addrType == core.ChangeAddress && walletLoaded.Type() != wallet.WalletTypeBip44 {
 		logWallet.Error("Change addresses may be used with Skycoin BIP44 HD wallets only")
-		return nil
+		return nil, errors.ErrInvalidArgument
 	}
 
 	genAddr := func(w wallet.Wallet, n uint64) ([]cipher.Addresser, error) {
@@ -1553,19 +1566,19 @@ func (wlt *LocalWallet) GenAddresses(addrType core.AddressType, startIndex, coun
 
 		if err != nil {
 			logWallet.WithError(err).Error("Call to genAddressesInFile inside GenAddresses failed")
-			return nil
+			return nil, err
 		}
 
 		if err := wallet.Save(walletLoaded, wlt.WalletDir); err != nil {
 			logWallet.WithError(err).WithField("dir", wlt.WalletDir).Error("Call to wallet.Save(wlt, dir) inside GenAddresses failed")
-			return nil
+			return nil, err
 		}
 	}
 
 	walletLoaded, err = wallet.Load(walletName)
 	if err != nil {
 		logWallet.WithError(err).WithField("filename", walletName).Error("Call to wallet.Load(filename) inside GenAddresses failed.")
-		return nil
+		return nil, err
 	}
 
 	addrs := getAddrs(walletLoaded)
@@ -1580,7 +1593,7 @@ func (wlt *LocalWallet) GenAddresses(addrType core.AddressType, startIndex, coun
 
 		skyAddrs = append(skyAddrs, &newSkyAddrs)
 	}
-	return NewSkycoinAddressIterator(skyAddrs)
+	return NewSkycoinAddressIterator(skyAddrs), nil
 
 }
 
@@ -1589,12 +1602,18 @@ func (wlt *LocalWallet) WalletCryptoAccount() core.CryptoAccount {
 	return wlt
 }
 
-func (wlt *LocalWallet) GetLoadedAddresses() (core.AddressIterator, error) {
+// GetLoadedAddressesForAccount iterates over wallet addresses discovered and known to have previous history and coins
+func (wlt *LocalWallet) GetLoadedAddressesForAccount(accountIndex uint32, addrType core.AddressType) (core.AddressIterator, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+// GetAllLoadedAddresses iterates over wallet addresses discovered and known to have previous history and coins
+func (wlt *LocalWallet) GetAllLoadedAddresses() (core.AddressIterator, error) {
 	logWallet.Info("Getting loaded addresses from local wallet")
 	walletName := filepath.Join(wlt.WalletDir, wlt.Id)
 	walletLoaded, err := wallet.Load(walletName)
 	if err != nil {
-		logWallet.WithError(err).WithField("filename", walletName).Error("Call to wallet.Load(filename) inside GetLoadedAddresses failed.")
+		logWallet.WithError(err).WithField("filename", walletName).Error("Call to wallet.Load(filename) inside GetAllLoadedAddresses failed.")
 		return nil, err
 	}
 	addrs := make([]core.Address, 0)
@@ -1602,7 +1621,7 @@ func (wlt *LocalWallet) GetLoadedAddresses() (core.AddressIterator, error) {
 	for _, addr := range addresses {
 		newSkyAddrs, err := NewSkycoinAddress(addr.String())
 		if err != nil {
-			logWallet.WithError(err).Warningf("GetLoadedAddresses: Unable to parse Skycoin address %s", addr.String())
+			logWallet.WithError(err).Warningf("GetAllLoadedAddresses: Unable to parse Skycoin address %s", addr.String())
 		} else if wlt.GetSkycoinWalletType() == wallet.WalletTypeBip44 {
 			newSkyAddrs.isBip32 = true
 		}
@@ -1617,7 +1636,7 @@ func (wlt *LocalWallet) GetSkycoinWalletType() string {
 	return wlt.Type
 }
 
-func checkEquivalentSkycoinWallets(wlt1, wlt2 core.FullWallet) (bool, error) {
+func checkEquivalentSkycoinWallets(wlt1, wlt2 core.Wallet) (bool, error) {
 	if wlt1 == wlt2 {
 		return true, nil
 	}
@@ -1636,18 +1655,18 @@ func checkEquivalentSkycoinWallets(wlt1, wlt2 core.FullWallet) (bool, error) {
 		return false, nil
 	}
 	// Must have a match for first address in deterministic sequence
-	addrs1, err := wlt1.GetLoadedAddresses()
+	addrs1, err := wlt1.GetAllLoadedAddresses()
 	if err != nil {
 		return false, err
 	}
-	addrs2, err := wlt2.GetLoadedAddresses()
+	addrs2, err := wlt2.GetAllLoadedAddresses()
 	if err != nil {
 		return false, err
 	}
 	return addrs1.Next() && addrs2.Next() && addrs1.Value().String() == addrs2.Value().String(), nil
 }
 
-func checkTxnSupported(wlt1, wlt2 core.FullWallet, txn core.Transaction) (bool, error) {
+func checkTxnSupported(wlt1, wlt2 core.Wallet, txn core.Transaction) (bool, error) {
 	// Wallets must match
 	if isMatch, err := checkEquivalentSkycoinWallets(wlt1, wlt2); err != nil || !isMatch {
 		return false, err
@@ -1658,7 +1677,7 @@ func checkTxnSupported(wlt1, wlt2 core.FullWallet, txn core.Transaction) (bool, 
 }
 
 // ReadyForTxn determines whether transaction can be signed with this signer instance
-func (wlt *LocalWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bool, error) {
+func (wlt *LocalWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool, error) {
 	return checkTxnSupported(wlt, w, txn)
 }
 
