@@ -551,8 +551,9 @@ func TestRemoteWalletGenAddresses(t *testing.T) {
 		},
 		nil)
 
-	addresses := []string{"2JJ8pgq8EDAnrzf9xxBJapE2qkYLefW4uF8", "2JJ8pgq8EDAnrzf9xxBJapE2qkYLefW4uF9"}
-	global_mock.On("NewWalletAddress", "wallet", 1, pwd).Return(addresses, nil)
+	newaddrs := []string{"2UDzBKnxZf4d9pdrBJAqbtoeH641RFLYKxd"}
+	global_mock.On("NewWalletAddress", "wallet", 1, pwd).Return(newaddrs, nil)
+	addresses := []string{"2JJ8pgq8EDAnrzf9xxBJapE2qkYLefW4uF8", "2UDzBKnxZf4d9pdrBJAqbtoeH641RFLYKxd"}
 
 	wlt := &RemoteWallet{
 		Id:          "wallet",
@@ -562,7 +563,7 @@ func TestRemoteWalletGenAddresses(t *testing.T) {
 		return "pwd", nil
 	}
 	iter, err := wlt.GenAddresses(0, core.AccountAddress, 0, 2, pwdReader)
-	require.NotNil(t, err)
+	require.Nil(t, err)
 	idx := 0
 	for iter.Next() {
 		a := iter.Value()
