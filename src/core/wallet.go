@@ -3,7 +3,7 @@ package core
 // WalletIterator iterates over sequences of wallets
 type WalletIterator interface {
 	// Value of wallet at iterator pointer position
-	Value() FullWallet
+	Value() Wallet
 	// Next discards current value and moves iteration pointer up to next item
 	Next() bool
 	// HasNext may be used to query whether more items are to be expected in the sequence
