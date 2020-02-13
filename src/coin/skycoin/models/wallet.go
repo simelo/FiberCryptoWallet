@@ -41,10 +41,10 @@ const (
 // SkycoinWalletIterator implements WalletIterator interface
 type SkycoinWalletIterator struct {
 	current int
-	wallets []core.FullWallet
+	wallets []core.Wallet
 }
 
-func (it *SkycoinWalletIterator) Value() core.FullWallet {
+func (it *SkycoinWalletIterator) Value() core.Wallet {
 	return it.wallets[it.current]
 }
 
@@ -60,7 +60,7 @@ func (it *SkycoinWalletIterator) HasNext() bool {
 	return !((it.current + 1) >= len(it.wallets))
 }
 
-func NewSkycoinWalletIterator(wallets []core.FullWallet) *SkycoinWalletIterator {
+func NewSkycoinWalletIterator(wallets []core.Wallet) *SkycoinWalletIterator {
 	return &SkycoinWalletIterator{wallets: wallets, current: -1}
 }
 
@@ -85,7 +85,7 @@ func (wltSrv *SkycoinRemoteWallet) ListWallets() core.WalletIterator {
 		logWallet.WithError(err).Error("Couldn't GET /api/v1/wallets")
 		return nil
 	}
-	wallets := make([]core.FullWallet, 0)
+	wallets := make([]core.Wallet, 0)
 	for _, wlt := range wlts {
 		nwlt := walletResponseToWallet(wlt)
 		nwlt.poolSection = wltSrv.poolSection
@@ -849,7 +849,7 @@ type SkycoinLocalWallet struct {
 
 func (wltSrv *SkycoinLocalWallet) ListWallets() core.WalletIterator {
 	logWallet.Info("Listing Skycoin local wallets")
-	wallets := make([]core.FullWallet, 0)
+	wallets := make([]core.Wallet, 0)
 	entries, err := ioutil.ReadDir(wltSrv.walletDir)
 	if err != nil {
 		logWallet.WithError(err).WithField("dirname", wltSrv.walletDir).Error("Call to ioutil.ReadDir(dirname) inside ListWallets failed.")
