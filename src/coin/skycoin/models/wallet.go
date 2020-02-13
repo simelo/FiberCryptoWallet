@@ -725,7 +725,7 @@ func (wlt *RemoteWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool,
 
 // DeriveParentPubKey generate watch-only wallet with parent token to derive child public keys
 func (wlt *RemoteWallet) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
-	return nil, ErrNotImplemented
+	return nil, errors.ErrNotImplemented
 }
 
 // SignTransaction according to Skycoin SkyFiber rules
