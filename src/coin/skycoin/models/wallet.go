@@ -1655,11 +1655,13 @@ func checkEquivalentSkycoinWallets(wlt1, wlt2 core.Wallet) (bool, error) {
 		return false, nil
 	}
 	// Must have a match for first address in deterministic sequence
-	addrs1, err := wlt1.GetAllLoadedAddresses()
+	watchWallet1, _ := wlt1.(core.WatchWallet)
+	addrs1, err := watchWallet1.GetAllLoadedAddresses()
 	if err != nil {
 		return false, err
 	}
-	addrs2, err := wlt2.GetAllLoadedAddresses()
+	watchWallet2, _ := wlt2.(core.WatchWallet)
+	addrs2, err := watchWallet2.GetAllLoadedAddresses()
 	if err != nil {
 		return false, err
 	}
@@ -1683,7 +1685,7 @@ func (wlt *LocalWallet) ReadyForTxn(w core.Wallet, txn core.Transaction) (bool, 
 
 // DeriveParentPubKey generate watch-only wallet with parent token to derive child public keys
 func (wlt *LocalWallet) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
-	return nil, ErrNotImplemented
+	return nil, errors.ErrNotImplemented
 }
 
 // SignTransaction according to Skycoin SkyFiber rules
