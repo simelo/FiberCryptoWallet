@@ -365,15 +365,6 @@ func (wlt *RemoteWallet) GetSkycoinWalletType() string {
 	return wlt.Type
 }
 
-func (wlt *RemoteWallet) Sign(txn core.Transaction, signer core.TxnSigner, pwd core.PasswordReader, index []string) (signedTxn core.Transaction, err error) {
-	logWallet.Info("Signing using remote wallet")
-	if signer == nil {
-		signer = wlt
-	}
-	signedTxn, err = signer.SignTransaction(txn, pwd, index)
-	return
-}
-
 func (wlt *RemoteWallet) signSkycoinTxn(txn core.Transaction, pwd core.PasswordReader, index []int) (core.Transaction, error) {
 	client, err := NewSkycoinApiClient(PoolSection)
 	var password string = ""
@@ -420,12 +411,12 @@ func (wlt *RemoteWallet) signSkycoinTxn(txn core.Transaction, pwd core.PasswordR
 	return cTxn, nil
 }
 
-func (wlt *RemoteWallet) GetLabel() string {
+func (wlt *RemoteWallet) WalletLabel() string {
 	logWallet.Info("Getting label of remote wallet")
 	return wlt.Label
 }
 
-func (wlt *RemoteWallet) SetLabel(name string) {
+func (wlt *RemoteWallet) SetWalletLabel(name string) {
 	logWallet.Info("Setting label to remote wallet")
 	c, err := NewSkycoinApiClient(wlt.poolSection)
 	if err != nil {
@@ -441,7 +432,7 @@ func (wlt *RemoteWallet) SetLabel(name string) {
 	}
 }
 
-func (wlt *RemoteWallet) GetId() string {
+func (wlt *RemoteWallet) WalletId() string {
 	logWallet.Info("Getting Id of remote wallet")
 	return wlt.Id
 }
@@ -685,7 +676,12 @@ func (wlt *RemoteWallet) GenAddresses(addrType core.AddressType, startIndex, cou
 
 }
 
-func (wlt *RemoteWallet) GetCryptoAccount() core.CryptoAccount {
+// ScanOutputs scan the blockchain looking for outputs
+func (wlt *RemoteWallet) ScanOutputs(unspentOnly bool) (core.TransactionOutputIterator, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+func (wlt *RemoteWallet) WalletCryptoAccount() core.CryptoAccount {
 	logWallet.Info("Getting CryptoAccount of remote wallet")
 	return wlt
 }
@@ -715,6 +711,11 @@ func (wlt *RemoteWallet) GetLoadedAddresses() (core.AddressIterator, error) {
 // ReadyForTxn determines whether this signer instance can be used by wallet to sign given transaction
 func (wlt *RemoteWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bool, error) {
 	return checkTxnSupported(wlt, w, txn)
+}
+
+// DeriveParentPubKey generate watch-only wallet with parent token to derive child public keys
+func (wlt *RemoteWallet) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
+	return nil, ErrNotImplemented
 }
 
 // SignTransaction according to Skycoin SkyFiber rules
@@ -1095,15 +1096,6 @@ type LocalWallet struct {
 	WalletDir string
 }
 
-func (wlt *LocalWallet) Sign(txn core.Transaction, signer core.TxnSigner, pwd core.PasswordReader, index []string) (signedTxn core.Transaction, err error) {
-	logWallet.Info("Signing local wallet")
-	if signer == nil {
-		signer = wlt
-	}
-	signedTxn, err = signer.SignTransaction(txn, pwd, index)
-	return
-}
-
 func copyTransaction(txn *coin.Transaction) *coin.Transaction {
 	txnHash := txn.Hash()
 	txnInnerHash := txn.HashInner()
@@ -1331,21 +1323,21 @@ func (wlt *LocalWallet) signSkycoinTxn(txn core.Transaction, pwd core.PasswordRe
 
 }
 
-func (wlt *LocalWallet) GetId() string {
+func (wlt *LocalWallet) WalletId() string {
 	logWallet.Info("Getting Id if local wallet")
 	return wlt.Id
 }
 
-func (wlt *LocalWallet) GetLabel() string {
+func (wlt *LocalWallet) WalletLabel() string {
 	logWallet.Info("Getting label from local wallet")
 	return wlt.Label
 }
 
-func (wlt *LocalWallet) SetLabel(wltName string) {
+func (wlt *LocalWallet) SetWalletLabel(wltName string) {
 	logWallet.Info("Setting label to local wallet")
-	wltFile, err := wallet.Load(filepath.Join(wlt.WalletDir, wlt.GetId()))
+	wltFile, err := wallet.Load(filepath.Join(wlt.WalletDir, wlt.WalletId()))
 	if err != nil {
-		logWallet.WithError(err).WithField("filename", filepath.Join(wlt.WalletDir, wlt.GetId())).Error("Call to wallet.Load(filename) inside SetLabel failed.")
+		logWallet.WithError(err).WithField("filename", filepath.Join(wlt.WalletDir, wlt.WalletId())).Error("Call to wallet.Load(filename) inside SetLabel failed.")
 		return
 	}
 	wltFile.SetLabel(wltName)
@@ -1449,6 +1441,11 @@ func (wlt LocalWallet) Spend(unspent, new []core.TransactionOutput, change core.
 	}
 
 	return createTransaction(nil, new, unspent, change, options, createTxnFunc)
+}
+
+// ScanOutputs scan the blockchain looking for outputs
+func (wlt *LocalWallet) ScanOutputs(unspentOnly bool) (core.TransactionOutputIterator, error) {
+	return nil, errors.ErrNotImplemented
 }
 
 func (wlt *LocalWallet) GenAddresses(addrType core.AddressType, startIndex, count uint32, pwd core.PasswordReader) core.AddressIterator {
@@ -1587,7 +1584,7 @@ func (wlt *LocalWallet) GenAddresses(addrType core.AddressType, startIndex, coun
 
 }
 
-func (wlt *LocalWallet) GetCryptoAccount() core.CryptoAccount {
+func (wlt *LocalWallet) WalletCryptoAccount() core.CryptoAccount {
 	logWallet.Info("Getting CryptoAccount from local wallet")
 	return wlt
 }
@@ -1665,6 +1662,11 @@ func (wlt *LocalWallet) ReadyForTxn(w core.FullWallet, txn core.Transaction) (bo
 	return checkTxnSupported(wlt, w, txn)
 }
 
+// DeriveParentPubKey generate watch-only wallet with parent token to derive child public keys
+func (wlt *LocalWallet) DeriveParentPubKey(chainCode []byte) (core.WatchWallet, error) {
+	return nil, ErrNotImplemented
+}
+
 // SignTransaction according to Skycoin SkyFiber rules
 //
 // @param txn Transacion object
@@ -1695,8 +1697,8 @@ func (wlt *LocalWallet) GetSignerDescription() string {
 
 // Typoe assertions
 var (
-	_ core.FullWallet            = &LocalWallet{}
-	_ core.FullWallet            = &RemoteWallet{}
+	_ core.FullWallet        = &LocalWallet{}
+	_ core.FullWallet        = &RemoteWallet{}
 	_ skytypes.SkycoinWallet = &LocalWallet{}
 	_ skytypes.SkycoinWallet = &RemoteWallet{}
 	_ core.WalletEnv         = &WalletNode{}
