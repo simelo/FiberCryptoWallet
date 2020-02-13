@@ -111,13 +111,13 @@ func (m *ModelWallets) loadModel() {
 		return
 	}
 	for wallets.Next() {
-		addresses, err := wallets.Value().GetLoadedAddresses()
+		addresses, err := wallets.Value().GetAllLoadedAddresses()
 		if err != nil {
 			logWalletsModel.WithError(nil).Warn("Couldn't get loaded address")
 			return
 		}
 		ma := NewModelAddresses(nil)
-		ma.SetName(wallets.Value().GetLabel())
+		ma.SetName(wallets.Value().WalletLabel())
 		oModels := make([]*ModelOutputs, 0)
 
 		for addresses.Next() {
