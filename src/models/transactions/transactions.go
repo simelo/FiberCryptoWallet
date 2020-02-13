@@ -13,6 +13,8 @@ var logTransactionDetails = logging.MustGetLogger("TransactionDetails")
 
 func init() {
 	TransactionDetails_QmlRegisterType2("Transaction", 1, 0, "QTransactionDetail")
+	TransactionList_QmlRegisterType2("Transaction", 1, 0, "QTransactionList")
+
 }
 
 const (

@@ -17,6 +17,10 @@ import (
 
 var logHistoryManager = logging.MustGetLogger("modelsHistoryManager")
 
+func init() {
+	HistoryManager_QmlRegisterType2("HistoryModels", 1, 0, "HistoryManager")
+}
+
 const (
 	dateTimeFormatForGo  = "2006-01-02T15:04:05"
 	dateTimeFormatForQML = "yyyy-MM-ddThh:mm:ss"

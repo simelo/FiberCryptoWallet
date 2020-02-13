@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import HistoryModels 1.0
-import WalletsManager 1.0
+import Transaction 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Dialogs"
