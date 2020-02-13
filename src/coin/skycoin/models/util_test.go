@@ -69,14 +69,14 @@ func makeTransactionFromMultipleWallets(t *testing.T, n int) (coin.Transaction, 
 	return makeTransactionFromUxOuts(t, uxs, secs), keysdata, uxs
 }
 
-func makeSimpleWalletAddress(wallet core.Wallet, address core.Address) core.WalletAddress {
+func makeSimpleWalletAddress(wallet core.Wallet, address core.Address) core.Address {
 	return &util.SimpleWalletAddress{
-		Wallet: wallet,
-		UxOut:  address,
+		Wallet:  wallet,
+		Address: address,
 	}
 }
 
-func makeSimpleWalletOutput(wallet core.Wallet, out core.TransactionOutput) core.WalletOutput {
+func makeSimpleWalletOutput(wallet core.Wallet, out core.TransactionOutput) core.TransactionOutput {
 	return &util.SimpleWalletOutput{
 		Wallet: wallet,
 		UxOut:  out,
