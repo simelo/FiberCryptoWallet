@@ -34,6 +34,7 @@ Page {
                     }
                 }
             }
+
             Button {
                 id: buttonFilters
                 flat: true

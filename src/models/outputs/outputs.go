@@ -114,14 +114,6 @@ func (m *ModelOutputs) data(index *qtCore.QModelIndex, role int) *qtCore.QVarian
 		{
 			return qtCore.NewQVariant1(qo.OutputID())
 		}
-	// case AddressSky:
-	// 	{
-	// 		return qtCore.NewQVariant1(qo.AddressSky())
-	// 	}
-	// case AddressCoinHours:
-	// 	{
-	// 		return qtCore.NewQVariant1(qo.AddressCoinHours())
-	// 	}
 	case CoinOpts:
 		{
 			return qtCore.NewQVariant1(qo.CoinOpt())
@@ -139,7 +131,6 @@ func (m *ModelOutputs) data(index *qtCore.QModelIndex, role int) *qtCore.QVarian
 			return qtCore.NewQVariant()
 		}
 	}
-	return nil
 }
 
 func (m *ModelOutputs) insertRows(row int, count int) bool {

@@ -20,6 +20,8 @@ type TransactionList struct {
 	_ func()                                `slot:"clear"`
 
 	_ []*TransactionDetails `property:"transactions"`
+
+	asd <-chan *TransactionDetails
 }
 
 func (txnList *TransactionList) init() {
@@ -135,3 +137,7 @@ func (txnList *TransactionList) clear() {
 	txnList.SetTransactions(make([]*TransactionDetails, 0))
 	txnList.EndRemoveRows()
 }
+
+// func (receiver *TransactionList) name()  {
+//
+// }

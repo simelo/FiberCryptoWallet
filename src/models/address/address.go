@@ -20,7 +20,6 @@ const (
 	AddressCoinHours
 	CoinOptions
 	WalletId
-	UnspendOutputs
 )
 
 type AddressDetails struct {
@@ -30,7 +29,6 @@ type AddressDetails struct {
 	_ string    `property:"addressSky"`
 	_ string    `property:"addressCoinHours"`
 	_ string    `property:"walletId"`
-	// _ *outputs.ModelOutputs `property:"unspendOutputs"`
 }
 
 type AddressList struct {
@@ -54,7 +52,6 @@ func (al *AddressList) init() {
 		AddressCoinHours: core.NewQByteArray2("addressCoinHours", -1),
 		CoinOptions:      core.NewQByteArray2("coinOptions", -1),
 		WalletId:         core.NewQByteArray2("walletId", -1),
-		// UnspendOutputs:   core.NewQByteArray2("unspendOutputs", -1),
 	})
 
 	al.ConnectRowCount(al.rowCount)
@@ -116,10 +113,6 @@ func (al *AddressList) data(index *core.QModelIndex, role int) *core.QVariant {
 		{
 			return core.NewQVariant1(address.WalletId())
 		}
-		// case UnspendOutputs:
-		// {
-		// 	return core.NewQVariant1(address.UnspendOutputs())
-		// }
 	default:
 		{
 			return core.NewQVariant()

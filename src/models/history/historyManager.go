@@ -1,6 +1,7 @@
 package history
 
 import (
+	"context"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"sort"
 	"time"
@@ -30,25 +31,29 @@ const (
 	HistoryManager
 	Represent the controller of history page and all the actions over this page
 */
+
 type HistoryManager struct {
 	qtCore.QObject
-	filters []string
-	_       func() `constructor:"init"`
-
-	_         func() []*transactions.TransactionDetails `slot:"loadHistoryWithFilters"`
-	_         func() []*transactions.TransactionDetails `slot:"loadHistory"`
-	_         func(string)                              `slot:"addFilter"`
-	_         func(string)                              `slot:"removeFilter"`
-	walletEnv core.WalletEnv
+	// filtersNew map[string]bool // new filter (^-^)
+	filters    []string                                  // Old filter
+	_          func()                                    `constructor:"init"`
+	_          func() []*transactions.TransactionDetails `slot:"loadHistoryWithFilters"`
+	_          func() []*transactions.TransactionDetails `slot:"loadHistory"`
+	_          func(string)                              `slot:"addFilter"`
+	_          func(string)                              `slot:"removeFilter"`
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+	ownTxns    []core.Transaction
+	walletEnv  core.WalletEnv
 }
 
-func (hm *HistoryManager) init() {
-	hm.ConnectLoadHistoryWithFilters(hm.loadHistoryWithFilters)
-	hm.ConnectLoadHistory(hm.loadHistory)
-	hm.ConnectAddFilter(hm.addFilter)
-	hm.ConnectRemoveFilter(hm.removeFilter)
-	hm.walletEnv = models.GetWalletEnv()
-
+func (historyMang *HistoryManager) init() {
+	historyMang.ConnectLoadHistoryWithFilters(historyMang.loadHistoryWithFilters)
+	historyMang.ConnectLoadHistory(historyMang.loadHistory)
+	historyMang.ConnectAddFilter(historyMang.addFilter)
+	historyMang.ConnectRemoveFilter(historyMang.removeFilter)
+	historyMang.walletEnv = models.GetWalletEnv()
+	historyMang.ctx, historyMang.cancelFunc = context.WithCancel(context.Background())
 }
 
 type ByDate []*transactions.TransactionDetails
@@ -65,22 +70,25 @@ func (a ByDate) Less(i, j int) bool {
 	d2, _ := time.Parse(dateTimeFormatForGo, a[j].Date().ToString(dateTimeFormatForQML))
 	return d1.After(d2)
 }
-func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) []*transactions.TransactionDetails {
+func (historyMang *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) []*transactions.TransactionDetails {
 	logHistoryManager.Info("Getting transactions of Addresses")
-	addresses := hm.getAddressesWithWallets()
+	addresses := historyMang.getAddressesWithWallets()
 
 	find := make(map[string]struct{}, len(filterAddresses))
 	for _, addr := range filterAddresses {
 		find[addr] = struct{}{}
 	}
-	txnFind := make(map[string]struct{})
-	txns := make([]core.Transaction, 0)
 
-	wltIterator := hm.walletEnv.GetWalletSet().ListWallets()
+	txnFind := make(map[string]struct{})
+	txnsList := make([]core.Transaction, 0)
+
+	wltIterator := historyMang.walletEnv.GetWalletSet().ListWallets()
+
 	if wltIterator == nil {
 		logHistoryManager.WithError(nil).Warn("Couldn't get transactions of Addresses")
 		return make([]*transactions.TransactionDetails, 0)
 	}
+
 	for wltIterator.Next() {
 		addressIterator, err := wltIterator.Value().GetLoadedAddresses()
 		if err != nil {
@@ -98,7 +106,7 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 				for txnsIterator.Next() {
 					_, ok2 := txnFind[txnsIterator.Value().GetId()]
 					if !ok2 {
-						txns = append(txns, txnsIterator.Value())
+						txnsList = append(txnsList, txnsIterator.Value())
 						txnFind[txnsIterator.Value().GetId()] = struct{}{}
 					}
 				}
@@ -196,13 +204,13 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 		return util.FormatCoins(amount, accuracy)
 	}
 
-	for e := range txns {
-		txnDetail, err := transactions.NewTransactionDetailFromCoreTransaction(txns[e], getTxnType(txns[e]))
+	for e := range txnsList {
+		txnDetail, err := transactions.NewTransactionDetailFromCoreTransaction(txnsList[e], getTxnType(txnsList[e]))
 		if err != nil {
 			logHistoryManager.WithError(err).Errorf(
-				"Could't get a Transaction Details from the transaction: %s", txns[e].GetId())
+				"Could't get a Transaction Details from the transaction: %s", txnsList[e].GetId())
 		}
-		txnDetail.SetAmount(getAmountFromTxn(txns[e], getTxnType(txns[e])))
+		txnDetail.SetAmount(getAmountFromTxn(txnsList[e], getTxnType(txnsList[e])))
 
 		txnsDetailsList = append(txnsDetailsList, txnDetail)
 	}
@@ -210,56 +218,56 @@ func (hm *HistoryManager) getTransactionsOfAddresses(filterAddresses []string) [
 	sort.Sort(ByDate(txnsDetailsList))
 	return txnsDetailsList
 }
-func (hm *HistoryManager) loadHistoryWithFilters() []*transactions.TransactionDetails {
+func (historyMang *HistoryManager) loadHistoryWithFilters() []*transactions.TransactionDetails {
 	logHistoryManager.Info("Loading history with some filters")
-	filterAddresses := hm.filters
-	return hm.getTransactionsOfAddresses(filterAddresses)
+	filterAddresses := historyMang.filters
+	return historyMang.getTransactionsOfAddresses(filterAddresses)
 
 }
 
-func (hm *HistoryManager) loadHistory() []*transactions.TransactionDetails {
+func (historyMang *HistoryManager) loadHistory() []*transactions.TransactionDetails {
 	logHistoryManager.Info("Loading history")
-	addresses := hm.getAddressesWithWallets()
+	addresses := historyMang.getAddressesWithWallets()
 
 	filterAddresses := make([]string, 0)
-	for addr, _ := range addresses {
+	for addr := range addresses {
 		filterAddresses = append(filterAddresses, addr)
 	}
 
-	return hm.getTransactionsOfAddresses(filterAddresses)
+	return historyMang.getTransactionsOfAddresses(filterAddresses)
 
 }
 
-func (hm *HistoryManager) addFilter(addr string) {
+func (historyMang *HistoryManager) addFilter(addr string) {
 	logHistoryManager.Info("Add filter")
 	alreadyIs := false
-	for _, filter := range hm.filters {
+	for _, filter := range historyMang.filters {
 		if filter == addr {
 			alreadyIs = true
 			break
 		}
 	}
 	if !alreadyIs {
-		hm.filters = append(hm.filters, addr)
+		historyMang.filters = append(historyMang.filters, addr)
 	}
 
 }
 
-func (hm *HistoryManager) removeFilter(addr string) {
+func (historyMang *HistoryManager) removeFilter(addr string) {
 	logHistoryManager.Info("Remove filter")
 
-	for i := 0; i < len(hm.filters); i++ {
-		if hm.filters[i] == addr {
-			hm.filters = append(hm.filters[0:i], hm.filters[i+1:]...)
+	for i := 0; i < len(historyMang.filters); i++ {
+		if historyMang.filters[i] == addr {
+			historyMang.filters = append(historyMang.filters[0:i], historyMang.filters[i+1:]...)
 			break
 		}
 	}
 
 }
-func (hm *HistoryManager) getAddressesWithWallets() map[string]string {
+func (historyMang *HistoryManager) getAddressesWithWallets() map[string]string {
 	logHistoryManager.Info("Get Addresses with wallets")
 	response := make(map[string]string, 0)
-	it := hm.walletEnv.GetWalletSet().ListWallets()
+	it := historyMang.walletEnv.GetWalletSet().ListWallets()
 	if it == nil {
 		logHistoryManager.WithError(nil).Warn("Couldn't load addresses")
 		return response
