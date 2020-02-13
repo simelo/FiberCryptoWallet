@@ -56,11 +56,11 @@ func TestWalletListPendingTransactions(t *testing.T) {
 	wallets := NewSkycoinWalletIterator([]core.Wallet{remote, local})
 	for wallets.Next() {
 		wlt := wallets.Value()
-		account := wlt.GetCryptoAccount()
-		global_mock.On(method, wlt.GetId()).Return(response, errors.New("failure")).Once()
+		account := wlt.WalletCryptoAccount()
+		global_mock.On(method, wlt.WalletId()).Return(response, errors.New("failure")).Once()
 		_, err := account.ListPendingTransactions()
 		require.Error(t, err)
-		global_mock.On(method, wlt.GetId()).Return(response, nil).Once()
+		global_mock.On(method, wlt.WalletId()).Return(response, nil).Once()
 		txns, err := account.ListPendingTransactions()
 		require.NoError(t, err)
 		for txns.Next() {

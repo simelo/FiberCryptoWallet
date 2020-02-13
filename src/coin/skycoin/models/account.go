@@ -105,7 +105,7 @@ func (addr *SkycoinAddress) ListTransactions() core.TransactionIterator {
 	return NewSkycoinTransactionIterator(transactions)
 
 }
-func (addr *SkycoinAddress) ListPendingTransactions() (core.TransactionIterator, error) { //------TODO
+func (addr *SkycoinAddress) ListPendingTransactions() (core.TransactionIterator, error) {
 	return nil, nil
 }
 
@@ -139,7 +139,7 @@ func (wlt *RemoteWallet) ListAssets() []string {
 
 func (wlt *RemoteWallet) ScanUnspentOutputs() core.TransactionOutputIterator {
 	log.Info("Calling RemoteWallet.GetLoadedAddresses()")
-	addressesIter, err := wlt.GetLoadedAddresses()
+	addressesIter, err := wlt.GetAllLoadedAddresses()
 	if err != nil {
 		log.WithError(err).Error("RemoteWallet.GetLoadedAddresses() failed")
 		return nil
@@ -156,7 +156,7 @@ func (wlt *RemoteWallet) ScanUnspentOutputs() core.TransactionOutputIterator {
 
 func (wlt *RemoteWallet) ListTransactions() core.TransactionIterator {
 	log.Info("Calling RemoteWallet.GetLoadedAddresses()")
-	addressesIter, err := wlt.GetLoadedAddresses()
+	addressesIter, err := wlt.GetAllLoadedAddresses()
 	if err != nil {
 		log.WithError(err).Error("RemoteWallet.GetLoadedAddresses() failed")
 		return nil
@@ -180,9 +180,9 @@ func (wlt *RemoteWallet) ListPendingTransactions() (core.TransactionIterator, er
 	}
 	defer ReturnSkycoinClient(c)
 	log.Info("GET /api/v1/wallet/transactions&verbose=1")
-	response, err2 := c.WalletUnconfirmedTransactionsVerbose(wlt.GetId())
+	response, err2 := c.WalletUnconfirmedTransactionsVerbose(wlt.WalletId())
 	if err2 != nil {
-		log.WithError(err).WithField("id", wlt.GetId()).Error("Couldn't GET /api/v1/wallet/transactions&verbose=1")
+		log.WithError(err).WithField("id", wlt.WalletId()).Error("Couldn't GET /api/v1/wallet/transactions&verbose=1")
 		return nil, err2
 	}
 	txns := make([]core.Transaction, 0)
@@ -261,7 +261,7 @@ func (wlt *LocalWallet) ListAssets() []string {
 
 func (wlt *LocalWallet) ScanUnspentOutputs() core.TransactionOutputIterator {
 	log.Info("Calling LocalWallet.GetLoadedAddresses()")
-	addressesIter, err := wlt.GetLoadedAddresses()
+	addressesIter, err := wlt.GetAllLoadedAddresses()
 	if err != nil {
 		log.WithError(err).Error("LocalWallet.GetLoadedAddresses() failed")
 		return nil
@@ -277,7 +277,7 @@ func (wlt *LocalWallet) ScanUnspentOutputs() core.TransactionOutputIterator {
 }
 
 func (wlt *LocalWallet) ListTransactions() core.TransactionIterator {
-	addressesIter, err := wlt.GetLoadedAddresses()
+	addressesIter, err := wlt.GetAllLoadedAddresses()
 	if err != nil {
 		log.WithError(err).Error("LocalWallet.GetLoadedAddresses() failed")
 		return nil
@@ -301,9 +301,9 @@ func (wlt *LocalWallet) ListPendingTransactions() (core.TransactionIterator, err
 	}
 	defer ReturnSkycoinClient(c)
 	log.Info("GET /api/v1/wallet/transactions&verbose=1")
-	response, err2 := c.WalletUnconfirmedTransactionsVerbose(wlt.GetId())
+	response, err2 := c.WalletUnconfirmedTransactionsVerbose(wlt.WalletId())
 	if err2 != nil {
-		log.WithError(err2).WithField("id", wlt.GetId()).Error("Couldn't GET /api/v1/wallet/transactions&verbose=1")
+		log.WithError(err2).WithField("id", wlt.WalletId()).Error("Couldn't GET /api/v1/wallet/transactions&verbose=1")
 		return nil, err2
 	}
 	txns := make([]core.Transaction, 0)
