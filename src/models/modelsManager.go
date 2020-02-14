@@ -2,6 +2,8 @@ package models
 
 import (
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
+	"time"
+
 	"github.com/therecipe/qt/qml"
 
 	qtcore "github.com/therecipe/qt/core"
@@ -21,6 +23,21 @@ func (mm *ModelManager) init() {
 	mm.ConnectGetAddressModel(mm.getAddressModel)
 	qml.QQmlEngine_SetObjectOwnership(mm, qml.QQmlEngine__CppOwnership)
 	mm.addressesModel = make(map[string]*address.AddressList, 0)
+	go func() {
+		uptimeTicker := time.NewTicker(time.Second * 2)
+
+		for {
+			<-uptimeTicker.C
+			for wlt, _ := range mm.addressesModel {
+				addrModel := address.NewAddressList(nil)
+				qml.QQmlEngine_SetObjectOwnership(addrModel, qml.QQmlEngine__CppOwnership)
+				addrModel.SetAddresses(mm.wltManager.getAddresses(wlt))
+				addrModel.RemoveAddress(0)
+				mm.addressesModel[wlt] = addrModel
+			}
+
+		}
+	}()
 }
 
 func (mm *ModelManager) setWalletManager(wm *WalletManager) {

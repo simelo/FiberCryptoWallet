@@ -14,11 +14,11 @@ const (
 
 type ModelOutput struct {
 	core.QAbstractListModel
+	outputs []*QOutput
 
 	_ func() `constructor:"init"`
 
 	_ map[int]*core.QByteArray `property:"roles"`
-	_ []*QOutput               `property:"outputs"`
 	_ string                   `property:"address"`
 
 	_ func([]*QOutput) `slot:"addOutputs"`
@@ -60,7 +60,7 @@ func (m *ModelOutput) init() {
 }
 
 func (m *ModelOutput) removeOutputsFromAddress(addr string) {
-	old := m.Outputs()
+	old := m.outputs
 	new := make([]*QOutput, 0)
 	for _, out := range old {
 		if out.AddressOwner() != addr {
@@ -71,7 +71,7 @@ func (m *ModelOutput) removeOutputsFromAddress(addr string) {
 }
 
 func (m *ModelOutput) removeOutputsFromWallet(wltId string) {
-	old := m.Outputs()
+	old := m.outputs
 	new := make([]*QOutput, 0)
 	for _, out := range old {
 		if out.WalletOwner() != wltId {
@@ -82,7 +82,7 @@ func (m *ModelOutput) removeOutputsFromWallet(wltId string) {
 }
 
 func (m *ModelOutput) rowCount(*core.QModelIndex) int {
-	return len(m.Outputs())
+	return len(m.outputs)
 }
 
 func (m *ModelOutput) roleNames() map[int]*core.QByteArray {
@@ -94,11 +94,11 @@ func (m *ModelOutput) data(index *core.QModelIndex, role int) *core.QVariant {
 		return core.NewQVariant()
 	}
 
-	if index.Row() >= len(m.Outputs()) {
+	if index.Row() >= len(m.outputs) {
 		return core.NewQVariant()
 	}
 
-	qo := m.Outputs()[index.Row()]
+	qo := m.outputs[index.Row()]
 
 	switch role {
 	case OutputID:
@@ -135,8 +135,23 @@ func (m *ModelOutput) insertRows(row int, count int) bool {
 }
 
 func (m *ModelOutput) addOutputs(mo []*QOutput) {
-	m.SetOutputs(mo)
-	m.insertRows(len(m.Outputs()), len(mo))
+	for row, out := range mo {
+		find := false
+		for _, outSet := range m.outputs {
+			if out.OutputID() == outSet.OutputID() {
+				outSet = out
+				find = true
+				break
+			}
+		}
+		if !find {
+			m.BeginInsertRows(core.NewQModelIndex(), row, row)
+			m.outputs = append(m.outputs, out)
+			m.EndInsertRows()
+		} else {
+			m.DataChanged(m.Index(len(m.outputs)-1, row, core.NewQModelIndex()), m.Index(len(m.outputs)-1, row+1, core.NewQModelIndex()), []int{int(core.Qt__DisplayRole)})
+		}
+	}
 }
 
 func contains(outputs []*QOutput, output *QOutput) bool {
@@ -151,7 +166,7 @@ func contains(outputs []*QOutput, output *QOutput) bool {
 }
 
 func (m *ModelOutput) insertOutputs(mo []*QOutput) {
-	toInsert := m.Outputs()
+	toInsert := m.outputs
 	for _, outputToInsert := range mo {
 		if !contains(toInsert, outputToInsert) {
 			toInsert = append(toInsert, outputToInsert)
@@ -162,12 +177,12 @@ func (m *ModelOutput) insertOutputs(mo []*QOutput) {
 
 func (m *ModelOutput) loadModel(mo []*QOutput) {
 	m.BeginResetModel()
-	m.SetOutputs(mo)
+	m.outputs = mo
 	m.EndResetModel()
 }
 
 func (m *ModelOutput) cleanModel() {
 	m.BeginResetModel()
-	m.SetOutputs(make([]*QOutput, 0))
+	m.outputs = make([]*QOutput, 0)
 	m.EndResetModel()
 }

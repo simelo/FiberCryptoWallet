@@ -38,7 +38,7 @@ type AddressList struct {
 
 	_ func() `constructor:"init"`
 
-	_ func(transaction *AddressDetails) `signal:"addAddress,auto"`
+	_ func(transaction *AddressDetails) `signal:"addAddress"`
 	_ func(index int)                   `signal:"removeAddress,auto"`
 	_ func([]*AddressDetails)           `slot:"loadModel"`
 
@@ -58,6 +58,8 @@ func (al *AddressList) init() {
 	al.ConnectData(al.data)
 	al.ConnectRoleNames(al.roleNames)
 	al.ConnectLoadModel(al.loadModel)
+	al.ConnectAddAddress(al.addAddress)
+
 }
 
 func (al *AddressList) rowCount(*core.QModelIndex) int {

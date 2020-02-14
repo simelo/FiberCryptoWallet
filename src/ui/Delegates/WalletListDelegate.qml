@@ -91,10 +91,10 @@ Item {
                     color: Material.accent
                     horizontalAlignment: Text.AlignRight
                     Layout.preferredWidth: internalLabelsWidth
-
                     BusyIndicator {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
+//                        running: sky === qsTr("N/A") ? true : false
 
                         implicitWidth: implicitHeight
                         implicitHeight: parent.height + 10
