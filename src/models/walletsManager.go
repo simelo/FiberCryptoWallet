@@ -256,8 +256,8 @@ func (walletM *WalletManager) updateOutputs(wltId, address string) {
 		walletM.outputsByAddress[address] = outs
 		return
 	}
-	outsIter := addr.GetCryptoAccount().ScanUnspentOutputs()
-	if outsIter == nil {
+	outsIter, err := addr.GetCryptoAccount().ScanUnspentOutputs()
+	if err != nil {
 		logWalletManager.WithError(err).Warn("Couldn't scan unspent outputs")
 		walletM.outputsByAddress[address] = outs
 		return
@@ -830,6 +830,7 @@ func (walletM *WalletManager) getWallets() []*QWallet {
 		}
 
 	}
+	// walletM.wallets = make([]*QWallet, 0)
 
 	logWalletManager.Info("Wallets obtained")
 	return walletM.wallets
@@ -971,7 +972,12 @@ func (walletM *WalletManager) loadOutputs() *outputs.ModelOutputs {
 	var outputList = make([]*outputs.QOutput, 0)
 
 	for walletIter.Next() {
-		unspendOutIter := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+		unspendOutIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+		if err != nil {
+			logWalletManager.WithError(err).Error(
+				"Could't get output iterator for wallet: %s", walletIter.Value().GetLabel())
+			continue
+		}
 		for unspendOutIter.Next() {
 			outputList = append(outputList,
 				outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel()))
