@@ -1,6 +1,5 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import WalletsManager 1.0
 
 Item {
     id: generalStackView
@@ -26,17 +25,9 @@ Item {
         }
     }
 
-
-    WalletManager {
-        id: walletManager
-    }
-
-    WalletModel {
-        id: walletModel
-
         Component.onCompleted: {
-            walletModel.loadModel(walletManager.getWallets())
-            if (walletModel.count) {
+            let walletModel = walletManager.getWallets();
+            if (walletModel.length > 0 ) {
                 if (stackView.depth > 1) {
                     stackView.replace(componentGeneralSwipeView)
                 } else {
@@ -51,7 +42,6 @@ Item {
 
             }
         }
-    }
 
     function openBlockchainPage() {
         if (stackView.depth > 1) {

@@ -16,6 +16,7 @@ type Map struct {
 	_        func(key string) string `slot:"getValue"`
 	_        func(key, value string) `slot:"setValue"`
 	_        func() []string         `slot:"getKeys"`
+	_        func(key string)        `slot:"removeVal"`
 }
 
 func (coinOpt *Map) init() {
@@ -35,6 +36,36 @@ func (coinOpt *Map) getKeys() []string {
 }
 
 func (coinOpt *Map) setValue(key, value string) {
-	coinOpt.keyList = append(coinOpt.keyList, key)
+	var exist = false
+	// Verify if the KeyList contains the key
+	for e := range coinOpt.keyList {
+		if coinOpt.keyList[e] == key {
+			exist = true
+			break
+		}
+	}
+
+	// If not contains the key, add the key to the KeyList
+	if !exist {
+		coinOpt.keyList = append(coinOpt.keyList, key)
+	}
+
 	coinOpt.keyValue[key] = value
+}
+
+func (coinOpt *Map) removeVal(key string) {
+	var pos = -1
+	// Find the position of the key in the list
+	for e := range coinOpt.keyList {
+		if coinOpt.keyList[e] == key {
+			pos = e
+			break
+		}
+	}
+
+	if pos != -1 {
+		// Delete the element in the position
+		coinOpt.keyList = append(coinOpt.keyList[:pos], coinOpt.keyList[pos+1:]...)
+		delete(coinOpt.keyValue, key)
+	}
 }
