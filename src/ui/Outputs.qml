@@ -2,33 +2,49 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
-//import WalletsManager 1.0
 import Outputs 1.0
+
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
 import "Delegates/" // For quick UI development, switch back to resources when making a release
 
 Page {
     id: outputs
-    
     readonly property real listOutputsLeftMargin: 20
     readonly property real listOutputsRightMargin: 50
     readonly property real listOutputsSpacing: 20
     readonly property real internalLabelsWidth: 60
     property alias model: listOutputs
-    property QOutputs outputModel
+    property var walletList: []
+
+    function loadWallets(pos){
+        var wlt = walletList.find(wlt => { return wlt.name === pos.walletLbl })
+        if (!wlt){
+            wlt = { name: pos.walletLbl , active: false };
+            walletList.push(wlt)
+        }
+        pos.showOrHide(wlt.active)
+        pos.visible = wlt.active
+    }
 
     function changeVisibilityByWltName( wltName ){
-        for( let i=0; i<model.count; i++ ){
+        let index = walletList.findIndex(wlt => wlt.name===wltName );
+        walletList[index].active = !walletList[index].active;
+
+        for( let i=0; i< model.count ; i++ ){
             if ( model.itemAtIndex(i).walletLbl === wltName ){
-                model.itemAtIndex(i).visible = !model.itemAtIndex(i).visible
+                  model.itemAtIndex(i).showOrHide(walletList[index].active)
             }
         }
     }
 
-    Component.onCompleted:{
-        outputModel = walletManager.loadOutputs()
+    QOutputs{
+        id: outputModel
+        Component.onCompleted:{
+            walletManager.loadOutputsAsync(this)
+        }
     }
+
     GroupBox{
         anchors.fill: parent
         anchors.margins: 20
@@ -68,41 +84,34 @@ Page {
                 Layout.fillHeight: true
                 clip: true
                 model: outputModel
+
                 section.property: "walletOwner"
                 section.criteria: ViewSection.FullString
-
                 section.delegate: OutputSectionDelegate{
                     width: parent.width
                 }
-
                 delegate: OutputDelegate{
-                    visible: false
-                    width: parent.width
-                    outId: outputID
-                    address: addressOwner
-                    traits: coinOpts
-                    walletLbl: walletOwner
+                    width : parent.width
+                    outId : outputID
+                    address : addressOwner
+                    traits : coinOpts
+                    walletLbl : walletOwner
+
+                    Component.onCompleted:{
+                        loadWallets(this) //TODO
+                    }
                 }
             }//ListView
+
 
         }//columnLayoutFrame
     }//GroupBox
 
-    property Timer timer: Timer {
-        id: addressModelTimer
-        interval: 0
-        repeat: false
-        running: true
-        onTriggered: {
 
-        }
-    }
-
-//    BusyIndicator {
-//        id: busyIndicator
-//
-//        anchors.centerIn: parent
+    BusyIndicator {
+        id: busyIndicator
+        anchors.centerIn: parent
 //         Create a `busy` property in the backend and bind it to `running` here:
-//        running: modelWallets.loading
-//    }
+        running: outputModel.loading
+    }
 }

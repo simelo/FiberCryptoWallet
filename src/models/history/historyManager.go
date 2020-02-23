@@ -3,7 +3,7 @@ package history
 import (
 	"time"
 
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
+	// "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/therecipe/qt/qml"
 
@@ -75,20 +75,20 @@ func (hm *HistoryManager) init() {
 
 	hm.txnForAddresses = make(map[string][]core.Transaction, 0)
 	hm.newTxn = make(map[string][]core.Transaction, 0)
-	updateTime := config.GetDataUpdateTime()
-	uptimeTicker := time.NewTicker(time.Duration(updateTime) * time.Microsecond * 2)
+	// updateTime := config.GetDataUpdateTime()
+	// uptimeTicker := time.NewTicker(time.Duration(updateTime) * time.Microsecond * 2)
 	historyManager = hm
 	hm.txnFinded = make(map[string]struct{}, 0)
-	go func() {
-		for {
-			select {
-			case <-uptimeTicker.C:
-				logHistoryManager.Debug("Updating history")
-				go hm.updateTxns()
-			}
-			historyManager = hm
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-uptimeTicker.C:
+	// 			logHistoryManager.Debug("Updating history")
+	// 			go hm.updateTxns()
+	// 		}
+	// 		historyManager = hm
+	// 	}
+	// }()
 }
 
 func (hm *HistoryManager) reviewForNew() {

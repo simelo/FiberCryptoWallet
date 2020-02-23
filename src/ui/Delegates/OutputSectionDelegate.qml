@@ -16,7 +16,7 @@ ColumnLayout{
         }
 
         ToolButton{
-              text:""
+            text:""
             icon.source: "qrc:/images/resources/images/icons/up.svg"
             icon.color: Material.accent
             Behavior on rotation { NumberAnimation { duration: 500 } }
@@ -25,8 +25,6 @@ ColumnLayout{
                 hide=!hide
                 this.rotation = hide ? 0 : 180
                 changeVisibilityByWltName(section)
-//                console.log(listOutputs.itemAtIndex(1).outputID)
-//                console.log(listOutputs.indexAt(1/)
             }
         }
     }

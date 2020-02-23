@@ -1,11 +1,13 @@
 package models
 
 import (
-	"sync"
-
-	"fmt"
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
+	"sync"
+	"time"
+
+	// "fmt"
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
+	// "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
 
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
@@ -17,7 +19,7 @@ import (
 
 	"github.com/therecipe/qt/qml"
 
-	"time"
+	// "time"
 
 	sky "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
@@ -57,7 +59,6 @@ type WalletManager struct {
 	_ func(wltId, address string)                                                                                                                           `slot:"updateOutputs"`
 	_ func(string)                                                                                                                                          `slot:"updateAddresses"`
 	_ func()                                                                                                                                                `slot:"updateWallets"`
-	_ func() *outputs.ModelOutputs                                                                                                                          `slot:"loadOutputs"`
 	_ func(seed string, label string, walletType string, password string, scanN int) *QWallet                                                               `slot:"createEncryptedWallet"`
 	_ func(seed string, label string, walletType string, scanN int) *QWallet                                                                                `slot:"createUnencryptedWallet"`
 	_ func(entropy int) string                                                                                                                              `slot:"getNewSeed"`
@@ -81,6 +82,7 @@ type WalletManager struct {
 	_ func(string, address.AddressList)                                                                                                                     `slot:"updateModel"`
 	_ func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
 	_ func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
+	_ func(modelOutputs *outputs.ModelOutputs)                                                                                                              `slot:"loadOutputsAsync"`
 }
 
 func (walletM *WalletManager) init() {
@@ -116,7 +118,10 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectGetDefaultWalletType(walletM.getDefaultWalletType)
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
 		walletM.ConnectUpdateModel(walletM.updateModel)
-		walletM.ConnectLoadOutputs(walletM.loadOutputs)
+		// walletM.ConnectLoadOutputs(walletM.loadOutputs)
+
+		walletM.ConnectLoadOutputsAsync(walletM.loadOutputsAsync)
+
 		walletM.addresseseByWallets = make(map[string][]*address.AddressDetails, 0)
 		walletM.outputsByAddress = make(map[string][]*QOutput, 0)
 		walletM.SeedGenerator = new(sky.SeedService)
@@ -155,16 +160,16 @@ func (walletM *WalletManager) init() {
 	}
 	logWalletManager.Debug("Finish wallets")
 	walletM.wallets = qWallets
-	go func() {
-		logWalletManager.Debug("Update time is :=> ", time.Duration(config.GetDataUpdateTime())*time.Microsecond)
-		uptimeTicker := time.NewTicker(time.Duration(config.GetDataUpdateTime()) * time.Microsecond)
-
-		for {
-			<-uptimeTicker.C
-			go walletM.updateWallets()
-			walletManager = walletM
-		}
-	}()
+	// go func() {
+	// 	logWalletManager.Debug("Update time is :=> ", time.Duration(config.GetDataUpdateTime())*time.Microsecond)
+	// 	uptimeTicker := time.NewTicker(time.Duration(config.GetDataUpdateTime()) * time.Microsecond)
+	//
+	// 	for {
+	// 		<-uptimeTicker.C
+	// 		go walletM.updateWallets()
+	// 		walletManager = walletM
+	// 	}
+	// }()
 }
 
 func (walletM *WalletManager) suscribe() chan *updateWalletInfo {
@@ -418,7 +423,6 @@ func (walletM *WalletManager) updateWallets() {
 		return
 	}
 	for it.Next() {
-
 		go walletM.updateAddresses(it.Value().GetId())
 
 		encrypted, err := walletM.WalletEnv.GetStorage().IsEncrypted(it.Value().GetId())
@@ -429,6 +433,7 @@ func (walletM *WalletManager) updateWallets() {
 		qw := fromWalletToQWallet(it.Value(), encrypted)
 		founded, changed := false, false
 		row := 0
+
 		for i := range walletM.wallets {
 			if walletM.wallets[i].FileName() == qw.FileName() {
 				row = i
@@ -947,14 +952,13 @@ func (walletM *WalletManager) getWallets() []*QWallet {
 	logWalletManager.Info("Getting wallets")
 	walletM.wallets = make([]*QWallet, 0)
 	if walletM.WalletEnv == nil {
-		walletM.UpdateWalletEnvs()
+		walletM.updateWalletEnvs()
 	}
 	it := walletM.WalletEnv.GetWalletSet().ListWallets()
 
 	if it == nil {
 		logWalletManager.WithError(nil).Error("Couldn't load wallets")
 		return walletM.wallets
-
 	}
 
 	for it.Next() {
@@ -973,7 +977,6 @@ func (walletM *WalletManager) getWallets() []*QWallet {
 		}
 
 	}
-	// walletM.wallets = make([]*QWallet, 0)
 
 	logWalletManager.Info("Wallets obtained")
 	return walletM.wallets
@@ -1094,7 +1097,6 @@ func fromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	}
 
 	addressList.SetAddresses(addressDetailList)
-	fmt.Println(addressList)
 	qWallet.SetAddresses(addressList)
 
 	return qWallet
@@ -1110,24 +1112,38 @@ func (walletM *WalletManager) updateModel(fileName string, list *address.Address
 	go list.LoadModel(walletM.getAddresses(fileName))
 }
 
-func (walletM *WalletManager) loadOutputs() *outputs.ModelOutputs {
-	walletIter := walletM.WalletEnv.GetWalletSet().ListWallets()
-	var outputList = make([]*outputs.QOutput, 0)
-
-	for walletIter.Next() {
-		unspendOutIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
-		if err != nil {
-			logWalletManager.WithError(err).Error(
-				"Could't get output iterator for wallet: %s", walletIter.Value().GetLabel())
-			continue
+func (walletM *WalletManager) loadOutputsAsync(modelOutputs *outputs.ModelOutputs) {
+	logWalletManager.Info("Loading outputs asynchronously")
+	logWalletManager.Infof("Update time = %d seg", config.GetDataUpdateTime())
+	loadOutputs := func() {
+		walletIter := walletM.WalletEnv.GetWalletSet().ListWallets()
+		var outputList = make([]*outputs.QOutput, 0)
+		for walletIter.Next() {
+			unspendOutIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+			if err != nil {
+				logWalletManager.WithError(err).Error(
+					"Could't get output iterator for wallet: %s", walletIter.Value().GetLabel())
+				modelOutputs.SetLoading(true)
+				continue
+			}
+			modelOutputs.SetLoading(false)
+			for unspendOutIter.Next() {
+				outputList = append(outputList,
+					outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel()))
+			}
 		}
-		for unspendOutIter.Next() {
-			outputList = append(outputList,
-				outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel()))
-		}
+		modelOutputs.LoadModelAsync(outputList)
 	}
-	modelOutputs := outputs.NewModelOutputs(nil)
-	modelOutputs.InsertOutputs(outputList)
 
-	return modelOutputs
+	go func() {
+		loadOutputs()
+		for {
+			select {
+			case <-modelOutputs.Ctx.Done():
+				return
+			case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
+				loadOutputs()
+			}
+		}
+	}()
 }

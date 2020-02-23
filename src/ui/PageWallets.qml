@@ -120,15 +120,6 @@ Page {
         Component.onCompleted: {
             walletModel.loadModel(walletManager.getWallets())
         }
-        //property Timer timer: Timer {
-        //    id: walletListTimer
-        //    interval: 5000
-        //    repeat: true
-        //    running: true
-        //    onTriggered: {
-        //        walletModel.updateModel(walletManager.getWallets())
-        //    }
-        //}
     }
 
     DialogAddLoadWallet {
@@ -156,22 +147,22 @@ Page {
     // Roles: name, encryptionEnabled, sky, coinHours
     // Use listModel.append( { "name": value, "encryptionEnabled": value, "sky": value, "coinHours": value } )
     // Or implement the model in the backend (a more recommendable approach)
-    ListModel {
-        id: listWallets
-        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
-        ListElement { name: "My second wallet"; encryptionEnabled: true; sky: 300; coinHours: 1049 }
-        ListElement { name: "My third wallet"; encryptionEnabled: false; sky: 13; coinHours: 201 }
-
-        ListElement { name: "My first wallet"; encryptionEnabled: false; sky: 5; coinHours: 10 }
-        ListElement { name: "My second wallet"; encryptionEnabled: true; sky: 300; coinHours: 1049 }
-        ListElement { name: "My third wallet"; encryptionEnabled: true; sky: 13; coinHours: 201 }
-
-        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
-        ListElement { name: "My second wallet"; encryptionEnabled: false; sky: 300; coinHours: 1049 }
-        ListElement { name: "My third wallet"; encryptionEnabled: false; sky: 13; coinHours: 201 }
-
-        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
-        ListElement { name: "My second wallet"; encryptionEnabled: false; sky: 300; coinHours: 1049 }
-        ListElement { name: "My third wallet"; encryptionEnabled: true; sky: 13; coinHours: 201 }
-    }
+//    ListModel {
+//        id: listWallets
+//        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
+//        ListElement { name: "My second wallet"; encryptionEnabled: true; sky: 300; coinHours: 1049 }
+//        ListElement { name: "My third wallet"; encryptionEnabled: false; sky: 13; coinHours: 201 }
+//
+//        ListElement { name: "My first wallet"; encryptionEnabled: false; sky: 5; coinHours: 10 }
+//        ListElement { name: "My second wallet"; encryptionEnabled: true; sky: 300; coinHours: 1049 }
+//        ListElement { name: "My third wallet"; encryptionEnabled: true; sky: 13; coinHours: 201 }
+//
+//        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
+//        ListElement { name: "My second wallet"; encryptionEnabled: false; sky: 300; coinHours: 1049 }
+//        ListElement { name: "My third wallet"; encryptionEnabled: false; sky: 13; coinHours: 201 }
+//
+//        ListElement { name: "My first wallet"; encryptionEnabled: true; sky: 5; coinHours: 10 }
+//        ListElement { name: "My second wallet"; encryptionEnabled: false; sky: 300; coinHours: 1049 }
+//        ListElement { name: "My third wallet"; encryptionEnabled: true; sky: 13; coinHours: 201 }
+//    }
 }

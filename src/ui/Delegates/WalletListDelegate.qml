@@ -94,7 +94,6 @@ Item {
                     BusyIndicator {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-//                        running: sky === qsTr("N/A") ? true : false
 
                         implicitWidth: implicitHeight
                         implicitHeight: parent.height + 10
@@ -114,20 +113,4 @@ Item {
             }
         } // ItemDelegate
     } //ColumnLayout
-    // Roles: address, addressSky, addressCoinHours
-    // Use listModel.append( { "address": value, "addressSky": value, "addressCoinHours": value } )
-    // Or implement the model in the backend (a more recommendable approach)
-//    QAddressList {
-//
-//        id: listAddresses
-//        property Timer timer: Timer {
-//            id: addressModelTimer
-//            interval: 7000
-//            repeat: trueGetLoadedAddresses
-//            running: true
-//            onTriggered: {
-//                walletManager.updateModel(fileName,listAddresses);
-//            }
-//        }
-//    }
 }
