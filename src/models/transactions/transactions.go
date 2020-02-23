@@ -46,16 +46,16 @@ const (
 type TransactionDetails struct {
 	qtCore.QObject
 	Txn core.Transaction
-	_   *qtCore.QDateTime    `property:"date"`
-	_   int                  `property:"status"`
-	_   int                  `property:"type"`
-	_   uint64               `property:"blockHeight"`
-	_   string               `property:"amount"`
-	_   string               `property:"transactionID"`
-	_   *address.AddressList `property:"addresses"`
-	_   *address.AddressList `property:"inputs"`
-	_   *address.AddressList `property:"outputs"`
-	_   *modelUtil.Map       `property:"coinOptions"`
+	_   *qtCore.QDateTime     `property:"date"`
+	_   int                   `property:"status"`
+	_   int                   `property:"type"`
+	_   uint64                `property:"blockHeight"`
+	_   string                `property:"amount"`
+	_   string                `property:"transactionID"`
+	_   *address.ModelAddress `property:"addresses"`
+	_   *address.ModelAddress `property:"inputs"`
+	_   *address.ModelAddress `property:"outputs"`
+	_   *modelUtil.Map        `property:"coinOptions"`
 }
 
 func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
@@ -80,9 +80,9 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	txnDetails.SetType(txType)
 
-	addresses := address.NewAddressList(nil)
-	inputList := address.NewAddressList(nil)
-	outputsList := address.NewAddressList(nil)
+	addresses := address.NewModelAddress(nil)
+	inputList := address.NewModelAddress(nil)
+	outputsList := address.NewModelAddress(nil)
 
 	var containsAddress = func(addr string) bool {
 		for _, addrDetail := range addresses.Addresses() {
@@ -95,7 +95,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	for _, input := range transaction.GetInputs() {
 
-		qIn := address.NewAddressDetails(nil)
+		qIn := address.NewQAddress(nil)
 		qIn.SetAddress(input.GetSpentOutput().GetAddress().String())
 		inputCoinOptions := modelUtil.NewMap(nil)
 
@@ -115,7 +115,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	for _, out := range transaction.GetOutputs() {
 
-		qOu := address.NewAddressDetails(nil)
+		qOu := address.NewQAddress(nil)
 		qOu.SetAddress(out.GetAddress().String())
 		outputCoinOptions := modelUtil.NewMap(nil)
 

@@ -2,6 +2,7 @@ package util
 
 import (
 	qtCore "github.com/therecipe/qt/core"
+	"reflect"
 )
 
 func init() {
@@ -68,4 +69,8 @@ func (coinOpt *Map) removeVal(key string) {
 		coinOpt.keyList = append(coinOpt.keyList[:pos], coinOpt.keyList[pos+1:]...)
 		delete(coinOpt.keyValue, key)
 	}
+}
+
+func CompareMaps(a, b *Map) bool {
+	return reflect.DeepEqual(a.keyValue, b.keyValue)
 }

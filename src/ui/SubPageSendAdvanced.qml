@@ -4,7 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import WalletsManager 1.0
 import OutputsModels 1.0
-import HistoryModels 1.0
+import Address 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"

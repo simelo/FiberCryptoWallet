@@ -342,16 +342,16 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 	sent := false
 	txnDetails := transactions.NewTransactionDetails(nil)
 	qml.QQmlEngine_SetObjectOwnership(txnDetails, qml.QQmlEngine__CppOwnership)
-	txnAddresses := address.NewAddressList(nil)
+	txnAddresses := address.NewModelAddress(nil)
 	qml.QQmlEngine_SetObjectOwnership(txnAddresses, qml.QQmlEngine__CppOwnership)
 	inAddresses := make(map[string]struct{}, 0)
-	inputs := address.NewAddressList(nil)
-	outputs := address.NewAddressList(nil)
+	inputs := address.NewModelAddress(nil)
+	outputs := address.NewModelAddress(nil)
 	qml.QQmlEngine_SetObjectOwnership(inputs, qml.QQmlEngine__CppOwnership)
 	qml.QQmlEngine_SetObjectOwnership(outputs, qml.QQmlEngine__CppOwnership)
 	txnIns := txn.GetInputs()
 	for _, in := range txnIns {
-		qIn := address.NewAddressDetails(nil)
+		qIn := address.NewQAddress(nil)
 		qml.QQmlEngine_SetObjectOwnership(qIn, qml.QQmlEngine__CppOwnership)
 		qIn.SetAddress(in.GetSpentOutput().GetAddress().String())
 		skyUint64, err := in.GetCoins(params.SkycoinTicker)
@@ -398,7 +398,7 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 			logHistoryManager.WithError(err).Warn("Couldn't get Skycoins balance")
 			return nil, err
 		}
-		qOu := address.NewAddressDetails(nil)
+		qOu := address.NewQAddress(nil)
 		qml.QQmlEngine_SetObjectOwnership(qOu, qml.QQmlEngine__CppOwnership)
 		qOu.SetAddress(out.GetAddress().String())
 		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)

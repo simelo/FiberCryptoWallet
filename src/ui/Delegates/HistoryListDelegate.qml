@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import ModelUtils 1.0
-
+import Address 1.0
 // Resource imports
 // import "qrc:/ui/src/ui/"
 import "../" // For quick UI development, switch back to resources when making a release

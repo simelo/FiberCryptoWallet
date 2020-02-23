@@ -28,27 +28,29 @@ type WalletModel struct {
 	_ map[int]*core.QByteArray `property:"roles"`
 	_ []*QWallet               `property:"wallets"`
 
-	_             func(*QWallet)                                                                   `slot:"addWallet"`
-	_             func(row int, name string, encryptionEnabled bool, address *address.AddressList) `slot:"editWallet"`
-	_             func(row int)                                                                    `slot:"removeWallet"`
-	_             func([]*QWallet)                                                                 `slot:"loadModel"`
-	_             func([]*QWallet)                                                                 `slot:"updateModel"`
-	_             func([]*QWallet, string)                                                         `slot:"filterWalletByCurrency"`
-	_             int                                                                              `property:"count"`
+	_             func(*QWallet)                                                                    `slot:"addWallet"`
+	_             func(row int, name string, encryptionEnabled bool, address *address.ModelAddress) `slot:"editWallet"`
+	_             func(row int)                                                                     `slot:"removeWallet"`
+	_             func([]*QWallet)                                                                  `slot:"loadModel"`
+	_             func([]*QWallet)                                                                  `slot:"updateModel"`
+	_             func([]*QWallet, string)                                                          `slot:"filterWalletByCurrency"`
+	_             int                                                                               `property:"count"`
 	receivChannel chan *updateWalletInfo
 	walletByName  map[string]*QWallet
+
+	existentWallets map[string]struct{}
 }
 
 type QWallet struct {
 	core.QObject
-	_ string               `property:"name"`
-	_ int                  `property:"encryptionEnabled"`
-	_ string               `property:"sky"`
-	_ string               `property:"fileName"`
-	_ string               `property:"currency"`
-	_ *address.AddressList `property:"addresses"`
-	_ *modelUtil.Map       `property:"coinOptions"`
-	_ bool                 `property:"expand"`
+	_ string `property:"name"`
+	_ int    `property:"encryptionEnabled"`
+	// _ string               `property:"sky"`
+	_ string                `property:"fileName"`
+	_ string                `property:"currency"`
+	_ *address.ModelAddress `property:"addresses"`
+	_ *modelUtil.Map        `property:"coinOptions"`
+	// _ bool                 `property:"expand"`
 }
 
 func (walletModel *WalletModel) init() {
@@ -57,10 +59,10 @@ func (walletModel *WalletModel) init() {
 		Name:              core.NewQByteArray2("name", -1),
 		EncryptionEnabled: core.NewQByteArray2("encryptionEnabled", -1),
 		FileName:          core.NewQByteArray2("fileName", -1),
-		Expand:            core.NewQByteArray2("expand", -1),
-		Addresses:         core.NewQByteArray2("addresses", -1),
-		Currency:          core.NewQByteArray2("currency", -1),
-		CoinOptions:       core.NewQByteArray2("coinOpts", -1),
+		// Expand:            core.NewQByteArray2("expand", -1),
+		Addresses:   core.NewQByteArray2("addresses", -1),
+		Currency:    core.NewQByteArray2("currency", -1),
+		CoinOptions: core.NewQByteArray2("coinOpts", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(walletModel, qml.QQmlEngine__CppOwnership)
 	walletModel.ConnectData(walletModel.data)
@@ -96,8 +98,8 @@ func (walletModel *WalletModel) init() {
 }
 
 func (walletModel *WalletModel) changeExpanded(id string) {
-	w := walletModel.walletByName[id]
-	w.SetExpand(!w.IsExpand())
+	// w := walletModel.walletByName[id]
+	// w.SetExpand(!w.IsExpand())
 
 }
 
@@ -129,10 +131,10 @@ func (walletModel *WalletModel) data(index *core.QModelIndex, role int) *core.QV
 		{
 			return core.NewQVariant1(w.FileName())
 		}
-	case Expand:
-		{
-			return core.NewQVariant1(w.IsExpand())
-		}
+	// case Expand:
+	// 	{
+	// 		return core.NewQVariant1(w.IsExpand())
+	// 	}
 	case Addresses:
 		{
 			return core.NewQVariant1(w.Addresses())
@@ -177,10 +179,10 @@ func (walletModel *WalletModel) setData(index *core.QModelIndex, value *core.QVa
 		{
 			w.SetFileName(value.ToString())
 		}
-	case Expand:
-		{
-			w.SetExpand(value.ToBool())
-		}
+	// case Expand:
+	// 	{
+	// w.SetExpand(value.ToBool())
+	// }
 	default:
 		{
 			return false
@@ -203,6 +205,24 @@ func (walletModel *WalletModel) roleNames() map[int]*core.QByteArray {
 	return walletModel.Roles()
 }
 
+func (walletModel *WalletModel) loadModelAsync(qWalletList []*QWallet) {
+	// If equal
+
+	for e := range qWalletList {
+		if _, ok := walletModel.existentWallets[qWalletList[e].FileName()]; ok {
+
+		}
+	}
+
+	// nothing
+	// If new
+	// add
+	// If different
+	// Edit
+	// If remove
+	// Remove
+}
+
 func (walletModel *WalletModel) addWallet(w *QWallet) {
 	logWalletsModel.Info("Add Wallet")
 	if w.Pointer() == nil {
@@ -216,7 +236,7 @@ func (walletModel *WalletModel) addWallet(w *QWallet) {
 	walletModel.EndInsertRows()
 }
 
-func (walletModel *WalletModel) editWallet(row int, name string, encrypted bool, address *address.AddressList) {
+func (walletModel *WalletModel) editWallet(row int, name string, encrypted bool, address *address.ModelAddress) {
 	logWalletsModel.Info("Edit Wallet")
 	pIndex := walletModel.Index(0, 0, core.NewQModelIndex())
 	lIndex := walletModel.Index(len(walletModel.Wallets())-1, 0, core.NewQModelIndex())
@@ -277,4 +297,13 @@ func (walletModel *WalletModel) filterWalletByCurrency(wallets []*QWallet, curre
 
 	walletModel.EndResetModel()
 	walletModel.SetCount(len(walletModel.Wallets()))
+}
+
+func CompareWallet(a, b *QWallet) bool {
+	return address.CompareModelAddress(a.Addresses(), b.Addresses()) &&
+		modelUtil.CompareMaps(a.CoinOptions(), b.CoinOptions()) &&
+		a.EncryptionEnabled() == b.EncryptionEnabled() &&
+		a.FileName() == b.FileName() &&
+		a.Currency() == b.Currency() &&
+		a.Name() == b.Name()
 }

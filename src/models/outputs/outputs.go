@@ -180,9 +180,7 @@ func (m *ModelOutputs) removeOutputs(row int) {
 
 func contains(outputs []*QOutput, output *QOutput) bool {
 	for _, out := range outputs {
-		x := output.OutputID()
-		y := out.OutputID()
-		if y == x {
+		if out.OutputID() == output.OutputID() {
 			return true
 		}
 	}
