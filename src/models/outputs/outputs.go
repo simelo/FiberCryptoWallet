@@ -51,48 +51,48 @@ type QOutput struct {
 	_ *modelUtil.Map `property:"coinOpt"`
 }
 
-func (m *ModelOutputs) init() {
-	m.SetRoles(map[int]*qtCore.QByteArray{
+func (modelOutputs *ModelOutputs) init() {
+	modelOutputs.SetRoles(map[int]*qtCore.QByteArray{
 		OutputID:     qtCore.NewQByteArray2("outputID", -1),
 		CoinOpts:     qtCore.NewQByteArray2("coinOpts", -1),
 		AddressOwner: qtCore.NewQByteArray2("addressOwner", -1),
 		WalletOwner:  qtCore.NewQByteArray2("walletOwner", -1),
 	})
 
-	m.ConnectDestroyModelOutputs(m.destroy)
-	m.ConnectRowCount(m.rowCount)
-	m.ConnectRoleNames(m.roleNames)
-	m.ConnectData(m.data)
-	m.ConnectRemoveOutputs(m.removeOutputs)
-	m.ConnectGet(m.get)
-	m.ConnectLoadModelAsync(m.loadModelAsync)
-	m.Ctx, m.cancel = context.WithCancel(context.Background())
-	m.SetLoading(true)
+	modelOutputs.ConnectDestroyModelOutputs(modelOutputs.destroy)
+	modelOutputs.ConnectRowCount(modelOutputs.rowCount)
+	modelOutputs.ConnectRoleNames(modelOutputs.roleNames)
+	modelOutputs.ConnectData(modelOutputs.data)
+	modelOutputs.ConnectRemoveOutputs(modelOutputs.removeOutputs)
+	modelOutputs.ConnectGet(modelOutputs.get)
+	modelOutputs.ConnectLoadModelAsync(modelOutputs.loadModelAsync)
+	modelOutputs.Ctx, modelOutputs.cancel = context.WithCancel(context.Background())
+	modelOutputs.SetLoading(true)
 }
 
-func (m *ModelOutputs) destroy() {
+func (modelOutputs *ModelOutputs) destroy() {
 	logModelOutputs.Info("Destroy")
-	m.cancel()
+	modelOutputs.cancel()
 }
 
-func (m *ModelOutputs) rowCount(*qtCore.QModelIndex) int {
-	return len(m.Outputs())
+func (modelOutputs *ModelOutputs) rowCount(*qtCore.QModelIndex) int {
+	return len(modelOutputs.Outputs())
 }
 
-func (m *ModelOutputs) roleNames() map[int]*qtCore.QByteArray {
-	return m.Roles()
+func (modelOutputs *ModelOutputs) roleNames() map[int]*qtCore.QByteArray {
+	return modelOutputs.Roles()
 }
 
-func (m *ModelOutputs) data(index *qtCore.QModelIndex, role int) *qtCore.QVariant {
+func (modelOutputs *ModelOutputs) data(index *qtCore.QModelIndex, role int) *qtCore.QVariant {
 	if !index.IsValid() {
 		return qtCore.NewQVariant()
 	}
 
-	if index.Row() >= len(m.Outputs()) {
+	if index.Row() >= len(modelOutputs.Outputs()) {
 		return qtCore.NewQVariant()
 	}
 
-	qo := m.Outputs()[index.Row()]
+	qo := modelOutputs.Outputs()[index.Row()]
 
 	switch role {
 	case OutputID:
@@ -118,26 +118,26 @@ func (m *ModelOutputs) data(index *qtCore.QModelIndex, role int) *qtCore.QVarian
 	}
 }
 
-func (m *ModelOutputs) get(row int) *QOutput {
-	if row >= len(m.Outputs()) {
+func (modelOutputs *ModelOutputs) get(row int) *QOutput {
+	if row >= len(modelOutputs.Outputs()) {
 		logModelOutputs.Errorf("Unable access to index %d: Index out of range", row)
 		return NewQOutput(nil)
 	}
-	return m.Outputs()[row]
+	return modelOutputs.Outputs()[row]
 }
 
-func (m *ModelOutputs) loadModelAsync(qOutList []*QOutput) {
+func (modelOutputs *ModelOutputs) loadModelAsync(qOutList []*QOutput) {
 
-	if len(m.Outputs()) == 0 {
+	if len(modelOutputs.Outputs()) == 0 {
 		for e := range qOutList {
-			m.addOutputs(qOutList[e])
+			modelOutputs.addOutputs(qOutList[e])
 		}
 		return
 	}
 
 	removePosList := make([]int, 0)
 
-	for k, v := range m.Outputs() {
+	for k, v := range modelOutputs.Outputs() {
 		if !contains(qOutList, v) {
 			removePosList = append(removePosList, k)
 		}
@@ -146,36 +146,36 @@ func (m *ModelOutputs) loadModelAsync(qOutList []*QOutput) {
 	sort.Sort(sort.Reverse(sort.IntSlice(removePosList)))
 
 	for e := range removePosList {
-		m.RemoveOutputs(removePosList[e])
+		modelOutputs.RemoveOutputs(removePosList[e])
 	}
 
 	for e := range qOutList {
-		if !contains(m.Outputs(), qOutList[e]) {
-			m.addOutputs(qOutList[e])
+		if !contains(modelOutputs.Outputs(), qOutList[e]) {
+			modelOutputs.addOutputs(qOutList[e])
 		}
 	}
 }
 
-func (m *ModelOutputs) addOutputs(output *QOutput) {
-	var row = len(m.Outputs())
-	for k, v := range m.Outputs() {
+func (modelOutputs *ModelOutputs) addOutputs(output *QOutput) {
+	var row = len(modelOutputs.Outputs())
+	for k, v := range modelOutputs.Outputs() {
 		if output.WalletOwner() < v.WalletOwner() {
 			row = k
 			break
 		}
 	}
-	m.BeginInsertRows(qtCore.NewQModelIndex(), row, row)
+	modelOutputs.BeginInsertRows(qtCore.NewQModelIndex(), row, row)
 	qml.QQmlEngine_SetObjectOwnership(output, qml.QQmlEngine__CppOwnership)
-	m.SetOutputs(append(m.Outputs()[:row], append([]*QOutput{output}, m.Outputs()[row:]...)...))
-	m.EndInsertRows()
+	modelOutputs.SetOutputs(append(modelOutputs.Outputs()[:row], append([]*QOutput{output}, modelOutputs.Outputs()[row:]...)...))
+	modelOutputs.EndInsertRows()
 }
 
-func (m *ModelOutputs) removeOutputs(row int) {
+func (modelOutputs *ModelOutputs) removeOutputs(row int) {
 	logModelOutputs.Info("Remove outputs for index")
 
-	m.BeginRemoveRows(qtCore.NewQModelIndex(), row, row)
-	m.SetOutputs(append(m.Outputs()[:row], m.Outputs()[row+1:]...))
-	m.EndRemoveRows()
+	modelOutputs.BeginRemoveRows(qtCore.NewQModelIndex(), row, row)
+	modelOutputs.SetOutputs(append(modelOutputs.Outputs()[:row], modelOutputs.Outputs()[row+1:]...))
+	modelOutputs.EndRemoveRows()
 }
 
 func contains(outputs []*QOutput, output *QOutput) bool {

@@ -359,24 +359,6 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 			logHistoryManager.WithError(err).Warn("Couldn't get Skycoins balance")
 			return nil, err
 		}
-		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-
-			return nil, err
-		}
-		qIn.SetAddressSky(util.FormatCoins(skyUint64, accuracy))
-		chUint64, err := in.GetCoins(params.CalculatedHoursTicker)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
-			return nil, err
-		}
-		accuracy, err = util.AltcoinQuotient(params.CalculatedHoursTicker)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours quotient")
-			return nil, err
-		}
-		qIn.SetAddressCoinHours(util.FormatCoins(chUint64, accuracy))
 		inputs.AddAddress(qIn)
 		_, ok := addresses[in.GetSpentOutput().GetAddress().String()]
 		if ok {
@@ -401,23 +383,11 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 		qOu := address.NewQAddress(nil)
 		qml.QQmlEngine_SetObjectOwnership(qOu, qml.QQmlEngine__CppOwnership)
 		qOu.SetAddress(out.GetAddress().String())
-		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-			return nil, err
-		}
-		qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
 		val, err := out.GetCoins(params.CoinHoursTicker)
 		if err != nil {
 			logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")
 			return nil, err
 		}
-		accuracy, err = util.AltcoinQuotient(coin.CoinHour)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours quotient")
-			return nil, err
-		}
-		qOu.SetAddressCoinHours(util.FormatCoins(val, accuracy))
 		outputs.AddAddress(qOu)
 		if sent {
 

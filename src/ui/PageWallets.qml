@@ -118,7 +118,8 @@ Page {
         id: walletModel
 
         Component.onCompleted: {
-            walletModel.loadModel(walletManager.getWallets())
+            walletManager.loadWallets(walletModel)
+//            walletModel.loadModel(walletManager.getWallets())
         }
     }
 
