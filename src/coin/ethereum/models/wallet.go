@@ -33,7 +33,9 @@ const (
 
 func NewWalletDirectory(path string) *WalletsDirectory {
 	return &WalletsDirectory{
-		path: path,
+		path:             path,
+		wallets:          make(map[string]*KeystoreWallet, 0),
+		walletsPasswords: make(map[string]string, 0),
 	}
 }
 

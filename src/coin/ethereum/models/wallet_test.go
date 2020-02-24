@@ -40,3 +40,7 @@ func TestWalletDirectoryGetWalletSet(t *testing.T) {
 		})
 	}
 }
+
+func TestWalletDirectory(t *testing.T) {
+
+}
