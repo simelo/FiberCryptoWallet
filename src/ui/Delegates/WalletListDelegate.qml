@@ -88,7 +88,7 @@ Item {
                     BusyIndicator {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
-
+                        running: loading
                         implicitWidth: implicitHeight
                         implicitHeight: parent.height + 10
                     }

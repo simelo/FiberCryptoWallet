@@ -964,7 +964,6 @@ func (walletM *WalletManager) loadWallets(model *wallets.WalletModel) {
 		model.LoadModelAsync(walletList)
 	}
 
-	// qWallets := loadWallets()
 	go func() {
 		loadWallets()
 		for {

@@ -8,7 +8,6 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
-	"sync"
 )
 
 var cosaTest []core.CoinTrait
@@ -20,6 +19,7 @@ const (
 	Addresses
 	Currency
 	CoinOptions
+	Loading
 )
 
 func init() {
@@ -33,20 +33,18 @@ var logWalletsModel = logging.MustGetLogger("Wallets Model")
 type WalletModel struct {
 	qtCore.QAbstractListModel
 
-	mutex sync.Mutex
-	_     func()                     `constructor:"init"`
-	_     map[int]*qtCore.QByteArray `property:"roles"`
-	_     []*QWallet                 `property:"wallets"`
+	_ func()                     `constructor:"init"`
+	_ map[int]*qtCore.QByteArray `property:"roles"`
+	_ []*QWallet                 `property:"wallets"`
 
-	_ func(*QWallet)                 `slot:"addWallet"`
-	_ func(row int, wallet *QWallet) `slot:"editWallet"`
-	_ func(row int)                  `slot:"removeWallet"`
-	_ func([]*QWallet)               `slot:"loadModelAsync"`
-	_ func([]*QWallet)               `slot:"loadModel"`
-	_ func([]*QWallet)               `slot:"updateModel"`
-	_ func([]*QWallet, string)       `slot:"filterWalletByCurrency"`
-	_ int                            `property:"count"`
-	// receivChannel chan *models.updateWalletInfo
+	_            func(*QWallet)                 `slot:"addWallet"`
+	_            func(row int, wallet *QWallet) `slot:"editWallet"`
+	_            func(row int)                  `slot:"removeWallet"`
+	_            func([]*QWallet)               `slot:"loadModelAsync"`
+	_            func([]*QWallet)               `slot:"loadModel"`
+	_            func([]*QWallet)               `slot:"updateModel"`
+	_            func([]*QWallet, string)       `slot:"filterWalletByCurrency"`
+	_            int                            `property:"count"`
 	walletByName map[string]*QWallet
 }
 
@@ -58,6 +56,7 @@ type QWallet struct {
 	_ string                `property:"currency"`
 	_ *address.ModelAddress `property:"addresses"`
 	_ *modelUtil.Map        `property:"coinOptions"`
+	_ bool                  `property:"loading"`
 }
 
 func (walletModel *WalletModel) init() {
@@ -69,6 +68,7 @@ func (walletModel *WalletModel) init() {
 		Addresses:         qtCore.NewQByteArray2("addresses", -1),
 		Currency:          qtCore.NewQByteArray2("currency", -1),
 		CoinOptions:       qtCore.NewQByteArray2("coinOpts", -1),
+		Loading:           qtCore.NewQByteArray2("loading", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(walletModel, qml.QQmlEngine__CppOwnership)
 	walletModel.ConnectData(walletModel.data)
@@ -83,30 +83,10 @@ func (walletModel *WalletModel) init() {
 	walletModel.ConnectRemoveWallet(walletModel.removeWallet)
 	walletModel.ConnectLoadModel(walletModel.loadModel)
 	walletModel.ConnectUpdateModel(walletModel.updateModel)
-	// walletModel.receivChannel = models.walletManager.suscribe()
 	walletModel.walletByName = make(map[string]*QWallet, 0)
-	// go func() {
-	// 	for {
-	// 		wi := <-walletModel.receivChannel
-	// 		if wi.isNew {
-	// 			walletModel.addWallet(wi.wallet)
-	// 		} else {
-	// 			encrypted := false
-	// if wi.wallet.EncryptionEnabled() == 1 {
-	// 	encrypted = true
-	// }
-	// walletModel.editWallet(wi.row, wi.wallet.Name(), encrypted, wi.wallet.Addresses())
-
-	// }
-	// }
-	// }()
-
 }
 
 func (walletModel *WalletModel) changeExpanded(id string) {
-	// w := walletModel.walletByName[id]
-	// w.SetExpand(!w.IsExpand())
-
 }
 
 func (walletModel *WalletModel) data(index *qtCore.QModelIndex, role int) *qtCore.QVariant {
@@ -148,6 +128,10 @@ func (walletModel *WalletModel) data(index *qtCore.QModelIndex, role int) *qtCor
 	case CoinOptions:
 		{
 			return qtCore.NewQVariant1(w.CoinOptions())
+		}
+	case Loading:
+		{
+			return qtCore.NewQVariant1(w.IsLoading())
 		}
 	default:
 		{
@@ -303,25 +287,25 @@ func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	qWallet.SetFileName(wlt.GetId())
 	qWallet.SetCurrency(wlt.GetCoinType())
 	qWallet.SetEncryptionEnabled(0)
+	qWallet.SetLoading(false)
 	if isEncrypted {
 		qWallet.SetEncryptionEnabled(1)
 	}
 
 	coinOpts := modelUtil.NewMap(nil)
-	logWalletsModel.Info("Test:Assets list: ", wlt.GetCryptoAccount().ListAssets())
 
 	// Iterate on all asset (the first asset need be the main asset ) and obtains the balance for that.
 	for _, asset := range wlt.GetCryptoAccount().ListAssets() {
-		// 	logWalletsModel.Info(asset)
 		bl, err := wlt.GetCryptoAccount().GetBalance(asset)
 		if err != nil {
 			logWalletsModel.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
+			qWallet.SetLoading(true)
 		} else {
 			accuracy, err := util.AltcoinQuotient(asset)
 			if err != nil {
 				logWalletsModel.WithError(err).Warnf("Couldn't get %s Altcoin quotient", util.AltcoinCaption(asset))
+				qWallet.SetLoading(true)
 			}
-			logWalletsModel.Info("Test:balance ", util.FormatCoins(bl, accuracy)+" "+asset)
 			coinOpts.SetValueAsync(util.AltcoinCaption(asset), util.FormatCoins(bl, accuracy)+" "+asset)
 		}
 	}
@@ -332,6 +316,7 @@ func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 
 	if err != nil {
 		logWalletsModel.WithError(err).Error("Couldn't get address iterator ")
+		qWallet.SetLoading(true)
 	}
 
 	var addressList = address.NewModelAddress(nil)
@@ -346,11 +331,12 @@ func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 			balance, err := addrIt.Value().GetCryptoAccount().GetBalance(asset)
 			if err != nil {
 				logWalletsModel.WithError(err).Warnf("Couldn't get balance for %s asset", asset)
+				qWallet.SetLoading(true)
 			}
-
 			accuracy, err := util.AltcoinQuotient(asset)
 			if err != nil {
 				logWalletsModel.WithError(err).Warnf("Couldn't get accuracy for %s asset", asset)
+				qWallet.SetLoading(true)
 			}
 
 			addressCoinOption.SetValueAsync(asset, util.FormatCoins(balance, accuracy))
