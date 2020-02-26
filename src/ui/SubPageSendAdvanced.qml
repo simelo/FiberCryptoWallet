@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.12
 import WalletsManager 1.0
 import OutputsModels 1.0
 import Address 1.0
+import QWallets 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"

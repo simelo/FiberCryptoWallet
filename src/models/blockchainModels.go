@@ -90,7 +90,7 @@ func (blockchainStatus *BlockchainStatusModel) updateInfo() error {
 		}
 		accuracy, err := util.AltcoinQuotient(asset)
 		if err != nil {
-			logWalletsModel.WithError(err).Warn("Couldn't get " + asset + " coins quotient")
+			logBlockchain.WithError(err).Warn("Couldn't get " + asset + " coins quotient")
 		}
 
 		coinOpts.SetValue(fmt.Sprintf("Current %s supply:", asset), util.FormatCoins(currentSupply, accuracy)+" "+asset)

@@ -193,9 +193,11 @@ func FromOutputsToQOutputs(output core.TransactionOutput, wltName string) *QOutp
 	qOutput.SetWalletOwner(wltName)
 	qOutput.SetAddressOwner(output.GetAddress().String())
 	coinOpts := modelUtil.NewMap(nil)
+
 	for _, coinTrait := range output.GetCoinTraits() {
 		coinOpts.SetValue(coinTrait.GetTrait(), coinTrait.GetValue())
 	}
+
 	qOutput.SetCoinOpt(coinOpts)
 
 	return qOutput

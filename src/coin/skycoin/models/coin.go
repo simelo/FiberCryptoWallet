@@ -890,7 +890,6 @@ func (out *SkycoinTransactionOutput) GetCoinTraits() []core.CoinTrait {
 		util.FormatCoins(out.skyOut.Hours, schAccuracy)))
 
 	return coinTraits
-
 }
 
 func (out *SkycoinTransactionOutput) GetAddress() core.Address {

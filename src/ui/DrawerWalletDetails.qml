@@ -113,9 +113,9 @@ id: root
 
         let keyList=walletCoinOpts.getKeys()
             for (var i=0;i<keyList.length;i++){
-                if (walletCoinOpts.getValue(keyList[i])=="0"){
-                    continue
-                }
+//                if (walletCoinOpts.getValue(keyList[i])=="0"){
+//                    continue
+//                }
 
                 Qt.createQmlObject("import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;

@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import WalletsManager 1.0
 import AddrsBookManager 1.0
+import QWallets 1.0
 
 // Resource imports
 // import "qrc:/ui/src/ui/Dialogs"
