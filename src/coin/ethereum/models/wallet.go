@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,12 +32,25 @@ const (
 	StrData            = "data"
 )
 
-func NewWalletDirectory(path string) *WalletsDirectory {
+func NewWalletDirectory(path string) (*WalletsDirectory, error) {
+	wallets := make(map[string]*KeystoreWallet, 0)
+	dirInfo, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range dirInfo {
+		if f.IsDir() {
+			strings.Split
+			nWlt := NewKeystoreWallet(f.Name(), strings.Split(f.Name(), "_")[0])
+			wallets = append(wallets, nWlt)
+		}
+	}
 	return &WalletsDirectory{
 		path:             path,
-		wallets:          make(map[string]*KeystoreWallet, 0),
+		wallets:          wallets,
 		walletsPasswords: make(map[string]string, 0),
-	}
+	}, nil
 }
 
 // Implements WalletEnv, WalletStorage and WalletSet interfaces
