@@ -91,7 +91,8 @@ func (model *PendingTransactionList) getMine() {
 	}
 	ptModels := make([]*transactions.TransactionDetails, 0)
 	for wallets.Next() {
-		account := wallets.Value().GetCryptoAccount()
+		wlt := wallets.Value()
+		account := wlt.GetCryptoAccount()
 		txns, err := account.ListPendingTransactions()
 		if err != nil {
 			// display an error in qml app when Mine is selected

@@ -1,11 +1,11 @@
 package models
 
 import (
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
 	"sync"
 	"time"
 
-	//"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
+
 	coin "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/models"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	local "github.com/fibercrypto/fibercryptowallet/src/main"
@@ -13,7 +13,6 @@ import (
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtcore "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
-	//"time"
 )
 
 var logWalletModel = logging.MustGetLogger("Wallet Model")
@@ -72,10 +71,10 @@ func (m *ModelWallets) init() {
 
 	m.WalletEnv = walletsEnvs[0]
 	go func() {
-		uptimeTicker := time.NewTicker(time.Duration(config.GetDataUpdateTime()) * time.Microsecond)
+		uptimeTicker := time.NewTicker(time.Duration(config.GetDataUpdateTime()) * time.Second)
 
 		for range uptimeTicker.C {
-			go m.loadModel()
+			go m.LoadModel()
 		}
 	}()
 }
@@ -150,15 +149,12 @@ func (m *ModelWallets) loadModel() {
 			qml.QQmlEngine_SetObjectOwnership(ma, qml.QQmlEngine__CppOwnership)
 			ma.SetName(wlt.GetLabel())
 			ma.SetId(wlt.GetId())
-			oModels := make([]*ModelOutput, 0)
+			oModels := make([]*ModelOutputs, 0)
 
 			for addresses.Next() {
 				a := addresses.Value()
 				outputs, err := a.GetCryptoAccount().ScanUnspentOutputs()
 				if err != nil {
-					continue
-				}
-				if outputs == nil {
 					logWalletModel.WithField("address", a.String()).Warn("Couldn't get unspent outputs")
 					m.SetLoading(true)
 					continue

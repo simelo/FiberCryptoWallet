@@ -33,6 +33,8 @@ func (mm *ModelManager) init() {
 				qml.QQmlEngine_SetObjectOwnership(addrModel, qml.QQmlEngine__CppOwnership)
 				addrModel.SetAddresses(mm.wltManager.getAddresses(wlt))
 				addrModel.RemoveAddress(0)
+				addrModel.LoadModel(mm.wltManager.getAddresses(wlt))
+				addrModel.RemoveAddress(0)
 				mm.addressesModel[wlt] = addrModel
 			}
 
@@ -49,13 +51,7 @@ func (mm *ModelManager) getAddressModel(wltName string) *address.ModelAddress {
 	if !ok {
 		addrModel = address.NewModelAddress(nil)
 		qml.QQmlEngine_SetObjectOwnership(addrModel, qml.QQmlEngine__CppOwnership)
-		addrModel.SetAddresses(mm.wltManager.getAddresses(wltName))
-		if len(addrModel.Addresses()) == 0 {
-			addr := address.NewQAddress(nil)
-			addr.SetAddress("--------------------------")
-			addr.SetCoinOptions(nil)
-			addrModel.SetAddresses([]*address.QAddress{addr})
-		}
+		addrModel.LoadModel(mm.wltManager.getAddresses(wltName))
 		addrModel.RemoveAddress(0)
 		mm.addressesModel[wltName] = addrModel
 	}
