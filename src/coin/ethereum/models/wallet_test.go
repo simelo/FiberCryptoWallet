@@ -68,25 +68,19 @@ func TestWalletDirectoryDecrypt(t *testing.T) {
 		wlt = wltIter.Value()
 	}
 
-	require.Equal(t, len(wltDir.wallets[wlt.GetId()].Accounts()), len(wltDir.wallets[wlt.GetId()].Wallets())+1)
-
 	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
 		return "", error_pkg.New("Error in password reader")
 	})
-
 	require.EqualError(t, err, "Error in password reader")
 
 	pass := wltDir.walletsPasswords[wlt.GetId()]
 	require.Equal(t, pass, "")
-	// err2 := wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
-	// return "wrong_pass2", nil
-	// })
-	// require.NotNil(t, err2)
+
 	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
-		return "wrong_pass1", nil
+		return "wrong_pass", nil
 	})
-	require.Equal(t, wltDir.walletsPasswords[wlt.GetId()], "wrong_pass2")
-	// require.NotNil(t, err)
+
+	require.NotNil(t, err)
 
 	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
 		return "test", nil
