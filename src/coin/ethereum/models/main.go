@@ -55,7 +55,11 @@ func (p *EthereumPlugin) LoadWalletEnvs() []core.WalletEnv {
 		tp := wltS.Tp
 		source := wltS.Source
 		if tp == string(config.LocalWallet) {
-			wltEnvs = append(wltEnvs, NewWalletDirectory(source))
+			wltDir, err := NewWalletDirectory(source)
+			if err != nil {
+				return nil
+			}
+			wltEnvs = append(wltEnvs, wltDir)
 		}
 	}
 	return wltEnvs

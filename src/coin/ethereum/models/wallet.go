@@ -41,9 +41,9 @@ func NewWalletDirectory(path string) (*WalletsDirectory, error) {
 
 	for _, f := range dirInfo {
 		if f.IsDir() {
-			strings.Split
-			nWlt := NewKeystoreWallet(f.Name(), strings.Split(f.Name(), "_")[0])
-			wallets = append(wallets, nWlt)
+			name := strings.Split(f.Name(), "_")[0]
+			nWlt := NewKeystoreWallet(filepath.Join(path, f.Name()), name)
+			wallets[filepath.Join(path, f.Name())] = nWlt
 		}
 	}
 	return &WalletsDirectory{
@@ -342,6 +342,7 @@ func (walletDir *WalletsDirectory) generateUniqueId(name string) string {
 
 func NewKeystoreWallet(dir, name string) *KeystoreWallet {
 	ks := keystore.NewKeyStore(dir, keystore.StandardScryptN, keystore.StandardScryptP)
+
 	return &KeystoreWallet{
 		KeyStore: ks,
 		name:     name,

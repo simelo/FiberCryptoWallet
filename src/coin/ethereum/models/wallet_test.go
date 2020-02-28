@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	error_pkg "errors"
 
 	"github.com/fibercrypto/fibercryptowallet/src/core"
-
+	"github.com/fibercrypto/fibercryptowallet/src/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +21,7 @@ func TestWalletDirectoryGetStorage(t *testing.T) {
 		wlt  *WalletsDirectory
 		want *WalletsDirectory
 	}{
-		{wlt: wlt, want: wlt},
+		{wlt: wlt, want: want},
 	}
 
 	for i, tt := range test {
@@ -53,15 +53,47 @@ func TestWalletDirectoryGetWalletSet(t *testing.T) {
 	}
 }
 
-func TestWalletDirectory(t *testing.T) {
+func TestWalletDirectoryDecrypt(t *testing.T) {
 	wltDir, err := NewWalletDirectory("testdata")
 	require.Nil(t, err)
+
+	err = wltDir.Decrypt("wrong_wallet_id", func(string, core.KeyValueStore) (string, error) {
+		return "", nil
+	})
+	require.EqualError(t, err, errors.ErrWalletNotFound.Error())
+
 	wltIter := wltDir.ListWallets()
 	var wlt core.Wallet
 	for wltIter.Next() {
 		wlt = wltIter.Value()
 	}
-	spew.Dump(wlt)
-	fmt.Println(wlt.GetId(), " ", wlt.GetLabel())
+
+	require.Equal(t, len(wltDir.wallets[wlt.GetId()].Accounts()), len(wltDir.wallets[wlt.GetId()].Wallets())+1)
+
+	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
+		return "", error_pkg.New("Error in password reader")
+	})
+
+	require.EqualError(t, err, "Error in password reader")
+
+	pass := wltDir.walletsPasswords[wlt.GetId()]
+	require.Equal(t, pass, "")
+	// err2 := wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
+	// return "wrong_pass2", nil
+	// })
+	// require.NotNil(t, err2)
+	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
+		return "wrong_pass1", nil
+	})
+	require.Equal(t, wltDir.walletsPasswords[wlt.GetId()], "wrong_pass2")
+	// require.NotNil(t, err)
+
+	err = wltDir.Decrypt(wlt.GetId(), func(string, core.KeyValueStore) (string, error) {
+		return "test", nil
+	})
+	require.Nil(t, err)
+
+	pass = wltDir.walletsPasswords[wlt.GetId()]
+	require.Equal(t, pass, "test")
 
 }
