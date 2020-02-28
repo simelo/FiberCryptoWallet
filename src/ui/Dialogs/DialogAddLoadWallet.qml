@@ -32,14 +32,14 @@ Dialog {
                 scanA = 10
             }
             
-            walletModel.addWallet(walletManager.createEncryptedWallet(seed, name, comboBoxWalletType.model[comboBoxWalletType.currentIndex].name, textFieldPassword.text, scanA))
+            walletManager.createEncryptedWallet(seed, name, comboBoxWalletType.model[comboBoxWalletType.currentIndex].name, textFieldPassword.text, scanA)
             
         } else{
             
             if (mode === CreateLoadWallet.Load){
                 scanA = 10
             }
-            walletModel.addWallet(walletManager.createUnencryptedWallet(seed, name, comboBoxWalletType.model[comboBoxWalletType.currentIndex].name, scanA))
+            walletManager.createUnencryptedWallet(seed, name, comboBoxWalletType.model[comboBoxWalletType.currentIndex].name, scanA)
         }
         textFieldPassword.text = ""
     }

@@ -868,21 +868,13 @@ func (walletM *WalletManager) createEncryptedWallet(seed, label, wltType, passwo
 	logWalletManager.Info("Created encrypted wallet")
 	qWallet := wallets.FromWalletToQWallet(wlt, true)
 	walletM.wallets = append(walletM.wallets, qWallet)
-	wi := &updateWalletInfo{
-		isNew:  true,
-		row:    len(walletM.wallets) - 1,
-		wallet: walletM.wallets[len(walletM.wallets)-1],
-	}
-	// walletM.utilByWallets[wlt.GetId()] = &utilByWallet{
-	// 	m:           sync.Mutex{},
-	// 	sendChannel: make(chan *updateAddressInfo),
-	// }
-	walletM.updaterChannel <- wi
+
+	walletM.update <- struct{}{}
 	return qWallet
 }
 
 func (walletM *WalletManager) createUnencryptedWallet(seed, label, wltType string, scanN int) *wallets.QWallet {
-	logWalletManager.Info("Creating encrypted wallet")
+	logWalletManager.Info("Creating unencrypted wallet")
 	pwd := util.EmptyPassword
 	wlt, err := walletM.WalletEnv.GetWalletSet().CreateWallet(label, seed, wltType, false, pwd, scanN)
 	if err != nil {
@@ -893,18 +885,9 @@ func (walletM *WalletManager) createUnencryptedWallet(seed, label, wltType strin
 
 	qWallet := wallets.FromWalletToQWallet(wlt, true)
 	walletM.wallets = append(walletM.wallets, qWallet)
-	wi := &updateWalletInfo{
-		isNew:  true,
-		row:    len(walletM.wallets) - 1,
-		wallet: walletM.wallets[len(walletM.wallets)-1],
-	}
-	// walletM.utilByWallets[wlt.GetId()] = &utilByWallet{
-	// 	m:           sync.Mutex{},
-	// 	sendChannel: make(chan *updateAddressInfo),
-	// }
-	walletM.updaterChannel <- wi
-	return qWallet
 
+	walletM.update <- struct{}{}
+	return qWallet
 }
 
 func (walletM *WalletManager) getNewSeed(entropy int) string {
