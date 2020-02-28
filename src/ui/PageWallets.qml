@@ -96,7 +96,11 @@ Page {
             anchors.fill: parent
             clip: true // limit the painting to it's bounding rectangle
             model: walletModel
-            delegate: WalletListDelegate {}
+            delegate: WalletListDelegate {
+                onDataChanged :{
+                    drawerWalletDetail.changedContent()
+                }
+            }
 
             populate: Transition {
                 id: transitionPopulate
@@ -117,10 +121,11 @@ Page {
 
     WalletModel {
         id: walletModel
-
+//        onDataChanged:{
+//            drawerWalletDetail.changedContent()
+//        }
         Component.onCompleted: {
             walletManager.loadWallets(walletModel)
-//            walletModel.loadModel(walletManager.getWallets())
         }
     }
 
@@ -143,7 +148,6 @@ Page {
         bottomPadding: 20
         height: parent.height
         edge: Qt.RightEdge
-
     }
 
     // Roles: name, encryptionEnabled, sky, coinHours

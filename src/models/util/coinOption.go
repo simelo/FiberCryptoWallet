@@ -38,8 +38,6 @@ func (coinOpt *Map) getKeys() []string {
 
 func (coinOpt *Map) SetValueAsync(key, value string) {
 	var exist = false
-	logModelUtils.Info("Test:Key ", key)
-	logModelUtils.Info("Test:Value ", value)
 	// Verify if the KeyList contains the key
 	for e := range coinOpt.keyList {
 		if coinOpt.keyList[e] == key {

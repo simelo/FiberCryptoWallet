@@ -422,12 +422,12 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 			return nil, err
 		}
 		qOu.SetAddress(outAddr.String())
-		accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
-		if err != nil {
-			logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
-			return nil, err
-		}
-		qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
+		// accuracy, err := util.AltcoinQuotient(params.SkycoinTicker)
+		// if err != nil {
+		// 	logHistoryManager.WithError(err).Warn("Couldn't get Skycoins quotient")
+		// 	return nil, err
+		// }
+		// qOu.SetAddressSky(util.FormatCoins(sky, accuracy))
 		val, err := out.GetCoins(params.CoinHoursTicker)
 		if err != nil {
 			logHistoryManager.WithError(err).Warn("Couldn't get Coin Hours balance")

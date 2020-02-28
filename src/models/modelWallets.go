@@ -1,6 +1,7 @@
 package models
 
 import (
+	// "github.com/fibercrypto/fibercryptowallet/src/models/outputs"
 	"sync"
 	"time"
 
@@ -149,7 +150,7 @@ func (m *ModelWallets) loadModel() {
 			qml.QQmlEngine_SetObjectOwnership(ma, qml.QQmlEngine__CppOwnership)
 			ma.SetName(wlt.GetLabel())
 			ma.SetId(wlt.GetId())
-			oModels := make([]*ModelOutputs, 0)
+			// oModels := make([]*outputs.ModelOutputs, 0)
 
 			for addresses.Next() {
 				a := addresses.Value()
@@ -201,10 +202,10 @@ func (m *ModelWallets) loadModel() {
 				}
 				if len(qOutputs) != 0 {
 					mo.addOutputs(qOutputs)
-					oModels = append(oModels, mo)
+					// oModels = append(oModels, mo)
 				}
 			}
-			ma.addOutputs(oModels)
+			// ma.addOutputs(oModels)
 
 			Helper.RunInMain(func() {
 				m.addAddresses([]*ModelAddresses{ma})

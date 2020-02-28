@@ -10,8 +10,6 @@ import (
 	"github.com/therecipe/qt/qml"
 )
 
-var cosaTest []core.CoinTrait
-
 const (
 	Name = int(qtCore.Qt__UserRole) + iota + 1
 	EncryptionEnabled
@@ -25,7 +23,6 @@ const (
 func init() {
 	WalletModel_QmlRegisterType2("QWallets", 1, 0, "WalletModel")
 	QWallet_QmlRegisterType2("QWallets", 1, 0, "QWallet")
-	cosaTest = append(cosaTest, util.NewCoinTrait("SKY", "12.0"), util.NewCoinTrait("SCH", "50.5"))
 }
 
 var logWalletsModel = logging.MustGetLogger("Wallets Model")
@@ -37,14 +34,14 @@ type WalletModel struct {
 	_ map[int]*qtCore.QByteArray `property:"roles"`
 	_ []*QWallet                 `property:"wallets"`
 
-	_            func(*QWallet)                 `slot:"addWallet"`
-	_            func(row int, wallet *QWallet) `slot:"editWallet"`
-	_            func(row int)                  `slot:"removeWallet"`
-	_            func([]*QWallet)               `slot:"loadModelAsync"`
-	_            func([]*QWallet)               `slot:"loadModel"`
-	_            func([]*QWallet)               `slot:"updateModel"`
-	_            func([]*QWallet, string)       `slot:"filterWalletByCurrency"`
-	_            int                            `property:"count"`
+	_            func(*QWallet)                                     `slot:"addWallet"`
+	_            func(row int, wallet *QWallet, changedRoles []int) `slot:"editWallet"`
+	_            func(row int)                                      `slot:"removeWallet"`
+	_            func([]*QWallet)                                   `slot:"loadModelAsync"`
+	_            func([]*QWallet)                                   `slot:"loadModel"`
+	_            func([]*QWallet)                                   `slot:"updateModel"`
+	_            func([]*QWallet, string)                           `slot:"filterWalletByCurrency"`
+	_            int                                                `property:"count"`
 	walletByName map[string]*QWallet
 }
 
@@ -141,7 +138,6 @@ func (walletModel *WalletModel) data(index *qtCore.QModelIndex, role int) *qtCor
 }
 
 func (walletModel *WalletModel) setData(index *qtCore.QModelIndex, value *qtCore.QVariant, role int) bool {
-
 	return true
 }
 
@@ -159,6 +155,14 @@ func (walletModel *WalletModel) roleNames() map[int]*qtCore.QByteArray {
 
 func (walletModel *WalletModel) loadModelAsync(qWalletList []*QWallet) {
 	logWalletsModel.Info("Load Wallets Async")
+	// logWalletsModel.Infof("Name: %d",Name)
+	// logWalletsModel.Infof("EncryptionEnabled: %d",EncryptionEnabled)
+	// logWalletsModel.Infof("FileName: %d",FileName)
+	// logWalletsModel.Infof("Addresses: %d",Addresses)
+	// logWalletsModel.Infof("Currency: %d",Currency)
+	// logWalletsModel.Infof("CoinOptions: %d",CoinOptions)
+	// logWalletsModel.Infof("Loading: %d",Loading)
+
 	getPos := func(list []*QWallet, obj *QWallet) int {
 		for e := range list {
 			if list[e].FileName() == obj.FileName() {
@@ -173,18 +177,17 @@ func (walletModel *WalletModel) loadModelAsync(qWalletList []*QWallet) {
 		if _, ok := walletModel.walletByName[qWalletList[e].FileName()]; !ok {
 			walletModel.addWallet(qWalletList[e])
 		} else {
-			// if !CompareWallet(qWalletList[e], walletModel.walletByName[qWalletList[e].FileName()]) {
-			walletModel.editWallet(getPos(walletModel.Wallets(), qWalletList[e]), qWalletList[e])
-			// }
+			if changedRoles := CompareWallet(qWalletList[e],
+				walletModel.walletByName[qWalletList[e].FileName()]); len(changedRoles) != 0 {
+				// edit wallet changing all properties that match with the roles changed.
+				walletModel.editWallet(getPos(walletModel.Wallets(), qWalletList[e]), qWalletList[e], changedRoles)
+			}
 		}
 	}
 }
 
 func (walletModel *WalletModel) addWallet(w *QWallet) {
 	logWalletsModel.Info("Add Wallet")
-	// if w.Pointer() == nil {
-	// 	return
-	// }
 
 	var row = len(walletModel.Wallets())
 	for pos, wlt := range walletModel.Wallets() {
@@ -204,25 +207,39 @@ func (walletModel *WalletModel) addWallet(w *QWallet) {
 	logWalletsModel.Info("End Add Wallet")
 }
 
-func (walletModel *WalletModel) editWallet(row int, wallet *QWallet) {
+func (walletModel *WalletModel) editWallet(row int, wallet *QWallet, changedRoles []int) {
 	logWalletsModel.Info("Edit Wallet")
 	if row == -1 {
 		return
 	}
-	walletModel.removeWallet(row)
-	walletModel.addWallet(wallet)
-	// lIndex := walletModel.Index(len(walletModel.Wallets())-1, 0, qtCore.NewQModelIndex())
-	// w := walletModel.Wallets()[row]
-	// w.SetName(name)
-	// w.SetAddresses(address)
-	// walletModel.DataChanged(row, row, []int{Addresses})
 
-	// if encrypted {
-	// 	w.SetEncryptionEnabled(1)
-	// } else {
-	// 	w.SetEncryptionEnabled(0)
-	// }
-	// walletModel.DataChanged(pIndex, lIndex, []int{Name, EncryptionEnabled})
+	wlt := walletModel.Wallets()[row]
+	logWalletsModel.Info(changedRoles)
+	for e := range changedRoles {
+		switch {
+		case changedRoles[e] == Name:
+			wlt.SetName(wallet.Name())
+			break
+
+		case changedRoles[e] == EncryptionEnabled:
+			wlt.SetEncryptionEnabled(wallet.EncryptionEnabled())
+			break
+		case changedRoles[e] == Addresses:
+			wlt.SetAddresses(wallet.Addresses())
+			break
+
+		case changedRoles[e] == CoinOptions:
+			wlt.SetCoinOptions(wallet.CoinOptions())
+			break
+		case changedRoles[e] == Loading:
+			wlt.SetLoading(wallet.IsLoading())
+			break
+		}
+	}
+	pindex := walletModel.Index(0, 0, qtCore.NewQModelIndex())
+	lindex := walletModel.Index(len(walletModel.Wallets())-1, 0, qtCore.NewQModelIndex())
+	walletModel.DataChanged(pindex, lindex, changedRoles)
+	walletModel.DataChanged(pindex, lindex, changedRoles)
 }
 
 func (walletModel *WalletModel) removeWallet(row int) {
@@ -234,9 +251,6 @@ func (walletModel *WalletModel) removeWallet(row int) {
 }
 
 func (walletModel *WalletModel) updateModel(wallets []*QWallet) {
-	// for i, wlt := range wallets {
-	// 	walletModel.editWallet(i, wlt.Name(), wlt.EncryptionEnabled() == 1, wlt.Addresses())
-	// }
 }
 
 func (walletModel *WalletModel) loadModel(wallets []*QWallet) {
@@ -271,13 +285,30 @@ func (walletModel *WalletModel) filterWalletByCurrency(wallets []*QWallet, curre
 	walletModel.SetCount(len(walletModel.Wallets()))
 }
 
-func CompareWallet(a, b *QWallet) bool {
-	return address.CompareModelAddress(a.Addresses(), b.Addresses()) &&
-		modelUtil.CompareMaps(a.CoinOptions(), b.CoinOptions()) &&
-		a.EncryptionEnabled() == b.EncryptionEnabled() &&
-		a.FileName() == b.FileName() &&
-		a.Currency() == b.Currency() &&
-		a.Name() == b.Name()
+func CompareWallet(a, b *QWallet) []int {
+	var changedRoles = make([]int, 0)
+	if !address.CompareModelAddress(a.Addresses(), b.Addresses()) {
+		changedRoles = append(changedRoles, Addresses)
+	}
+	if !modelUtil.CompareMaps(a.CoinOptions(), b.CoinOptions()) {
+		changedRoles = append(changedRoles, CoinOptions)
+	}
+	if a.EncryptionEnabled() != b.EncryptionEnabled() {
+		changedRoles = append(changedRoles, EncryptionEnabled)
+	}
+	if a.FileName() != b.FileName() {
+		changedRoles = append(changedRoles, FileName)
+	}
+	if a.Currency() != b.Currency() {
+		changedRoles = append(changedRoles, Currency)
+	}
+	if a.Name() != b.Name() {
+		changedRoles = append(changedRoles, Name)
+	}
+	if a.IsLoading() != b.IsLoading() {
+		changedRoles = append(changedRoles, Loading)
+	}
+	return changedRoles
 }
 
 func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
