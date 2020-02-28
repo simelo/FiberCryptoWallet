@@ -58,38 +58,38 @@ type WalletManager struct {
 	outputsByAddressMutex    sync.Mutex
 	walletsIterator          core.WalletIterator
 	updaterChannel           chan *updateWalletInfo
-
-	_ func()                                                                                                                                                `constructor:"init"`
-	_ func(model *wallets.WalletModel)                                                                                                                      `slot:"loadWallets"`
-	_ func()                                                                                                                                                `slot:"updateAll"`
-	_ func()                                                                                                                                                `slot:"updateWalletEnvs"`
-	_ func(wltId, address string)                                                                                                                           `slot:"updateOutputs"`
-	_ func(string)                                                                                                                                          `slot:"updateAddresses"`
-	_ func()                                                                                                                                                `slot:"updateWallets"`
-	_ func(seed string, label string, walletType string, password string, scanN int) *wallets.QWallet                                                       `slot:"createEncryptedWallet"`
-	_ func(seed string, label string, walletType string, scanN int) *wallets.QWallet                                                                        `slot:"createUnencryptedWallet"`
-	_ func(entropy int) string                                                                                                                              `slot:"getNewSeed"`
-	_ func(seed string) int                                                                                                                                 `slot:"verifySeed"`
-	_ func(id string, n int, password string)                                                                                                               `slot:"newWalletAddress"`
-	_ func(id string, password string) int                                                                                                                  `slot:"encryptWallet"`
-	_ func(id string, password string) int                                                                                                                  `slot:"decryptWallet"`
-	_ func() []*wallets.QWallet                                                                                                                             `slot:"getWallets"`
-	_ func() []string                                                                                                                                       `slot:"getCurrencyList"`
-	_ func(id string) []*address.QAddress                                                                                                                   `slot:"getAddresses"`
-	_ func(wltIds, addresses []string, source string, pwd interface{}, index []int, qTxn *transactions.TransactionDetails) *transactions.TransactionDetails `slot:"signTxn"`
-	_ func(wltId string, destinationAddress string, amount, currency string) *transactions.TransactionDetails                                               `slot:"sendTo"`
-	_ func(id, label string) *wallets.QWallet                                                                                                               `slot:"editWallet"`
-	_ func(wltId, address string) []*QOutput                                                                                                                `slot:"getOutputs"`
-	_ func(txn *transactions.TransactionDetails) bool                                                                                                       `slot:"broadcastTxn"`
-	_ func(wltIds, from, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromAddresses"`
-	_ func(wltIds, outs, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromOutputs"`
-	_ func() []*address.QAddress                                                                                                                            `slot:"getAllAddresses"`
-	_ func(wltId string) []*QOutput                                                                                                                         `slot:"getOutputsFromWallet"`
-	_ func() string                                                                                                                                         `slot:"getDefaultWalletType"`
-	_ func(string, address.ModelAddress)                                                                                                                    `slot:"updateModel"`
-	_ func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
-	_ func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
-	_ func(modelOutputs *outputs.ModelOutputs)                                                                                                              `slot:"loadOutputsAsync"`
+	update                   chan struct{}
+	_                        func()                                                                                                                                                `constructor:"init"`
+	_                        func(model *wallets.WalletModel)                                                                                                                      `slot:"loadWallets"`
+	_                        func()                                                                                                                                                `slot:"updateAll"`
+	_                        func()                                                                                                                                                `slot:"updateWalletEnvs"`
+	_                        func(wltId, address string)                                                                                                                           `slot:"updateOutputs"`
+	_                        func(string)                                                                                                                                          `slot:"updateAddresses"`
+	_                        func()                                                                                                                                                `slot:"updateWallets"`
+	_                        func(seed string, label string, walletType string, password string, scanN int) *wallets.QWallet                                                       `slot:"createEncryptedWallet"`
+	_                        func(seed string, label string, walletType string, scanN int) *wallets.QWallet                                                                        `slot:"createUnencryptedWallet"`
+	_                        func(entropy int) string                                                                                                                              `slot:"getNewSeed"`
+	_                        func(seed string) int                                                                                                                                 `slot:"verifySeed"`
+	_                        func(id string, n int, password string)                                                                                                               `slot:"newWalletAddress"`
+	_                        func(id string, password string) int                                                                                                                  `slot:"encryptWallet"`
+	_                        func(id string, password string) int                                                                                                                  `slot:"decryptWallet"`
+	_                        func() []*wallets.QWallet                                                                                                                             `slot:"getWallets"`
+	_                        func() []string                                                                                                                                       `slot:"getCurrencyList"`
+	_                        func(id string) []*address.QAddress                                                                                                                   `slot:"getAddresses"`
+	_                        func(wltIds, addresses []string, source string, pwd interface{}, index []int, qTxn *transactions.TransactionDetails) *transactions.TransactionDetails `slot:"signTxn"`
+	_                        func(wltId string, destinationAddress string, amount, currency string) *transactions.TransactionDetails                                               `slot:"sendTo"`
+	_                        func(id, label string)                                                                                                                                `slot:"editWalletLbl"`
+	_                        func(wltId, address string) []*QOutput                                                                                                                `slot:"getOutputs"`
+	_                        func(txn *transactions.TransactionDetails) bool                                                                                                       `slot:"broadcastTxn"`
+	_                        func(wltIds, from, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromAddresses"`
+	_                        func(wltIds, outs, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromOutputs"`
+	_                        func() []*address.QAddress                                                                                                                            `slot:"getAllAddresses"`
+	_                        func(wltId string) []*QOutput                                                                                                                         `slot:"getOutputsFromWallet"`
+	_                        func() string                                                                                                                                         `slot:"getDefaultWalletType"`
+	_                        func(string, address.ModelAddress)                                                                                                                    `slot:"updateModel"`
+	_                        func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
+	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
+	_                        func(modelOutputs *outputs.ModelOutputs)                                                                                                              `slot:"loadOutputsAsync"`
 }
 
 func (walletM *WalletManager) init() {
@@ -98,7 +98,7 @@ func (walletM *WalletManager) init() {
 	once.Do(func() {
 		qml.QQmlEngine_SetObjectOwnership(walletM, qml.QQmlEngine__CppOwnership)
 		walletM.ConnectLoadWallets(walletM.loadWallets)
-		walletM.ConnectEditWallet(walletM.editWallet)
+		walletM.ConnectEditWalletLbl(walletM.editWalletLbl)
 		walletM.ConnectCreateEncryptedWallet(walletM.createEncryptedWallet)
 		walletM.ConnectCreateUnencryptedWallet(walletM.createUnencryptedWallet)
 		walletM.ConnectGetNewSeed(walletM.getNewSeed)
@@ -132,7 +132,7 @@ func (walletM *WalletManager) init() {
 		// walletM.outputsByAddress = make(map[string][]*QOutput, 0)
 		walletM.SeedGenerator = new(sky.SeedService)
 		walletManager = walletM
-
+		walletM.update = make(chan struct{})
 	})
 	walletM.altManager = local.LoadAltcoinManager()
 	walletM.updateTransactionAPI()
@@ -945,8 +945,10 @@ func (walletM *WalletManager) encryptWallet(id, password string) int {
 	}
 	logWalletManager.Info("Wallet encrypted")
 	if ret {
+		walletM.update <- struct{}{}
 		return 1
 	}
+	walletM.update <- struct{}{}
 	return 0
 }
 
@@ -962,8 +964,10 @@ func (walletM *WalletManager) decryptWallet(id, password string) int {
 	}
 	logWalletManager.Info("Wallet decrypted")
 	if ret {
+		walletM.update <- struct{}{}
 		return 1
 	}
+	walletM.update <- struct{}{}
 	return 0
 }
 
@@ -983,7 +987,7 @@ func (walletM *WalletManager) newWalletAddress(id string, n int, password string
 		wltEntriesLen++
 	}
 	wlt.GenAddresses(core.AccountAddress, uint32(wltEntriesLen), uint32(n), pwd)
-	go walletM.updateAddresses(id)
+	walletM.update <- struct{}{}
 	logWalletManager.Info("New addresses created")
 }
 
@@ -1051,25 +1055,22 @@ func (walletM *WalletManager) loadWallets(model *wallets.WalletModel) {
 			select {
 			case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
 				loadWallets()
+			case <-walletM.update:
+				loadWallets()
+			case <-model.Ctx.Done():
+				logWalletManager.Info("Cancel Wallet updating")
+				return
 			}
 		}
 	}()
 }
 
-func (walletM *WalletManager) editWallet(id, label string) *wallets.QWallet {
+func (walletM *WalletManager) editWalletLbl(id, label string) {
 	logWalletManager.Info("Editing wallet")
-
 	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(id)
 	wlt.SetLabel(label)
-	wlt = walletM.WalletEnv.GetWalletSet().GetWallet(id)
-	encrypted, err := walletM.WalletEnv.GetStorage().IsEncrypted(wlt.GetId())
-	if err != nil {
-		logWalletManager.WithError(err).Error("Couldn't edit wallet")
-		return nil
-	}
-	qWallet := wallets.FromWalletToQWallet(wlt, encrypted)
+	walletM.update <- struct{}{}
 	logWalletManager.Info("Wallet edited")
-	return qWallet
 }
 
 func (walletM *WalletManager) getCurrencyList() []string {

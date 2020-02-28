@@ -71,7 +71,7 @@ func (modelOutputs *ModelOutputs) init() {
 }
 
 func (modelOutputs *ModelOutputs) destroy() {
-	logModelOutputs.Info("Destroy")
+	logModelOutputs.Info("Destroy ModelOutputs")
 	modelOutputs.cancel()
 }
 

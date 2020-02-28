@@ -13,7 +13,7 @@ Item {
     id: root
 
     readonly property real delegateHeight: 30
-    signal dataChanged()
+
     width: walletList.width
     height: itemDelegateMainButton.height
     Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutQuint } }
@@ -104,7 +104,6 @@ Item {
                 drawerWalletDetail.walletFileName = Qt.binding(function(){return fileName})
                 drawerWalletDetail.walletIndex = Qt.binding(function(){return index})
                 drawerWalletDetail.visible = true
-                drawerWalletDetail.bind = Qt.binding(function(){console.log("Test:",loading),coinOpts.getKeys(),dataChanged()})
             }
         } // ItemDelegate
     } //ColumnLayout

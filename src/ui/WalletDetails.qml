@@ -4,13 +4,12 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import Address 1.0
 import ModelUtils 1.0
-import WalletsManager 1.0
+
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
 import "Delegates/" // For quick UI development, switch back to resources when making a release
 
 // Backend imports
-import HistoryModels 1.0
 
 import "./Dialogs"
 Item {
@@ -203,8 +202,6 @@ Item {
 
             } else{
                 walletManager.newWalletAddress(fileName, spinValue, "")
-                walletModel.updateModel(walletManager.getWallets())
-
             }
 
 
@@ -242,8 +239,7 @@ Item {
             modal: true
 
             onAccepted: {
-                var encrypt = walletManager.encryptWallet(fileName, password)
-                walletModel.editWallet(index, fileName, encrypt, addressList)
+                let encrypt = walletManager.encryptWallet(fileName, password)
                 isEncrypted = encrypt
             }
             onRejected: {
@@ -262,8 +258,7 @@ Item {
             focus: true
             modal: true
             onAccepted: {
-                var encrypt = walletManager.decryptWallet(fileName, password)
-                walletModel.editWallet(index, name, encrypt, addressList)
+                let encrypt = walletManager.decryptWallet(fileName, password)
                 isEncrypted = encrypt
             }
             onRejected: {
@@ -278,8 +273,7 @@ Item {
             modal: true
 
             onAccepted: {
-                var qwallet = walletManager.editWallet(fileName, name)
-                walletModel.editWallet(index, qwallet.name, isEncrypted,addressList)
+                 walletManager.editWalletLbl(fileName, name)
             }
         } // DialogEditWallet
 }

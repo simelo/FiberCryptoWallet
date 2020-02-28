@@ -1,6 +1,7 @@
 package wallets
 
 import (
+	"context"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
@@ -29,19 +30,25 @@ var logWalletsModel = logging.MustGetLogger("Wallets Model")
 
 type WalletModel struct {
 	qtCore.QAbstractListModel
+	Ctx    context.Context
+	cancel context.CancelFunc
+	_      func() `constructor:"init"`
+	_      func() `destructor:"destroy"`
 
-	_ func()                     `constructor:"init"`
 	_ map[int]*qtCore.QByteArray `property:"roles"`
 	_ []*QWallet                 `property:"wallets"`
+	_ int                        `property:"count"`
 
-	_            func(*QWallet)                                     `slot:"addWallet"`
-	_            func(row int, wallet *QWallet, changedRoles []int) `slot:"editWallet"`
-	_            func(row int)                                      `slot:"removeWallet"`
-	_            func([]*QWallet)                                   `slot:"loadModelAsync"`
-	_            func([]*QWallet)                                   `slot:"loadModel"`
-	_            func([]*QWallet)                                   `slot:"updateModel"`
-	_            func([]*QWallet, string)                           `slot:"filterWalletByCurrency"`
-	_            int                                                `property:"count"`
+	_ func(*QWallet)                                     `slot:"addWallet"`
+	_ func(row int, wallet *QWallet, changedRoles []int) `slot:"editWallet"`
+	_ func(row int)                                      `slot:"removeWallet"`
+	_ func([]*QWallet)                                   `slot:"loadModelAsync"`
+	_ func([]*QWallet)                                   `slot:"loadModel"`
+	_ func([]*QWallet)                                   `slot:"updateModel"`
+	_ func([]*QWallet, string)                           `slot:"filterWalletByCurrency"`
+
+	_ func() `signal:"changeDetails"`
+
 	walletByName map[string]*QWallet
 }
 
@@ -68,6 +75,7 @@ func (walletModel *WalletModel) init() {
 		Loading:           qtCore.NewQByteArray2("loading", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(walletModel, qml.QQmlEngine__CppOwnership)
+	walletModel.ConnectDestroyWalletModel(walletModel.destroy)
 	walletModel.ConnectData(walletModel.data)
 	walletModel.ConnectSetData(walletModel.setData)
 	walletModel.ConnectRowCount(walletModel.rowCount)
@@ -81,6 +89,8 @@ func (walletModel *WalletModel) init() {
 	walletModel.ConnectLoadModel(walletModel.loadModel)
 	walletModel.ConnectUpdateModel(walletModel.updateModel)
 	walletModel.walletByName = make(map[string]*QWallet, 0)
+
+	walletModel.Ctx, walletModel.cancel = context.WithCancel(context.Background())
 }
 
 func (walletModel *WalletModel) changeExpanded(id string) {
@@ -239,7 +249,7 @@ func (walletModel *WalletModel) editWallet(row int, wallet *QWallet, changedRole
 	pindex := walletModel.Index(0, 0, qtCore.NewQModelIndex())
 	lindex := walletModel.Index(len(walletModel.Wallets())-1, 0, qtCore.NewQModelIndex())
 	walletModel.DataChanged(pindex, lindex, changedRoles)
-	walletModel.DataChanged(pindex, lindex, changedRoles)
+	walletModel.ChangeDetails()
 }
 
 func (walletModel *WalletModel) removeWallet(row int) {
@@ -283,6 +293,11 @@ func (walletModel *WalletModel) filterWalletByCurrency(wallets []*QWallet, curre
 
 	walletModel.EndResetModel()
 	walletModel.SetCount(len(walletModel.Wallets()))
+}
+
+func (walletModel *WalletModel) destroy() {
+	logWalletsModel.Info("Destroying WalletModel")
+	walletModel.cancel()
 }
 
 func CompareWallet(a, b *QWallet) []int {

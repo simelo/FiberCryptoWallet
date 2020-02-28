@@ -96,12 +96,7 @@ Page {
             anchors.fill: parent
             clip: true // limit the painting to it's bounding rectangle
             model: walletModel
-            delegate: WalletListDelegate {
-                onDataChanged :{
-                    drawerWalletDetail.changedContent()
-                }
-            }
-
+            delegate: WalletListDelegate {}
             populate: Transition {
                 id: transitionPopulate
 
@@ -121,9 +116,9 @@ Page {
 
     WalletModel {
         id: walletModel
-//        onDataChanged:{
-//            drawerWalletDetail.changedContent()
-//        }
+        onChangeDetails:{
+            drawerWalletDetail.changedContent()
+        }
         Component.onCompleted: {
             walletManager.loadWallets(walletModel)
         }

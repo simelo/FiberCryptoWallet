@@ -98,7 +98,7 @@ Page {
                     walletLbl : walletOwner
 
                     Component.onCompleted:{
-                        loadWallets(this) //TODO
+                        loadWallets(this)
                     }
                 }
             }//ListView
