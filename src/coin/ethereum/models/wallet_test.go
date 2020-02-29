@@ -91,3 +91,55 @@ func TestWalletDirectoryDecrypt(t *testing.T) {
 	require.Equal(t, pass, "test")
 
 }
+
+func TestWalletDirectoryEncrypt(t *testing.T) {
+	wltDir, err := NewWalletDirectory("testdata")
+	require.Nil(t, err)
+
+	err = wltDir.Encrypt("wrong_wallet_id", func(string, core.KeyValueStore) (string, error) {
+		return "", nil
+	})
+	require.EqualError(t, err, errors.ErrWalletNotFound.Error())
+
+	var wlt *KeystoreWallet
+	for _, val := range wltDir.wallets {
+		wlt = val
+	}
+
+	err = wltDir.Encrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "", nil
+	})
+	require.EqualError(t, err, errors.ErrWalletIsNotDecrypted.Error())
+
+	err = wltDir.Decrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test", nil
+	})
+	require.Nil(t, err)
+	require.Equal(t, "test", wltDir.walletsPasswords[wlt.dirName])
+
+	err = wltDir.Encrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "", error_pkg.New("Error in password reader")
+	})
+	require.EqualError(t, err, "Error in password reader")
+
+	err = wltDir.Encrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test2", nil
+	})
+	require.Nil(t, err)
+	_, ok := wltDir.walletsPasswords[wlt.dirName]
+	require.Equal(t, false, ok)
+
+	err = wltDir.Decrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test2", nil
+	})
+	require.Nil(t, err)
+	require.Equal(t, "test2", wltDir.walletsPasswords[wlt.dirName])
+
+	err = wltDir.Encrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test", nil
+	})
+	require.Nil(t, err)
+	_, ok = wltDir.walletsPasswords[wlt.dirName]
+	require.Equal(t, false, ok)
+
+}
