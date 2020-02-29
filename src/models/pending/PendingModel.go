@@ -67,7 +67,8 @@ func (model *PendingTransactionList) getAll() {
 	}
 	ptModels := make([]*transactions.TransactionDetails, 0)
 	for txns.Next() {
-		ptModel, err := transactions.NewTransactionDetailFromCoreTransaction(txns.Value(), transactions.TransactionTypeGeneric)
+		ptModel, err := transactions.NewTransactionDetailFromCoreTransaction(txns.Value(),
+			transactions.TransactionTypeGeneric, []string{}, []string{})
 
 		if err != nil {
 			logPendingTxn.WithError(err).Warn("Couldn't get txn pool")
@@ -102,7 +103,8 @@ func (model *PendingTransactionList) getMine() {
 		for txns.Next() {
 			txn := txns.Value()
 			if txn.GetStatus() == core.TXN_STATUS_PENDING {
-				ptModel, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric)
+				ptModel, err := transactions.NewTransactionDetailFromCoreTransaction(txn,
+					transactions.TransactionTypeGeneric, []string{}, []string{})
 
 				if err != nil {
 					logPendingTxn.WithError(err).Warn("Couldn't list pending transactions")

@@ -20,8 +20,6 @@ type TransactionList struct {
 	_ func()                                `slot:"clear"`
 
 	_ []*TransactionDetails `property:"transactions"`
-
-	asd <-chan *TransactionDetails
 }
 
 func (txnList *TransactionList) init() {
@@ -37,6 +35,8 @@ func (txnList *TransactionList) init() {
 		Inputs:        core.NewQByteArray2("inputs", -1),
 		Outputs:       core.NewQByteArray2("outputs", -1),
 		CoinOptions:   core.NewQByteArray2("coinOptions", -1),
+		WalletOwner:   core.NewQByteArray2("walletOwner", -1),
+		AddressOwner:  core.NewQByteArray2("addressOwner", -1),
 	})
 
 	txnList.ConnectRowCount(txnList.rowCount)
@@ -118,6 +118,14 @@ func (txnList *TransactionList) data(index *core.QModelIndex, role int) *core.QV
 		{
 			return core.NewQVariant1(transaction.CoinOptions())
 		}
+	case WalletOwner:
+		{
+			return core.NewQVariant1(transaction.WalletOwner())
+		}
+	case AddressOwner:
+		{
+			return core.NewQVariant1(transaction.AddressOwner())
+		}
 	default:
 		{
 			return core.NewQVariant()
@@ -137,7 +145,3 @@ func (txnList *TransactionList) clear() {
 	txnList.SetTransactions(make([]*TransactionDetails, 0))
 	txnList.EndRemoveRows()
 }
-
-// func (receiver *TransactionList) name()  {
-//
-// }

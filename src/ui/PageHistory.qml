@@ -59,6 +59,8 @@ Page {
                     onClicked: {
                         dialogTransactionDetails.open()
                         listTransactions.currentIndex = index
+                        console.log(walletOwner)
+                        console.log(addressOwner)
                     }
                 }
             }
@@ -120,6 +122,9 @@ Page {
 
     QTransactionList {
         id: modelTransactions
+        Component.onCompleted:{
+            historyManager.loadTransactionAsync(this)
+        }
     }
 
     HistoryManager {
@@ -133,5 +138,4 @@ Page {
             }
         }
     }
-
 }
