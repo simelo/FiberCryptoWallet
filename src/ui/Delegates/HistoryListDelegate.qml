@@ -8,9 +8,6 @@ import Address 1.0
 // import "qrc:/ui/src/ui/"
 import "../" // For quick UI development, switch back to resources when making a release
 
-// Backend imports
-import HistoryModels 1.0
-
 ItemDelegate {
     id: root
 

@@ -517,7 +517,7 @@ func (walletM *WalletManager) sendFromOutputs(wltIds []string, from, addrTo, sky
 		return nil
 	}
 
-	qTransaction, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric, []string{}, []string{})
+	qTransaction, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric)
 	if err != nil {
 		logWalletManager.WithError(err).Info("Error converting transaction")
 		return nil
@@ -597,7 +597,7 @@ func (walletM *WalletManager) sendFromAddresses(wltIds []string, from, addrTo, s
 		return nil
 	}
 
-	qtxn, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric, []string{}, []string{})
+	qtxn, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric)
 	if err != nil {
 		logWalletManager.WithError(err).Info("Error converting transaction")
 		return nil
@@ -652,7 +652,7 @@ func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount, currency
 		logWalletManager.WithError(err).Warn("Couldn't create transaction")
 		return nil
 	}
-	qTxn, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeSend, []string{}, []string{})
+	qTxn, err := transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeSend)
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Couldn't convert transaction")
 		return nil
@@ -721,7 +721,7 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 		return nil
 	}
 
-	qTxn, err = transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric, []string{}, []string{})
+	qTxn, err = transactions.NewTransactionDetailFromCoreTransaction(txn, transactions.TransactionTypeGeneric)
 	if err != nil {
 		logWalletManager.WithError(err).Warn("Error converting transaction")
 		return nil

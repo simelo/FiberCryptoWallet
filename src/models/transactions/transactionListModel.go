@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"context"
 	"github.com/therecipe/qt/core"
 )
 
@@ -9,10 +10,12 @@ func init() {
 
 type TransactionList struct {
 	core.QAbstractListModel
-
-	_ map[int]*core.QByteArray `property:"roles"`
+	Ctx    context.Context
+	cancel context.CancelFunc
+	_      map[int]*core.QByteArray `property:"roles"`
 
 	_ func() `constructor:"init"`
+	_ func() `destructor:"destroyer"`
 
 	_ func(transaction *TransactionDetails) `signal:"addTransaction,auto"`
 	_ func(index int)                       `signal:"removeTransaction,auto"`
@@ -35,16 +38,16 @@ func (txnList *TransactionList) init() {
 		Inputs:        core.NewQByteArray2("inputs", -1),
 		Outputs:       core.NewQByteArray2("outputs", -1),
 		CoinOptions:   core.NewQByteArray2("coinOptions", -1),
-		WalletOwner:   core.NewQByteArray2("walletOwner", -1),
-		AddressOwner:  core.NewQByteArray2("addressOwner", -1),
 	})
 
+	txnList.ConnectDestroyTransactionList(txnList.destroy)
 	txnList.ConnectRowCount(txnList.rowCount)
 	txnList.ConnectData(txnList.data)
 	txnList.ConnectRoleNames(txnList.roleNames)
 	txnList.ConnectAddMultipleTransactions(txnList.addMultipleTransactions)
 	txnList.ConnectClear(txnList.clear)
 
+	txnList.Ctx, txnList.cancel = context.WithCancel(context.Background())
 }
 
 func (txnList *TransactionList) rowCount(*core.QModelIndex) int {
@@ -118,14 +121,6 @@ func (txnList *TransactionList) data(index *core.QModelIndex, role int) *core.QV
 		{
 			return core.NewQVariant1(transaction.CoinOptions())
 		}
-	case WalletOwner:
-		{
-			return core.NewQVariant1(transaction.WalletOwner())
-		}
-	case AddressOwner:
-		{
-			return core.NewQVariant1(transaction.AddressOwner())
-		}
 	default:
 		{
 			return core.NewQVariant()
@@ -144,4 +139,8 @@ func (txnList *TransactionList) clear() {
 	txnList.BeginRemoveRows(core.NewQModelIndex(), 0, len(txnList.Transactions())-1)
 	txnList.SetTransactions(make([]*TransactionDetails, 0))
 	txnList.EndRemoveRows()
+}
+
+func (txnList *TransactionList) destroy() {
+	txnList.cancel()
 }

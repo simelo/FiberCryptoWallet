@@ -28,8 +28,6 @@ const (
 	Inputs
 	Outputs
 	CoinOptions
-	AddressOwner
-	WalletOwner
 )
 
 const (
@@ -50,8 +48,6 @@ type TransactionDetails struct {
 	Txn core.Transaction
 	_   *qtCore.QDateTime     `property:"date"`
 	_   int                   `property:"status"`
-	_   []string              `property:"walletOwner"`
-	_   []string              `property:"addressOwner"`
 	_   int                   `property:"type"`
 	_   uint64                `property:"blockHeight"`
 	_   string                `property:"amount"`
@@ -62,11 +58,8 @@ type TransactionDetails struct {
 	_   *modelUtil.Map        `property:"coinOptions"`
 }
 
-func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int, wltOwner,
-	addrsOwner []string) (*TransactionDetails, error) {
+func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txType int) (*TransactionDetails, error) {
 	txnDetails := NewTransactionDetails(nil)
-	txnDetails.SetAddressOwner(wltOwner)
-	txnDetails.SetWalletOwner(addrsOwner)
 	t := time.Unix(int64(transaction.GetTimestamp()), 0)
 	txnDetails.Txn = transaction
 	txnDetails.SetDate(qtCore.NewQDateTime3(qtCore.NewQDate3(t.Year(), int(t.Month()), t.Day()),

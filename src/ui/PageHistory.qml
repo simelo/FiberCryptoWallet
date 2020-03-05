@@ -128,13 +128,5 @@ Page {
 
     HistoryManager {
         id: historyManager
-        onNewTransactions: {
-            if (!switchFilters.checked) {
-                modelTransactions.addMultipleTransactions(historyManager.getNewTransactions())
-            }
-            else {
-                modelTransactions.addMultipleTransactions(historyManager.getNewTransactionsWithFilters())
-            }
-        }
     }
 }
