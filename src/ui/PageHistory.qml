@@ -59,8 +59,6 @@ Page {
                     onClicked: {
                         dialogTransactionDetails.open()
                         listTransactions.currentIndex = index
-                        console.log(walletOwner)
-                        console.log(addressOwner)
                     }
                 }
             }
@@ -84,6 +82,7 @@ Page {
             modelTransactions.clear()
             modelTransactions.addMultipleTransactions(historyManager.getTransactionsWithFilters())
         }
+
 
         onOpened:{
             filter.loadWallets()

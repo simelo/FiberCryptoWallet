@@ -165,13 +165,6 @@ func (walletModel *WalletModel) roleNames() map[int]*qtCore.QByteArray {
 
 func (walletModel *WalletModel) loadModelAsync(qWalletList []*QWallet) {
 	logWalletsModel.Info("Load Wallets Async")
-	// logWalletsModel.Infof("Name: %d",Name)
-	// logWalletsModel.Infof("EncryptionEnabled: %d",EncryptionEnabled)
-	// logWalletsModel.Infof("FileName: %d",FileName)
-	// logWalletsModel.Infof("Addresses: %d",Addresses)
-	// logWalletsModel.Infof("Currency: %d",Currency)
-	// logWalletsModel.Infof("CoinOptions: %d",CoinOptions)
-	// logWalletsModel.Infof("Loading: %d",Loading)
 
 	getPos := func(list []*QWallet, obj *QWallet) int {
 		for e := range list {
@@ -266,17 +259,11 @@ func (walletModel *WalletModel) updateModel(wallets []*QWallet) {
 func (walletModel *WalletModel) loadModel(wallets []*QWallet) {
 	logWalletsModel.Info("Loading wallets")
 
-	for _, wlt := range wallets {
-		qml.QQmlEngine_SetObjectOwnership(wlt, qml.QQmlEngine__CppOwnership)
+	for e := range wallets {
+		if _, ok := walletModel.walletByName[wallets[e].FileName()]; !ok {
+			walletModel.AddWallet(wallets[e])
+		}
 	}
-	for _, w := range wallets {
-		walletModel.walletByName[w.FileName()] = w
-	}
-	walletModel.BeginResetModel()
-	walletModel.SetWallets(wallets)
-
-	walletModel.EndResetModel()
-	walletModel.SetCount(len(walletModel.Wallets()))
 }
 
 func (walletModel *WalletModel) filterWalletByCurrency(wallets []*QWallet, currency string) {

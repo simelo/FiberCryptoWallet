@@ -1,17 +1,22 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
-
+import QWallets 1.0
 // Resource imports
 // import "qrc:/ui/src/ui/Delegates"
 import "Delegates/" // For quick UI development, switch back to resources when making a release
 
-
-
-
 ScrollView {
     id: historyFilterDelegate
     signal loadWallets()
+    property var checkedList
+
+    clip:true
+
+    onLoadWallets:{
+        modelFilters.loadModel(walletManager.getWallets())
+    }
+
     ListView {
         id: listViewFilters
         
@@ -20,30 +25,11 @@ ScrollView {
         
         model: modelFilters
         delegate: HistoryFilterListDelegate {
-            property var listAddresses
             width: parent.width
         }
 
-//        ModelManager {
-//            id: modelManager
-//
-//            Component.onCompleted: {
-//                setWalletManager(walletManager)
-//            }
-//        }
-        Connections{
-            target: historyFilterDelegate
-            onLoadWallets:{
-                modelFilters.loadModel(walletManager.getWallets())
-            }
+        WalletModel {
+            id: modelFilters
         }
-
-//        WalletModel {
-//            id: modelFilters
-//
-//            Component.onCompleted: {
-//                loadModel(walletManager.getWallets())
-//            }
-//        }
     }
 }

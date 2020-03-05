@@ -13,7 +13,7 @@ Item {
 
     property alias tristate: checkDelegate.tristate
     property alias walletText: checkDelegate.text
-    
+
     clip: true
     implicitWidth: width
     implicitHeight: height
@@ -34,16 +34,10 @@ Item {
 
             nextCheckState: function() {
                 if (checkState === Qt.Checked) {
-                    if (!listViewFilterAddress.allChecked) {
-                        listViewFilterAddress.allChecked = true
-                    }
-                    listViewFilterAddress.allChecked = false
+                    listViewFilterAddress.allChecked(Qt.Unchecked)
                     return Qt.Unchecked
                 } else {
-                    if (listViewFilterAddress.allChecked) {
-                        listViewFilterAddress.allChecked = false
-                    }
-                    listViewFilterAddress.allChecked = true
+                    listViewFilterAddress.allChecked(Qt.Checked)
                     return Qt.Checked
                 }
             }
@@ -58,67 +52,40 @@ Item {
 
         ListView {
             id: listViewFilterAddress
-
-//            property AddressModel listAddresses
             property int checkedDelegates: 0
-            property bool allChecked: false
+            signal allChecked(int isChecked)
 
-            model: listAddresses
-            
+            onAllChecked:{
+                console.log(this.itemAtIndex(0))
+               for (let i=0;i< this.count; i++){
+               this.itemAtIndex(i).checkState = isChecked
+               console.log( this.itemAtIndex(i).checkState )
+               }
+            }
+            model: addresses
+
             Layout.fillWidth: true
             implicitHeight: contentHeight
             interactive: false
 
-
-            onCheckedDelegatesChanged: {
-                if (checkedDelegates === 0) {
-                    checkDelegate.checkState = Qt.Unchecked
-                } else if (checkedDelegates === count) {
-                    checkDelegate.checkState = Qt.Checked
-                } else {
-                    checkDelegate.checkState = Qt.PartiallyChecked
-
-                }
-            }
-
-            
-
-            Component.onCompleted: {
-                modelManager.setWalletManager(walletManager)
-                listAddresses = modelManager.getAddressModel(fileName)
-            }
-
-            
-
-            delegate: HistoryFilterListAddressDelegate {
+            delegate: CheckDelegate {
+                clip:true
                 // BUG: Checking the wallet does not change the check state of addresses
                 // Is `checked: marked` ok? Or it should be the opposite?
-                checked: marked
+
+                LayoutMirroring.enabled: true
+
                 width: parent.width
-                text: address 
-                Connections{
-                    target: listViewFilterAddress
-                    onAllCheckedChanged: {
-                        if (listViewFilterAddress.allChecked) {
-                            historyManager.addFilter(address)
-                        } else {
-                            historyManager.removeFilter(address)
-                        }
-                        walletManager.editMarkAddress(address, listViewFilterAddress.allChecked)
-                        listViewFilterAddress.listAddresses.editAddress(index, address, sky, coinHours, listViewFilterAddress.allChecked)
-                    }
-                }
+                text: address
+
                 onCheckedChanged: {
                     ListView.view.checkedDelegates += checked ? 1: -1
-                    
+
                     if (checked == true) {
                         historyManager.addFilter(address)
                     } else {
-                        historyManager.removeFilter(address)  
+                        historyManager.removeFilter(address)
                     }
-                    walletManager.editMarkAddress(address, checked)
-                    listViewFilterAddress.listAddresses.editAddress(index, address, sky, coinHours, checked)
-
                 }
             } // HistoryFilterListAddressDelegate (delegate)
         } // ListView
