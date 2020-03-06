@@ -113,7 +113,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 		inputCoinOptions := modelUtil.NewMap(nil)
 
 		for _, v := range input.GetCoinTraits() {
-			inputCoinOptions.SetValue(v.GetTrait(), v.GetValue())
+			inputCoinOptions.SetValueAsync(v.GetTrait(), v.GetValue())
 		}
 
 		qIn.SetCoinOptions(inputCoinOptions)
@@ -139,7 +139,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 		outputCoinOptions := modelUtil.NewMap(nil)
 
 		for _, v := range out.GetCoinTraits() {
-			outputCoinOptions.SetValue(v.GetTrait(), v.GetValue())
+			outputCoinOptions.SetValueAsync(v.GetTrait(), v.GetValue())
 		}
 
 		qOu.SetCoinOptions(outputCoinOptions)
@@ -153,11 +153,11 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	txnCoinOptions := modelUtil.NewMap(nil)
 	for _, v := range transaction.GetCoinTraits() {
-		txnCoinOptions.SetValue(v.GetTrait(), v.GetValue())
+		txnCoinOptions.SetValueAsync(v.GetTrait(), v.GetValue())
 	}
 
-	if len(txnCoinOptions.GetKeys()) > 0 {
-		txnDetails.SetAmount(txnCoinOptions.GetValue(txnCoinOptions.GetKeys()[0]))
+	if len(transaction.GetCoinTraits()) > 0 {
+		txnDetails.SetAmount(transaction.GetCoinTraits()[0].GetValue())
 	} else {
 		txnDetails.SetAmount("")
 	}

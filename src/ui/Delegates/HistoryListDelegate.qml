@@ -82,13 +82,13 @@ ItemDelegate {
                 Layout.alignment: Qt.AlignLeft
                 height: contentHeight
                 id: listViewAddresses
-                model: modelAddresses
+                model: modelInputs
                 delegate: TransactionAddressDelegate {}
             }
         } // ColumnLayout (main content)
 
         Label {
-            text: amount + " " + coinOpts.getKeys()[0] // model's role
+            text: ( modelType == TransactionDetails.Type.Send ? "-" : "" )+ amount + " " + coinOpts.getKeys()[0] // model's role
             font.pointSize: Qt.application.font.pointSize * 1.25
             font.bold: true
             Layout.alignment: Qt.AlignTop | Qt.AlignRight

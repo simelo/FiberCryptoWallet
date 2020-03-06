@@ -25,12 +25,9 @@ Page {
                 text: qsTr("Filters")
                 onClicked:{
                     if (!checked) {
-                        modelTransactions.clear()
-                        modelTransactions.addMultipleTransactions(historyManager.getTransactions())
-                    }
-                    else {
-                        modelTransactions.clear()
-                        modelTransactions.addMultipleTransactions(historyManager.getTransactionsWithFilters())
+                        historyManager.hasChanged(false)
+			        }else {
+                        historyManager.hasChanged(true)
                     }
                 }
             }
@@ -79,8 +76,7 @@ Page {
         title: qsTr("Available filters")
 
         onClosed: {
-            modelTransactions.clear()
-            modelTransactions.addMultipleTransactions(historyManager.getTransactionsWithFilters())
+           historyManager.hasChanged(true)
         }
 
 

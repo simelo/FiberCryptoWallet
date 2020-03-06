@@ -3,6 +3,8 @@ package transactions
 import (
 	"context"
 	"github.com/therecipe/qt/core"
+	"github.com/therecipe/qt/qml"
+	"sort"
 )
 
 func init() {
@@ -10,15 +12,16 @@ func init() {
 
 type TransactionList struct {
 	core.QAbstractListModel
-	Ctx    context.Context
-	cancel context.CancelFunc
-	_      map[int]*core.QByteArray `property:"roles"`
+	Ctx     context.Context
+	cancel  context.CancelFunc
+	txnFind map[string]struct{}
+	_       map[int]*core.QByteArray `property:"roles"`
 
 	_ func() `constructor:"init"`
 	_ func() `destructor:"destroyer"`
 
-	_ func(transaction *TransactionDetails) `signal:"addTransaction,auto"`
-	_ func(index int)                       `signal:"removeTransaction,auto"`
+	_ func(transaction *TransactionDetails) `slot:"addTransaction,auto"`
+	_ func(index int)                       `slot:"removeTransaction,auto"`
 	_ func(txns []*TransactionDetails)      `slot:"addMultipleTransactions"`
 	_ func()                                `slot:"clear"`
 
@@ -46,8 +49,10 @@ func (txnList *TransactionList) init() {
 	txnList.ConnectRoleNames(txnList.roleNames)
 	txnList.ConnectAddMultipleTransactions(txnList.addMultipleTransactions)
 	txnList.ConnectClear(txnList.clear)
-
 	txnList.Ctx, txnList.cancel = context.WithCancel(context.Background())
+	txnList.ConnectAddTransaction(txnList.addTransaction)
+	txnList.ConnectRemoveTransaction(txnList.removeTransaction)
+	txnList.txnFind = make(map[string]struct{})
 }
 
 func (txnList *TransactionList) rowCount(*core.QModelIndex) int {
@@ -61,6 +66,7 @@ func (txnList *TransactionList) roleNames() map[int]*core.QByteArray {
 func (txnList *TransactionList) addTransaction(transaction *TransactionDetails) {
 	logTransactionDetails.Info("Adding transaction for history")
 	txnList.BeginInsertRows(core.NewQModelIndex(), len(txnList.Transactions()), len(txnList.Transactions()))
+	qml.QQmlEngine_SetObjectOwnership(transaction, qml.QQmlEngine__CppOwnership)
 	txnList.SetTransactions(append(txnList.Transactions(), transaction))
 	txnList.EndInsertRows()
 }
@@ -129,9 +135,27 @@ func (txnList *TransactionList) data(index *core.QModelIndex, role int) *core.QV
 }
 
 func (txnList *TransactionList) addMultipleTransactions(txns []*TransactionDetails) {
+	logTransactionDetails.Info("load transaction model async")
 
+	var newTxnList = make(map[string]struct{})
 	for _, txn := range txns {
-		txnList.addTransaction(txn)
+		newTxnList[txn.TransactionID()] = struct{}{}
+		if _, ok := txnList.txnFind[txn.TransactionID()]; !ok {
+			txnList.addTransaction(txn)
+			txnList.txnFind[txn.TransactionID()] = struct{}{}
+		}
+	}
+	var posToRemove = make([]int, 0)
+	for index, qTxn := range txnList.Transactions() {
+		if _, ok := newTxnList[qTxn.TransactionID()]; !ok {
+			posToRemove = append(posToRemove, index)
+			delete(txnList.txnFind, qTxn.TransactionID())
+		}
+	}
+
+	sort.Sort(sort.Reverse(sort.IntSlice(posToRemove)))
+	for e := range posToRemove {
+		txnList.removeTransaction(posToRemove[e])
 	}
 }
 

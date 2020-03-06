@@ -43,7 +43,7 @@ type HistoryManager struct {
 	_         func(list *transactions.TransactionList) `slot:"loadTransactionAsync"`
 	_         func(string)                             `slot:"addFilter"`
 	_         func(string)                             `slot:"removeFilter"`
-	_         func()                                   `signal:"hasChanged"`
+	_         func(bool)                               `signal:"hasChanged"`
 }
 
 func (historyManager *HistoryManager) init() {
@@ -51,6 +51,7 @@ func (historyManager *HistoryManager) init() {
 	historyManager.ConnectLoadTransactionAsync(historyManager.loadTransactionsAsync)
 	historyManager.ConnectAddFilter(historyManager.addFilter)
 	historyManager.ConnectRemoveFilter(historyManager.removeFilter)
+	historyManager.ConnectHasChanged(historyManager.hasChanged)
 	historyManager.walletEnv = models.GetWalletEnv()
 	historyManager.update = make(chan bool)
 	historyManager.filters = make(map[string]struct{}, 0)
@@ -90,6 +91,7 @@ func (historyManager *HistoryManager) loadTransactionsAsync(list *transactions.T
 		txnList, err := getTxnList(historyManager.walletEnv.GetWalletSet().ListWallets(), withFilter, historyManager.filters)
 		if err != nil {
 			// TODO
+			logHistoryManager.Info("error")
 			return []*transactions.TransactionDetails{}
 		}
 		return txnList
@@ -106,29 +108,34 @@ func (historyManager *HistoryManager) loadTransactionsAsync(list *transactions.T
 				return
 			}
 		}
-
 	}()
 }
 
-func getAddrMapByWalletIter(wltIter core.WalletIterator) (map[string]core.Address, error) {
-	var addrList = make(map[string]core.Address, 0)
+func (historyManager *HistoryManager) hasChanged(withFilter bool) {
+	historyManager.update <- withFilter
+}
+
+func getAddrMapByWalletIter(wltIter core.WalletIterator) (map[string]core.Address, map[string]string, error) {
+	var coreAddrByStrAddr = make(map[string]core.Address, 0)
+	var walletByStrAddress = make(map[string]string, 0)
 
 	for wltIter.Next() {
 		addrIter, err := wltIter.Value().GetLoadedAddresses()
 		if err != nil {
 			logHistoryManager.WithError(err).Warnf("Couldn't get address for wallet: %s",
 				wltIter.Value().GetLabel())
-			return nil, err
+			return nil, nil, err
 		}
 
 		for addrIter.Next() {
-			addrList[addrIter.Value().String()] = addrIter.Value()
+			walletByStrAddress[addrIter.Value().String()] = wltIter.Value().GetLabel()
+			coreAddrByStrAddr[addrIter.Value().String()] = addrIter.Value()
 		}
 	}
-	return addrList, nil
+	return coreAddrByStrAddr, walletByStrAddress, nil
 }
 
-func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]core.Address) (string, error) {
+func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]string) (string, error) {
 	var mainAsset = txn.SupportedAssets()[0]
 	var amount uint64
 
@@ -172,6 +179,7 @@ func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]core.Add
 		}
 		break
 	case transactions.TransactionTypeSend:
+		var wltInp = make(map[string]struct{})
 		for _, input := range txn.GetInputs() {
 			inpAddr, err := getAddressFromInput(input)
 			if err != nil {
@@ -179,20 +187,42 @@ func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]core.Add
 					"Couldn't get string address from input %s", input.GetId())
 				return "N/A", err
 			}
-			if _, ok := addrMap[inpAddr.String()]; ok {
-				inpBalance, err := input.GetCoins(mainAsset)
-				if err != nil {
+			if wlt, ok := addrMap[inpAddr.String()]; ok {
+				wltInp[wlt] = struct{}{}
+			}
+		}
 
+		for _, output := range txn.GetOutputs() {
+			addrs, err := output.GetAddress()
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get address from output %s", output.GetId())
+				return "N/A", err
+			}
+
+			if wlt, ok := addrMap[addrs.String()]; ok {
+				if _, ok2 := wltInp[wlt]; ok2 {
+					continue
+				}
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
 					logHistoryManager.WithError(err).Warnf(
-						"Could't get main balance of input %s", input.GetId())
+						"Couldn't get main balance from output %s", output.GetId())
 					return "N/A", err
 				}
-				amount += inpBalance
+				amount += outBalance
+			} else {
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Warnf(
+						"Couldn't get main balance from output %s", output.GetId())
+					return "N/A", err
+				}
+				amount += outBalance
 			}
 		}
 		break
 	case transactions.TransactionTypeReceive:
-
 		for _, output := range txn.GetOutputs() {
 			addrs, err := output.GetAddress()
 			if err != nil {
@@ -218,11 +248,13 @@ func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]core.Add
 			"Couldn't get accuracy from asset %s", mainAsset)
 		return "N/A", err
 	}
+
 	return util.FormatCoins(amount, accuracy), nil
 }
 
-func getTxnType(txn core.Transaction, addrsMap map[string]core.Address) int {
+func getTxnType(txn core.Transaction, addrsMap map[string]string) int {
 	var isInput, someOutputs, allOutputs = false, false, true
+	var wltLblList = make(map[string]struct{}, 0)
 	for _, input := range txn.GetInputs() {
 		inpAddr, err := getAddressFromInput(input)
 		if err != nil {
@@ -230,9 +262,9 @@ func getTxnType(txn core.Transaction, addrsMap map[string]core.Address) int {
 			continue
 		}
 
-		if _, ok := addrsMap[inpAddr.String()]; ok {
+		if wltLbl, ok := addrsMap[inpAddr.String()]; ok {
+			wltLblList[wltLbl] = struct{}{}
 			isInput = true
-			break
 		}
 	}
 
@@ -243,8 +275,11 @@ func getTxnType(txn core.Transaction, addrsMap map[string]core.Address) int {
 			continue
 		}
 
-		if _, ok := addrsMap[outAddr.String()]; ok {
+		if wlt, ok := addrsMap[outAddr.String()]; ok {
 			someOutputs = true
+			if _, ok2 := wltLblList[wlt]; !ok2 {
+				allOutputs = false
+			}
 		} else {
 			allOutputs = false
 		}
@@ -267,7 +302,7 @@ func getTxnList(walletIter core.WalletIterator, withFilter bool, filterAddress m
 	if walletIter == nil {
 		return nil, errors.New("wallet iterator is empty")
 	}
-	addrsMap, err := getAddrMapByWalletIter(walletIter)
+	coreAddrByStrAddr, wltLblByStrAddr, err := getAddrMapByWalletIter(walletIter)
 	if err != nil {
 		logHistoryManager.Warn(err)
 		return nil, err
@@ -276,7 +311,7 @@ func getTxnList(walletIter core.WalletIterator, withFilter bool, filterAddress m
 	var txnList = make([]*transactions.TransactionDetails, 0)
 	var atomicTxn = make(map[string]struct{})
 
-	for strAddr, corAddr := range addrsMap {
+	for strAddr, corAddr := range coreAddrByStrAddr {
 		if _, ok := filterAddress[strAddr]; !ok && withFilter {
 			continue
 		}
@@ -288,7 +323,7 @@ func getTxnList(walletIter core.WalletIterator, withFilter bool, filterAddress m
 
 		for txnIter.Next() {
 			if _, ok := atomicTxn[txnIter.Value().GetId()]; !ok {
-				txnType := getTxnType(txnIter.Value(), addrsMap)
+				txnType := getTxnType(txnIter.Value(), wltLblByStrAddr)
 				txnDetails, err := transactions.NewTransactionDetailFromCoreTransaction(txnIter.Value(), txnType)
 				if err != nil {
 					logHistoryManager.WithError(err).Warnf("error obtaining transaction"+
@@ -296,7 +331,7 @@ func getTxnList(walletIter core.WalletIterator, withFilter bool, filterAddress m
 					return nil, err
 				}
 
-				amount, err := getTxnAmount(txnIter.Value(), txnType, addrsMap)
+				amount, err := getTxnAmount(txnIter.Value(), txnType, wltLblByStrAddr)
 				if err != nil {
 					return nil, err
 				}
