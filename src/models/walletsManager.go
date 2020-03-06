@@ -713,6 +713,10 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 			logWalletManager.WithError(err).Warnf("No signer %s for wallet %v", source, wlts[0])
 			return nil
 		}
+		if suid, err := signer.GetSignerUID(); err != nil && wlts[0].GetId() == string(suid) {
+			// NOTE the signer is the wallet it self
+			signer = nil
+		}
 		txn, err = wlts[0].Sign(qTxn.Txn, signer, pwd, nil)
 	}
 
@@ -730,8 +734,10 @@ func (walletM *WalletManager) signTxn(wltIds, address []string, source string, t
 	return qTxn
 
 }
-func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, txn *transactions.TransactionDetails) {
+
+func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails) {
 	channel := make(chan *transactions.TransactionDetails)
+
 	go func() {
 		var pwd core.PasswordReader = func(message string, ctx core.KeyValueStore) (string, error) {
 			bridgeForPassword.BeginUse()
@@ -754,7 +760,7 @@ func (walletM *WalletManager) signAndBroadcastTxnAsync(wltIds, addresses []strin
 			return pass, nil
 		}
 
-		channel <- walletM.signTxn(wltIds, addresses, source, pwd, index, txn)
+		channel <- walletM.signTxn(wltIds, addresses, source, pwd, index, qTxn)
 	}()
 
 	go func() {

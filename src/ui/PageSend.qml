@@ -15,6 +15,7 @@ Page {
 
     property alias advancedMode: switchAdvancedMode.checked
     property string walletSelected
+    property string signerSelected
     property bool walletEncrypted
     property string destinationAddress
     property string amount
@@ -204,11 +205,9 @@ Page {
 
         modal: true
         focus: true
-        onAccepted:{
-            walletManager.signAndBroadcastTxnAsync(walletsAddresses[1], walletsAddresses[0],"", bridgeForPassword, [], txn)
-            if (walletEncrypted){
-                getPasswordDialog.open()
-            }
+		onAccepted: {
+            signerSelected = stackView.currentItem.simplePage.getSignerSelected()
+            walletManager.signAndBroadcastTxnAsync(walletsAddresses[1], walletsAddresses[0],signerSelected, bridgeForPassword, [], txn)
         }
     }
 
