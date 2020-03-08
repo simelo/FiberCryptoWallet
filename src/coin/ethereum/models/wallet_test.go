@@ -189,3 +189,21 @@ func TestWalletDirectoryListWallet(t *testing.T) {
 	require.NotNil(t, wlt)
 	require.Equal(t, "test", wlt.GetLabel())
 }
+
+func TestWalletDirectoryGetWallet(t *testing.T) {
+	wltDir, err := NewWalletDirectory("testdata")
+	require.Nil(t, err)
+
+	wlt, err := wltDir.GetWallet("wrong_wallet_id")
+	require.EqualError(t, err, errors.ErrNotFound.Error())
+
+	var origWlt *KeystoreWallet
+	for _, sWlt := range wltDir.wallets {
+		origWlt = sWlt
+	}
+
+	wlt, err = wltDir.GetWallet(origWlt.GetId())
+	require.Nil(t, err)
+
+	require.Equal(t, origWlt, wlt)
+}
