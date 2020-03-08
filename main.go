@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/params"
 	"os"
 
 	_ "github.com/fibercrypto/fibercryptowallet/src/coin/ethereum"
@@ -24,14 +25,15 @@ func main() {
 	app := gui.NewQGuiApplication(len(os.Args), os.Args)
 
 	// Set the application information
-	app.SetOrganizationName("Simelo.Tech")
-	app.SetOrganizationDomain("simelo.tech")
-	app.SetApplicationName("FiberCryptoWallet")
-	app.SetApplicationVersion("0.27.0")
+	app.SetOrganizationName(params.OrganizationName)
+	app.SetOrganizationDomain(params.OrganizationDomain)
+	app.SetApplicationName(params.ApplicationName)
+	app.SetApplicationVersion(params.ApplicationVersion)
 	app.SetWindowIcon(gui.NewQIcon5(":/images/resources/images/icons/appIcon/appIcon.png"))
 
 	// Add this monospaced font
 	gui.QFontDatabase_AddApplicationFont(":/fonts/resources/fonts/code-new-roman/code-new-roman.otf")
+	gui.QFontDatabase_AddApplicationFont(":/fonts/resources/fonts/hemi-head/hemi-head.ttf")
 
 	engine := qml.NewQQmlApplicationEngine(nil)
 	// To speed up UI development, loading QML files from resources is disabled, but it must be re-enabled in order to make a release

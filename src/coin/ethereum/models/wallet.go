@@ -177,6 +177,26 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 	return nil
 }
 
+func lookupWallet(env core.WalletEnv, firstAddr string) (core.Wallet, error) {
+	ws := env.GetWalletSet()
+	wls := ws.ListWallets()
+	for wls.Next() {
+		w := wls.Value()
+		addrs := w.GenAddresses(core.AccountAddress, 0, 1, nil)
+		if addrs.Next() {
+			addr := addrs.Value()
+			if addr.String() == firstAddr {
+				return w, nil
+			}
+		}
+	}
+	return nil, errors.ErrWltFromAddrNotFound
+}
+
+func (wltDir *WalletsDirectory) LookupWallet(firstAddr string) (core.Wallet, error) {
+	return lookupWallet(wltDir, firstAddr)
+}
+
 //TODO
 func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
 	return nil
