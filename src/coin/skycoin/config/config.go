@@ -16,6 +16,7 @@ const (
 	SectionName               = "skycoin"
 	SettingPathToLog          = "log"
 	SettingPathToNode         = "node"
+	SettingNodeAddress        = "address"
 	SettingPathToWalletSource = "walletSource"
 )
 
@@ -26,7 +27,7 @@ var (
 
 func RegisterConfig() error {
 	cm := local.GetConfigManager()
-	node := map[string]string{"address": "https://staging.node.skycoin.net"}
+	node := map[string]string{"address": "https://node.skycoin.com"}
 	nodeBytes, err := json.Marshal(node)
 	if err != nil {
 		return err
@@ -45,7 +46,7 @@ func RegisterConfig() error {
 
 	wltOpt := local.NewOption(string(wltSrc.id), []string{SettingPathToWalletSource}, false, string(wltSrcBytes))
 
-	level := map[string]string{"level": "warn"}
+	level := map[string]string{"level": strconv.Itoa(logging.Warning)}
 	levelBytes, err := json.Marshal(level)
 	if err != nil {
 		return err
@@ -57,9 +58,18 @@ func RegisterConfig() error {
 	if err != nil {
 		return err
 	}
+
 	logOutputOpt := local.NewOption(SettingPathToLog, []string{}, false, string(outputBytes))
 
-	sectionManager = cm.RegisterSection(SectionName, []*local.Option{nodeOpt, wltOpt, logLevelOpt, logOutputOpt})
+	outputFile := map[string]string{"outputFile": ""}
+	outputFileBytes, err := json.Marshal(outputFile)
+	if err != nil {
+		return err
+	}
+
+	logOutputFileOpt := local.NewOption(SettingPathToLog, []string{}, false, string(outputFileBytes))
+
+	sectionManager = cm.RegisterSection(SectionName, []*local.Option{nodeOpt, wltOpt, logLevelOpt, logOutputOpt, logOutputFileOpt})
 	return nil
 }
 
@@ -73,6 +83,14 @@ func getValues(prefix string) ([]string, error) {
 }
 
 func GetDataRefreshTimeout() uint64 {
+	return getFromCache(local.DataRefreshTimeoutKey)
+}
+
+func GetDataUpdateTime() uint64 {
+	return getFromCache(local.DataUpdateTimeKey)
+}
+
+func getFromCache(cacheKeyValue string) uint64 {
 	cm := local.GetConfigManager()
 	sm := cm.GetSectionManager("global")
 	value, err := sm.GetValue("cache", nil)
@@ -87,7 +105,7 @@ func GetDataRefreshTimeout() uint64 {
 		log.WithError(err).Warn("Couldn't unmarshal from options")
 		return 0
 	}
-	strVal, ok := keyValue["lifeTime"]
+	strVal, ok := keyValue[cacheKeyValue]
 	if !ok {
 		return 0
 	}
@@ -111,8 +129,29 @@ func GetWalletSources() ([]*walletSource, error) {
 		if err != nil {
 			return nil, err
 		}
+		if wltSrcs[i].Tp == RemoteWallet {
+			node, err := GetNodeSource()
+			if err != nil {
+				return nil, err
+			}
+			wltSrcs[i].Source = node[SettingNodeAddress]
+		}
 	}
 	return wltSrcs, nil
+}
+
+func GetNodeSource() (map[string]string, error) {
+
+	nodeSettingStr, err := GetOption(SettingPathToNode)
+	if err != nil {
+		return nil, err
+	}
+	node := make(map[string]string)
+	err = json.Unmarshal([]byte(nodeSettingStr), &node)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }
 
 type walletSource struct {
