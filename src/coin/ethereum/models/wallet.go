@@ -247,6 +247,26 @@ func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 
 }
 
+func lookupWallet(env core.WalletEnv, firstAddr string) (core.Wallet, error) {
+	ws := env.GetWalletSet()
+	wls := ws.ListWallets()
+	for wls.Next() {
+		w := wls.Value()
+		addrs := w.GenAddresses(core.AccountAddress, 0, 1, nil)
+		if addrs.Next() {
+			addr := addrs.Value()
+			if addr.String() == firstAddr {
+				return w, nil
+			}
+		}
+	}
+	return nil, errors.ErrWltFromAddrNotFound
+}
+
+func (wltDir *WalletsDirectory) LookupWallet(firstAddr string) (core.Wallet, error) {
+	return lookupWallet(wltDir, firstAddr)
+}
+
 //WalletSet methods set
 func (walletDir *WalletsDirectory) ListWallets() core.WalletIterator {
 	wallets := make([]core.Wallet, 0)
@@ -398,7 +418,7 @@ func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.Transac
 		logWallet.WithError(err).Error("Error sending transaction")
 		return nil, err
 	}
-	addrTo := common.HexToAddress(addrFrom.String())
+	addrTo := common.HexToAddress(tmpAddr.String())
 	nCtx := context.Background()
 
 	nonce, err := clt.NonceAt(nCtx, addrFrom, nil)

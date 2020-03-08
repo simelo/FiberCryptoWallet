@@ -33,6 +33,7 @@ func NewEthereumApiClient(section string) (ethtypes.EthereumApi, error) {
 	}
 
 	obj, err := pool.Get()
+
 	if err != nil {
 		for err == errors.ErrObjectPoolUndeflow {
 			obj, err = pool.Get()
