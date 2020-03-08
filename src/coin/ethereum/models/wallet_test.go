@@ -143,3 +143,35 @@ func TestWalletDirectoryEncrypt(t *testing.T) {
 	require.Equal(t, false, ok)
 
 }
+
+func TestWalletDirectoryIsEncrypted(t *testing.T) {
+	wltDir, err := NewWalletDirectory("testdata")
+	require.Nil(t, err)
+
+	encrypted, err := wltDir.IsEncrypted("wrong_wallet_name")
+	require.EqualError(t, err, errors.ErrNotFound.Error())
+
+	var wlt *KeystoreWallet
+
+	for _, w := range wltDir.wallets {
+		wlt = w
+	}
+
+	encrypted, err = wltDir.IsEncrypted(wlt.dirName)
+	require.Nil(t, err)
+	require.Equal(t, true, encrypted)
+
+	err = wltDir.Decrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test", nil
+	})
+	require.Nil(t, err)
+
+	encrypted, err = wltDir.IsEncrypted(wlt.dirName)
+	require.Nil(t, err)
+	require.Equal(t, false, encrypted)
+
+	err = wltDir.Encrypt(wlt.dirName, func(string, core.KeyValueStore) (string, error) {
+		return "test", nil
+	})
+	require.Nil(t, err)
+}
