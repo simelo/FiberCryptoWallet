@@ -175,3 +175,17 @@ func TestWalletDirectoryIsEncrypted(t *testing.T) {
 	})
 	require.Nil(t, err)
 }
+
+func TestWalletDirectoryListWallet(t *testing.T) {
+	wltDir, err := NewWalletDirectory("testdata")
+	require.Nil(t, err)
+
+	wltIter := wltDir.ListWallets()
+	require.NotNil(t, wltIter)
+
+	require.Equal(t, true, wltIter.Next())
+
+	wlt := wltIter.Value()
+	require.NotNil(t, wlt)
+	require.Equal(t, "test", wlt.GetLabel())
+}
