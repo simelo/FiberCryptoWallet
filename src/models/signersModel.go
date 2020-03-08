@@ -1,14 +1,14 @@
 package models
 
 import (
+	wlcore "github.com/fibercrypto/fibercryptowallet/src/main"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
-	wlcore "github.com/fibercrypto/fibercryptowallet/src/main"
 )
 
 const (
-	SignerId              = iota + int(core.Qt__UserRole) + 1
+	SignerId = iota + int(core.Qt__UserRole) + 1
 	SignerDescription
 )
 
@@ -17,25 +17,25 @@ var logSignersModel = logging.MustGetLogger("Signers Model")
 type SignerModel struct {
 	core.QAbstractListModel
 
-	_ func()                       `constructor:"init"`
-	_ map[int]*core.QByteArray     `property:"roles"`
-	_ []*QSigner                   `property:"signers"`
-	_ func(string)                 `slot:"loadModel"`
-	_ int                          `property:"count"`
+	_ func()                   `constructor:"init"`
+	_ map[int]*core.QByteArray `property:"roles"`
+	_ []*QSigner               `property:"signers"`
+	_ func(string)             `slot:"loadModel"`
+	_ int                      `property:"count"`
 }
 
 type QSigner struct {
 	core.QObject
 
-	_ string  `property:"id"`
-	_ string  `property:"description"`
+	_ string `property:"id"`
+	_ string `property:"description"`
 }
 
 func (signerModel *SignerModel) init() {
 	logWalletsModel.Debugln("Initialize Signer model")
 	signerModel.SetRoles(map[int]*core.QByteArray{
-		SignerId:              core.NewQByteArray2("id", -1),
-		SignerDescription:     core.NewQByteArray2("description", -1),
+		SignerId:          core.NewQByteArray2("id", -1),
+		SignerDescription: core.NewQByteArray2("description", -1),
 	})
 	qml.QQmlEngine_SetObjectOwnership(signerModel, qml.QQmlEngine__CppOwnership)
 	signerModel.ConnectData(signerModel.data)
@@ -84,8 +84,8 @@ func (signersModel *SignerModel) roleNames() map[int]*core.QByteArray {
 
 func (signerModel *SignerModel) loadModel(wltId string) {
 	logSignersModel.Debugln("Loading signers", wltId)
-	wlt := walletManager.WalletEnv.GetWalletSet().GetWallet(wltId)
-	if wlt == nil {
+	wlt, err := walletManager.WalletEnv.GetWalletSet().GetWallet(wltId)
+	if err != nil {
 		return
 	}
 	am := wlcore.LoadAltcoinManager()

@@ -294,7 +294,7 @@ func (walletM *WalletManager) updateWalletEnvs() {
 
 func (walletM *WalletManager) initWalletAddresses(wltId string) {
 	logWalletManager.Info("Updating Addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	wlt, _ := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
 	qAddresses := make(map[string]*QAddress, 0)
 	it, err := wlt.GetLoadedAddresses()
 	if err != nil {
@@ -333,9 +333,9 @@ func (walletM *WalletManager) updateAddresses(wltId string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	logWalletManager.Info("Updating Addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-	if wlt == nil {
-		logWalletManager.Warn("Couldn't load wallet")
+	wlt, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
+	if err != nil {
+		logWalletManager.WithError(err).Warn("Couldn't load wallet")
 		return
 	}
 	it, err := wlt.GetLoadedAddresses()

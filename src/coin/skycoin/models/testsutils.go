@@ -1,22 +1,23 @@
 package skycoin
 
 import (
-	"github.com/SkycoinProject/skycoin/src/wallet"
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/testsuite"
-	"github.com/fibercrypto/fibercryptowallet/src/core"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
-	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
+	"testing"
+
 	"github.com/SkycoinProject/skycoin/src/cipher"
 	skytestsuite "github.com/SkycoinProject/skycoin/src/cipher/testsuite"
 	"github.com/SkycoinProject/skycoin/src/coin"
 	"github.com/SkycoinProject/skycoin/src/testutil"
 	"github.com/SkycoinProject/skycoin/src/util/file"
+	"github.com/SkycoinProject/skycoin/src/wallet"
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/testsuite"
+	"github.com/fibercrypto/fibercryptowallet/src/core"
+	"github.com/fibercrypto/fibercryptowallet/src/util"
+	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-	"testing"
 )
 
 func makeUninjectedTransaction(t *testing.T, txn *coin.Transaction, fee uint64) *SkycoinUninjectedTransaction {
@@ -74,15 +75,15 @@ func makeLocalWalletsFromKeyData(t *testing.T, keysData []KeyData) []core.Wallet
 		var isFound bool
 		var err error
 		if w, isFound = walletsCache[kd.Mnemonic]; !isFound {
-			if w = walletSet.GetWallet(walletID); w == nil {
+			if w, err = walletSet.GetWallet(walletID); err != nil {
 				w, err = walletSet.CreateWallet(walletID, kd.Mnemonic, wallet.WalletTypeDeterministic, false, util.EmptyPassword, 0)
 				require.NoError(t, err)
 			}
 			walletsCache[kd.Mnemonic] = w
 		}
 		wallets[i] = w
-		w.GenAddresses(core.AccountAddress, 0, uint32(kd.AddressIndex + 100), nil)
-		w.GenAddresses(core.ChangeAddress, 0, uint32(kd.AddressIndex + 100), nil)
+		w.GenAddresses(core.AccountAddress, 0, uint32(kd.AddressIndex+100), nil)
+		w.GenAddresses(core.ChangeAddress, 0, uint32(kd.AddressIndex+100), nil)
 	}
 	return wallets
 }
@@ -142,6 +143,7 @@ func GenerateTestKeyPair(t *testing.T) (*KeyData, error) {
 var global_mock *SkycoinApiMock
 
 var logModelTest = logging.MustGetLogger("Skycoin Model Test")
+
 // API method used in other test with different values.
 
 // CleanGlobalMock util when is needed to change the values of an

@@ -32,14 +32,14 @@ func NewEthereumApiClient(section string) (ethtypes.EthereumApi, error) {
 		return nil, err
 	}
 
-	obj := pool.Get()
+	obj, err := pool.Get()
 	if err != nil {
-		for _, ok := err.(core.NotAvailableObjectsError); ok; _, ok = err.(core.NotAvailableObjectsError) {
-			if err == nil {
-				break
-			}
+		for err == errors.ErrObjectPoolUndeflow {
+			obj, err = pool.Get()
 		}
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ethApi, ok := obj.(ethtypes.EthereumApi)

@@ -393,7 +393,12 @@ func (kw *KeystoreWallet) SendFromAddress(from []core.Address, to []core.Transac
 		return nil, err
 	}
 	addrFrom := common.HexToAddress(from[0].String())
-	addrTo := common.HexToAddress(to[0].GetAddress().String())
+	tmpAddr, err := to[0].GetAddress()
+	if err != nil {
+		logWallet.WithError(err).Error("Error sending transaction")
+		return nil, err
+	}
+	addrTo := common.HexToAddress(addrFrom.String())
 	nCtx := context.Background()
 
 	nonce, err := clt.NonceAt(nCtx, addrFrom, nil)
