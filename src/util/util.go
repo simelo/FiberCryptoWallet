@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -115,4 +116,36 @@ func GetMultiPlatformUserDirectory(FoldersSuffix []string) string {
 		path = filepath.Join(path, string(os.PathSeparator), folder)
 	}
 	return path
+}
+
+func CopyAllFiles(fromDir, toDir string) error {
+	files, err := ioutil.ReadDir(fromDir)
+	if err != nil {
+		return err
+	}
+	var copied []string
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		data, err := ioutil.ReadFile(filepath.Join(fromDir, file.Name()))
+		if err != nil {
+			break
+		}
+
+		err = ioutil.WriteFile(filepath.Join(toDir, file.Name()), data, 0644)
+		if err != nil {
+			break
+		}
+		copied = append(copied, file.Name())
+	}
+
+	if err != nil {
+		for _, file := range copied {
+			os.Remove(filepath.Join(toDir, file))
+		}
+	}
+
+	return err
+
 }

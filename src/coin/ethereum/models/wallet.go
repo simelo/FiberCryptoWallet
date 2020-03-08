@@ -185,65 +185,103 @@ func (walletDir *WalletsDirectory) IsEncrypted(walletName string) (bool, error) 
 	return decrypt, nil
 }
 
+// func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
+// 	tempDir, err := ioutil.TempDir("", "ethWlt")
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	tempWallet := keystore.NewKeyStore(tempDir, keystore.StandardScryptN, keystore.StandardScryptP)
+// 	defer os.RemoveAll(tempDir)
+
+// 	for _, acc := range wlt.Accounts() {
+// 		accBytes, err := wlt.Export(acc, password, newPassword)
+// 		if err != nil {
+// 			logWallet.Error("1")
+// 			return err
+// 		}
+
+// 		_, err = tempWallet.Import(accBytes, newPassword, newPassword)
+// 		if err != nil {
+// 			logWallet.Error("2")
+// 			return err
+// 		}
+// 	}
+// 	newAccs, err := ioutil.ReadDir(tempDir)
+// 	if err != nil {
+// 		logWallet.Error("3")
+// 		return err
+// 	}
+
+// 	for _, accFile := range newAccs {
+// 		data, err := ioutil.ReadFile(accFile.Name())
+// 		if err != nil {
+// 			logWallet.Error("4")
+// 			return err
+// 		}
+// 		name := filepath.Dir(accFile.Name())
+// 		err = ioutil.WriteFile(filepath.Join(wlt.dirName, name), data, 0644)
+// 		if err != nil {
+// 			logWallet.Error("5")
+// 			return err
+// 		}
+// 	}
+// 	allFiles, err := ioutil.ReadDir(wlt.dirName)
+// 	if err != nil {
+// 		logWallet.Error("6")
+// 		return err
+// 	}
+// 	for _, file := range allFiles {
+// 		founded := false
+// 		for _, f := range newAccs {
+// 			if file.Name() == f.Name() {
+// 				founded = true
+// 				break
+// 			}
+// 		}
+// 		if !founded {
+// 			os.Remove(file.Name())
+// 		}
+// 	}
+// 	return nil
+
+// }
+
 func updateWallet(wlt *KeystoreWallet, password, newPassword string) error {
 	tempDir, err := ioutil.TempDir("", "ethWlt")
 	if err != nil {
 		return err
 	}
 
-	tempWallet := keystore.NewKeyStore(tempDir, keystore.StandardScryptN, keystore.StandardScryptP)
 	defer os.RemoveAll(tempDir)
 
+	err = util.CopyAllFiles(wlt.dirName, tempDir)
+	if err != nil {
+		return err
+	}
+
 	for _, acc := range wlt.Accounts() {
-		accBytes, err := wlt.Export(acc, password, newPassword)
+		err = wlt.Update(acc, password, newPassword)
 		if err != nil {
-			logWallet.Error("1")
-			return err
+			break
 		}
-
-		_, err = tempWallet.Import(accBytes, newPassword, newPassword)
-		if err != nil {
-			logWallet.Error("2")
-			return err
-		}
-	}
-	newAccs, err := ioutil.ReadDir(tempDir)
-	if err != nil {
-		logWallet.Error("3")
-		return err
 	}
 
-	for _, accFile := range newAccs {
-		data, err := ioutil.ReadFile(accFile.Name())
-		if err != nil {
-			logWallet.Error("4")
-			return err
-		}
-		name := filepath.Dir(accFile.Name())
-		err = ioutil.WriteFile(filepath.Join(wlt.dirName, name), data, 0644)
-		if err != nil {
-			logWallet.Error("5")
-			return err
-		}
-	}
-	allFiles, err := ioutil.ReadDir(wlt.dirName)
 	if err != nil {
-		logWallet.Error("6")
-		return err
-	}
-	for _, file := range allFiles {
-		founded := false
-		for _, f := range newAccs {
-			if file.Name() == f.Name() {
-				founded = true
-				break
+		files, err := ioutil.ReadDir(wlt.dirName)
+		if err != nil {
+			return err
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				continue
 			}
+			os.Remove(filepath.Join(wlt.dirName, file.Name()))
 		}
-		if !founded {
-			os.Remove(file.Name())
-		}
+
+		util.CopyAllFiles(tempDir, wlt.dirName)
 	}
-	return nil
+	return err
 
 }
 
