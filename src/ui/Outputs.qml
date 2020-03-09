@@ -41,7 +41,7 @@ Page {
     QOutputs{
         id: outputModel
         Component.onCompleted:{
-            walletManager.loadOutputsAsync(this)
+        loadModelAsync()
         }
     }
 

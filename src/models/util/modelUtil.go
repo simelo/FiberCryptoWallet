@@ -12,6 +12,16 @@ func init() {
 
 var logModelUtils = logging.MustGetLogger("ModelUtils")
 
+var Helper = NewHelper(nil)
+
+type helper struct {
+	qtCore.QObject
+
+	_ func(f func()) `signal:"runInMain,auto"`
+}
+
+func (h *helper) runInMain(f func()) { f() }
+
 type ModelsUtil struct {
 	qtCore.QObject
 	_ func()                       `constructor:"init"`

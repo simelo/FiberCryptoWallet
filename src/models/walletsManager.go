@@ -10,7 +10,6 @@ import (
 
 	// "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
-	"github.com/fibercrypto/fibercryptowallet/src/models/outputs"
 	"github.com/fibercrypto/fibercryptowallet/src/models/transactions"
 	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"sort"
@@ -73,7 +72,6 @@ type WalletManager struct {
 	_                        func(string, address.ModelAddress)                                                                                                                    `slot:"updateModel"`
 	_                        func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
 	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
-	_                        func(modelOutputs *outputs.ModelOutputs)                                                                                                              `slot:"loadOutputsAsync"`
 }
 
 func (walletM *WalletManager) init() {
@@ -110,7 +108,6 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectGetDefaultWalletType(walletM.getDefaultWalletType)
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
 		walletM.ConnectUpdateModel(walletM.updateModel)
-		walletM.ConnectLoadOutputsAsync(walletM.loadOutputsAsync)
 		walletM.SeedGenerator = new(sky.SeedService)
 		walletManager = walletM
 		walletM.updateWalletModel = make(chan struct{})
@@ -998,40 +995,40 @@ func (walletM *WalletManager) updateModel(fileName string, list *address.ModelAd
 	go list.LoadModel(walletM.getAddresses(fileName))
 }
 
-func (walletM *WalletManager) loadOutputsAsync(modelOutputs *outputs.ModelOutputs) {
-	logWalletManager.Info("Loading outputs asynchronously")
-	logWalletManager.Infof("Update time = %d seg", config.GetDataUpdateTime())
-	loadOutputs := func() {
-		walletIter := walletM.WalletEnv.GetWalletSet().ListWallets()
-		var outputList = make([]*outputs.QOutput, 0)
-		for walletIter.Next() {
-			unspendOutIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
-			if err != nil {
-				logWalletManager.WithError(err).Error(
-					"Could't get output iterator for wallet: %s", walletIter.Value().GetLabel())
-				modelOutputs.SetLoading(true)
-				continue
-			}
-			modelOutputs.SetLoading(false)
-			for unspendOutIter.Next() {
-
-				outy := outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel())
-				logWalletManager.Info(outy.CoinOpt().GetKeys())
-				outputList = append(outputList, outy)
-			}
-		}
-		modelOutputs.LoadModelAsync(outputList)
-	}
-
-	go func() {
-		loadOutputs()
-		for {
-			select {
-			case <-modelOutputs.Ctx.Done():
-				return
-			case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
-				loadOutputs()
-			}
-		}
-	}()
-}
+// func (walletM *WalletManager) loadOutputsAsync(modelOutputs *outputs.ModelOutputs) {
+// 	logWalletManager.Info("Loading outputs asynchronously")
+// logWalletManager.Infof("Update time = %d seg", config.GetDataUpdateTime())
+// loadOutputs := func() {
+// 	walletIter := walletM.WalletEnv.GetWalletSet().ListWallets()
+// 	var outputList = make([]*outputs.QOutput, 0)
+// 	for walletIter.Next() {
+// 		unspendOutIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+// 		if err != nil {
+// 			logWalletManager.WithError(err).Error(
+// 				"Could't get output iterator for wallet: %s", walletIter.Value().GetLabel())
+// 			modelOutputs.SetLoading(true)
+// 			continue
+// 		}
+// 		modelOutputs.SetLoading(false)
+// 		for unspendOutIter.Next() {
+//
+// 			outy := outputs.FromOutputsToQOutputs(unspendOutIter.Value(), walletIter.Value().GetLabel())
+// 			logWalletManager.Info(outy.CoinOpt().GetKeys())
+// 			outputList = append(outputList, outy)
+// 		}
+// 	}
+// 	modelOutputs.LoadModelAsync(outputList)
+// }
+//
+// go func() {
+// 	loadOutputs()
+// 	for {
+// 		select {
+// 		case <-modelOutputs.Ctx.Done():
+// 			return
+// 		case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
+// 			loadOutputs()
+// 		}
+// 	}
+// }()
+// }
