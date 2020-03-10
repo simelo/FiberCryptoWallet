@@ -29,12 +29,12 @@ const (
 type ModelOutputs struct {
 	qtCore.QAbstractListModel
 
-	Ctx              context.Context
-	cancel           context.CancelFunc
-	mutex            sync.Mutex
-	walletsByOutputs map[string]string
-	_                func() `constructor:"init"`
-	_                func() `destructor:"destroy"`
+	Ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+	// walletsByOutputs map[string]string
+	_ func() `constructor:"init"`
+	_ func() `destructor:"destroy"`
 
 	_ map[int]*qtCore.QByteArray `property:"roles"`
 	_ []*QOutput                 `property:"outputs"`
@@ -58,7 +58,7 @@ type QOutput struct {
 func (modelOutputs *ModelOutputs) init() {
 	modelOutputs.SetRoles(map[int]*qtCore.QByteArray{
 		OutputID:     qtCore.NewQByteArray2("outputID", -1),
-		CoinFeature:  qtCore.NewQByteArray2("CoinFtr", -1),
+		CoinFeature:  qtCore.NewQByteArray2("coinFtr", -1),
 		AddressOwner: qtCore.NewQByteArray2("addressOwner", -1),
 		WalletOwner:  qtCore.NewQByteArray2("walletOwner", -1),
 	})
@@ -73,13 +73,14 @@ func (modelOutputs *ModelOutputs) init() {
 	modelOutputs.ConnectLoadModelAsync(modelOutputs.loadModelAsync)
 	modelOutputs.Ctx, modelOutputs.cancel = context.WithCancel(context.Background())
 	modelOutputs.walletsByOutputs = make(map[string]string)
-	modelOutputs.mutex = sync.Mutex{}
+	modelOutputs.wg = sync.WaitGroup{}
 	modelOutputs.SetLoading(true)
 }
 
 func (modelOutputs *ModelOutputs) destroy() {
 	logModelOutputs.Info("Destroy ModelOutputs")
 	modelOutputs.cancel()
+	modelOutputs.wg.Wait()
 
 }
 
@@ -137,80 +138,37 @@ func (modelOutputs *ModelOutputs) get(row int) *QOutput {
 func (modelOutputs *ModelOutputs) loadModelAsync() {
 	logModelOutputs.Info("Load model Async")
 
-	loadOutputs := func() {
-		walletIter := models.GetWalletEnv().GetWalletSet().ListWallets()
-		if walletIter == nil {
-			// TODO error
-			return
-		}
+	isLoadingChan := make(chan bool)
+	outToAdd := make(chan *QOutput)
+	m := sync.Mutex{}
+	OutListToRemove := make(chan []string)
+	go loadCoreOutputsAsync(isLoadingChan, outToAdd, OutListToRemove, modelOutputs.Ctx)
 
-		for walletIter.Next() {
-			// Getting outputs iterator for each wallet. If it has an error set to loading.
-			outputIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
-			if err != nil {
-				logModelOutputs.WithError(err).Errorf(
-					"Couldn't get output iterator from wallet: %s", walletIter.Value().GetLabel())
-				modelUtil.Helper.RunInMain(func() { modelOutputs.SetLoading(true) })
-				continue
-			}
-
-			select {
-			case <-modelOutputs.Ctx.Done():
-				return
-			default:
-				break
-			}
-
-			modelUtil.Helper.RunInMain(func() { modelOutputs.SetLoading(false) })
-
-			// Outputs list for the current wallet
-			var findNewOutputs = make(map[string]struct{})
-			for outputIter.Next() {
-				// Saved the outputs id of the current wallet.
-				findNewOutputs[outputIter.Value().GetId()] = struct{}{}
-
-				// Added the output to the model if the model doesn't contains the outputs.
-				if _, ok := modelOutputs.walletsByOutputs[outputIter.Value().GetId()]; !ok {
-					qOutput := FromOutputsToQOutputs(outputIter.Value(), walletIter.Value().GetLabel())
-					modelUtil.Helper.RunInMain(func() {
-						modelOutputs.mutex.Lock()
-						defer modelOutputs.mutex.Unlock()
-						modelOutputs.addOutputs(qOutput)
-					})
-					modelOutputs.walletsByOutputs[outputIter.Value().GetId()] = walletIter.Value().GetId()
-				}
-			}
-
-			// Iterated on the wallet list.
-			idToRemove := make([]string, 0)
-			for outId, wltId := range modelOutputs.walletsByOutputs {
-				if wltId == walletIter.Value().GetId() {
-					if _, ok := findNewOutputs[outId]; !ok {
-						idToRemove = append(idToRemove, outId)
-						logModelOutputs.Info(outId)
-					}
-				}
-			}
-			for e := range idToRemove {
-				modelUtil.Helper.RunInMain(func() {
-					modelOutputs.mutex.Lock()
-					defer modelOutputs.mutex.Unlock()
-					modelOutputs.removeOutpByOutpId(idToRemove[e])
-				})
-			}
-		}
-	}
-
+	// controller function
 	go func() {
-		// loadOutputs()
 		for {
 			select {
+			case loading := <-isLoadingChan:
+				modelUtil.Helper.RunInMain(func() { modelOutputs.SetLoading(loading) })
+				break
+			case qOut := <-outToAdd:
+				modelUtil.Helper.RunInMain(func() {
+					m.Lock()
+					defer m.Unlock()
+					modelOutputs.addOutputs(qOut)
+
+				})
+				break
+			case outIdList := <-OutListToRemove:
+				modelUtil.Helper.RunInMain(func() {
+					m.Lock()
+					defer m.Unlock()
+					for e := range outIdList {
+						modelOutputs.removeOutpByOutpId(outIdList[e])
+					}
+				})
 			case <-modelOutputs.Ctx.Done():
 				return
-			case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
-				logModelOutputs.Info("loadingOutputs")
-				time.Sleep(3 * time.Second)
-				loadOutputs()
 			}
 		}
 	}()
@@ -218,6 +176,9 @@ func (modelOutputs *ModelOutputs) loadModelAsync() {
 
 func (modelOutputs *ModelOutputs) addOutputs(output *QOutput) {
 	logModelOutputs.Infof("Adding output with id: %s", output.OutputID())
+	modelOutputs.wg.Add(1)
+	defer modelOutputs.wg.Done()
+
 	var row = len(modelOutputs.Outputs())
 	for k, v := range modelOutputs.Outputs() {
 		if output.WalletOwner() < v.WalletOwner() {
@@ -236,7 +197,6 @@ func (modelOutputs *ModelOutputs) removeOutpByOutpId(outId string) {
 	for index, output := range modelOutputs.Outputs() {
 		if output.coreOut.GetId() == outId {
 			modelOutputs.removeOutputs(index)
-			delete(modelOutputs.walletsByOutputs, outId)
 			return
 		}
 	}
@@ -244,19 +204,11 @@ func (modelOutputs *ModelOutputs) removeOutpByOutpId(outId string) {
 
 func (modelOutputs *ModelOutputs) removeOutputs(row int) {
 	logModelOutputs.Infof("Removing outputs with index: %d", row)
-
+	modelOutputs.wg.Add(1)
+	defer modelOutputs.wg.Done()
 	modelOutputs.BeginRemoveRows(qtCore.NewQModelIndex(), row, row)
 	modelOutputs.SetOutputs(append(modelOutputs.Outputs()[:row], modelOutputs.Outputs()[row+1:]...))
 	modelOutputs.EndRemoveRows()
-}
-
-func contains(outputs []*QOutput, output *QOutput) bool {
-	for _, out := range outputs {
-		if out.OutputID() == output.OutputID() {
-			return true
-		}
-	}
-	return false
 }
 
 func FromOutputsToQOutputs(output core.TransactionOutput, wltName string) *QOutput {
@@ -270,18 +222,77 @@ func FromOutputsToQOutputs(output core.TransactionOutput, wltName string) *QOutp
 		return qOutput
 	}
 	qOutput.SetAddressOwner(outAddrs.String())
-	coinOpts := modelUtil.NewMap(nil)
-	qOutput.SetCoinFtr(coinOpts)
+	coinFtr := modelUtil.NewMap(nil)
+	// wg := sync.WaitGroup{}
+	coinTrait := output.GetCoinTraits()
+	for e := range coinTrait {
+		coinFtr.SetValue(coinTrait[e].GetTrait(), coinTrait[e].GetValue())
+	}
+	logModelOutputs.Info(coinFtr.GetKeys())
+	qOutput.SetCoinFtr(coinFtr)
 
 	return qOutput
 }
 
-func loadCoinFeatures(output core.TransactionOutput, qOutput *QOutput) {
+func loadCoinFeatures(output core.TransactionOutput) *modelUtil.Map {
 	coinFtr := modelUtil.NewMap(nil)
 	for _, trait := range output.GetCoinTraits() {
 		models.Helper.RunInMain(func() {
 			coinFtr.SetValue(trait.GetTrait(), trait.GetValue())
 		})
 	}
-	qOutput.SetCoinFtr(coinFtr)
+	return coinFtr
+}
+
+func loadCoreOutputsAsync(isLoading chan<- bool, send chan<- *QOutput, outToRemove chan<- []string, ctx context.Context) {
+	walletByOutputs := make(map[string]string)
+	for {
+		select {
+		case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
+			walletIter := models.GetWalletEnv().GetWalletSet().ListWallets()
+			if walletIter == nil {
+				// TODO error
+				continue
+			}
+			for walletIter.Next() {
+				outputIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+				if err != nil {
+					logModelOutputs.WithError(err).Errorf(
+						"Couldn't get output iterator from wallet: %s", walletIter.Value().GetLabel())
+					isLoading <- true
+					continue
+				}
+				isLoading <- false
+				// Outputs list for the current wallet
+				isPersistent := make(map[string]struct{})
+				for outputIter.Next() {
+					isPersistent[outputIter.Value().GetId()] = struct{}{}
+					if _, ok := walletByOutputs[outputIter.Value().GetId()]; !ok {
+						walletByOutputs[outputIter.Value().GetId()] = walletIter.Value().GetLabel()
+						// <- OutToAdd
+						send <- FromOutputsToQOutputs(outputIter.Value(), walletIter.Value().GetLabel())
+					}
+				}
+				removeOutList := make([]string, 0)
+				for outputId, walletId := range walletByOutputs {
+					if walletId == walletIter.Value().GetLabel() {
+						if _, ok := isPersistent[outputId]; !ok {
+
+							removeOutList = append(removeOutList, outputId)
+						}
+					}
+				}
+
+				for e := range removeOutList {
+					delete(walletByOutputs, removeOutList[e])
+				}
+				outToRemove <- removeOutList
+				// remove no persistent outputs
+				// <- removeOutList
+			}
+			break
+		case <-ctx.Done():
+			return
+		}
+	}
 }

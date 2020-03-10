@@ -94,7 +94,7 @@ Page {
                     width : parent.width
                     outId : outputID
                     address : addressOwner
-                    traits : coinOpts
+                    traits : coinFtr
                     walletLbl : walletOwner
 
                     Component.onCompleted:{

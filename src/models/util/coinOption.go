@@ -15,7 +15,7 @@ type Map struct {
 	keyList  []string
 	_        func()                  `constructor:"init"`
 	_        func(key string) string `slot:"getValue"`
-	_        func(key, value string) `slot:"setValue"`
+	_        func(key, value string) `signal:"setValue"`
 	_        func() []string         `slot:"getKeys"`
 	_        func(key string)        `slot:"removeVal"`
 }
