@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
-	// "github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
@@ -85,11 +84,7 @@ func (walletModel *WalletModel) init() {
 	walletModel.ConnectLoadModel(walletModel.loadModel)
 	walletModel.ConnectUpdateModel(walletModel.updateModel)
 	walletModel.walletByName = make(map[string]*QWallet, 0)
-
 	walletModel.Ctx, walletModel.cancel = context.WithCancel(context.Background())
-}
-
-func (walletModel *WalletModel) changeExpanded(id string) {
 }
 
 func (walletModel *WalletModel) data(index *qtCore.QModelIndex, role int) *qtCore.QVariant {
@@ -315,18 +310,7 @@ func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	// Iterate on all asset (the first asset need be the main asset ) and obtains the balance for that.
 	for _, asset := range wlt.GetCryptoAccount().ListAssets() {
 		coinOpts.SetValueAsync(asset, "N/A")
-		// bl, err := wlt.GetCryptoAccount().GetBalance(asset)
-		// if err != nil {
-		// 	logWalletsModel.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
-		// 	qWallet.SetLoading(true)
-		// } else {
-		// 	accuracy, err := util.AltcoinQuotient(asset)
-		// 	if err != nil {
-		// 		logWalletsModel.WithError(err).Warnf("Couldn't get %s Altcoin quotient", util.AltcoinCaption(asset))
-		// 		qWallet.SetLoading(true)
-		// 	}
-		// 	coinOpts.SetValueAsync(util.AltcoinCaption(asset), util.FormatCoins(bl, accuracy)+" "+asset)
-		// }
+		qWallet.SetLoading(true)
 	}
 
 	qWallet.SetCoinOptions(coinOpts)
