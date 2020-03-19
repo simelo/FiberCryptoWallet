@@ -8,9 +8,5 @@ func init() {
 	QSigner_QmlRegisterType2("WalletsManager", 1, 0, "QSigner")
 	SignerModel_QmlRegisterType2("WalletsManager", 1, 0, "SignerModel")
 	KeyValueStorage_QmlRegisterType2("Config", 1, 0, "Options")
-	ModelManager_QmlRegisterType2("WalletsManager", 1, 0, "ModelManager")
-	ModelWallets_QmlRegisterType2("OutputsModels", 1, 0, "QWallets")
-	ModelAddresses_QmlRegisterType2("OutputsModels", 1, 0, "QAddresses")
-	ModelOutput_QmlRegisterType2("OutputsModels", 1, 0, "QOutputs")
 	QBridge_QmlRegisterType2("Utils", 1, 0, "QBridge")
 }

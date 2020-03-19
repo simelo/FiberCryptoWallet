@@ -34,7 +34,6 @@ type WalletManager struct {
 	SeedGenerator            core.SeedGenerator
 	wallets                  []*wallets.QWallet
 	addresseseByWallets      map[string][]*address.QAddress
-	outputsByAddress         map[string][]*QOutput
 	altManager               core.AltcoinManager
 	signer                   core.BlockchainSignService
 	transactionAPI           core.BlockchainTransactionAPI
@@ -46,9 +45,6 @@ type WalletManager struct {
 	_                        func(model *wallets.WalletModel)                                                                                                                      `slot:"loadWallets"`
 	_                        func()                                                                                                                                                `slot:"updateAll"`
 	_                        func()                                                                                                                                                `slot:"updateWalletEnvs"`
-	_                        func(wltId, address string)                                                                                                                           `slot:"updateOutputs"`
-	_                        func(string)                                                                                                                                          `slot:"updateAddresses"`
-	_                        func()                                                                                                                                                `slot:"updateWallets"`
 	_                        func(seed string, label string, walletType string, password string, scanN int) *wallets.QWallet                                                       `slot:"createEncryptedWallet"`
 	_                        func(seed string, label string, walletType string, scanN int) *wallets.QWallet                                                                        `slot:"createUnencryptedWallet"`
 	_                        func(entropy int) string                                                                                                                              `slot:"getNewSeed"`
@@ -58,16 +54,12 @@ type WalletManager struct {
 	_                        func(id string, password string) int                                                                                                                  `slot:"decryptWallet"`
 	_                        func() []*wallets.QWallet                                                                                                                             `slot:"getWallets"`
 	_                        func() []string                                                                                                                                       `slot:"getCurrencyList"`
-	_                        func(id string) []*address.QAddress                                                                                                                   `slot:"getAddresses"`
 	_                        func(wltIds, addresses []string, source string, pwd interface{}, index []int, qTxn *transactions.TransactionDetails) *transactions.TransactionDetails `slot:"signTxn"`
 	_                        func(wltId string, destinationAddress string, amount, currency string) *transactions.TransactionDetails                                               `slot:"sendTo"`
 	_                        func(id, label string)                                                                                                                                `slot:"editWalletLbl"`
-	_                        func(wltId, address string) []*QOutput                                                                                                                `slot:"getOutputs"`
 	_                        func(txn *transactions.TransactionDetails) bool                                                                                                       `slot:"broadcastTxn"`
 	_                        func(wltIds, from, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromAddresses"`
 	_                        func(wltIds, outs, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails   `slot:"sendFromOutputs"`
-	_                        func() []*address.QAddress                                                                                                                            `slot:"getAllAddresses"`
-	_                        func(wltId string) []*QOutput                                                                                                                         `slot:"getOutputsFromWallet"`
 	_                        func() string                                                                                                                                         `slot:"getDefaultWalletType"`
 	_                        func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
 	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
@@ -91,20 +83,13 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectDecryptWallet(walletM.decryptWallet)
 		walletM.ConnectGetWallets(walletM.getWallets)
 		walletM.ConnectGetCurrencyList(walletM.getCurrencyList)
-		walletM.ConnectGetAddresses(walletM.getAddresses)
 		walletM.ConnectSendTo(walletM.sendTo)
 		walletM.ConnectSignTxn(walletM.signTxn)
-		walletM.ConnectGetOutputs(walletM.getOutputs)
 		walletM.ConnectSendFromAddresses(walletM.sendFromAddresses)
 		walletM.ConnectSendFromOutputs(walletM.sendFromOutputs)
 		walletM.ConnectBroadcastTxn(walletM.broadcastTxn)
-		walletM.ConnectGetAllAddresses(walletM.getAllAddresses)
-		walletM.ConnectGetOutputsFromWallet(walletM.getOutputsFromWallet)
 		walletM.ConnectUpdateWalletEnvs(walletM.updateWalletEnvs)
-		walletM.ConnectUpdateWallets(walletM.updateWallets)
 		walletM.ConnectUpdateAll(walletM.updateAll)
-		walletM.ConnectUpdateAddresses(walletM.updateAddresses)
-		walletM.ConnectUpdateOutputs(walletM.updateOutputs)
 		walletM.ConnectSignAndBroadcastTxnAsync(walletM.signAndBroadcastTxnAsync)
 		walletM.ConnectGetDefaultWalletType(walletM.getDefaultWalletType)
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
@@ -131,9 +116,6 @@ func (walletM *WalletManager) updateAll() {
 	walletM.updateSigner()
 	walletM.updateWalletEnvs()
 	skycoin.UpdateAltcoin()
-	updateTime := config.GetDataUpdateTime()
-	logWalletManager.Debug("Update time is :=> ", time.Duration(updateTime)*time.Second)
-	// walletM.timerUpdate <- time.Duration(updateTime) * time.Second
 }
 
 func GetWalletEnv() core.WalletEnv {
@@ -159,7 +141,6 @@ func (walletM *WalletManager) getAvailableWalletTypes() []string {
 }
 
 func (walletM *WalletManager) updateSigner() {
-
 	logWalletManager.Info("Updating Signers")
 	signers := make([]core.BlockchainSignService, 0)
 
@@ -188,6 +169,7 @@ func (walletM *WalletManager) updateTransactionAPI() {
 
 	walletM.transactionAPI = txnAPIS[0]
 }
+
 func (walletM *WalletManager) updateWalletEnvs() {
 	logWalletManager.Info("Updating WalletEnvs")
 	var walletsEnvs = make([]core.WalletEnv, 0)
@@ -200,217 +182,6 @@ func (walletM *WalletManager) updateWalletEnvs() {
 		return
 	}
 	walletM.WalletEnv = walletsEnvs[0]
-}
-
-func (walletM *WalletManager) initWalletAddresses(wltId string) {
-	logWalletManager.Info("Updating Addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-	// qAddresses := make([]*address.QAddress, 0)
-	it, err := wlt.GetLoadedAddresses()
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't loaded addresses")
-		return
-	}
-	for it.Next() {
-		addr := it.Value()
-		qAddress := address.NewQAddress(nil)
-		qml.QQmlEngine_SetObjectOwnership(qAddress, qml.QQmlEngine__CppOwnership)
-		qAddress.SetAddress(addr.String())
-		qAddress.SetWalletId(wlt.GetId())
-		qml.QQmlEngine_SetObjectOwnership(qAddress, qml.QQmlEngine__CppOwnership)
-
-		// qAddresses = append(qAddresses, qAddress)
-		// qAddresses[addr.String()] = qAddress
-		// go walletM.getOutputs(wltId, addr.String())
-	}
-
-	// walletM.addresseseByWallets[wltId] = qAddresses
-
-}
-
-func (walletM *WalletManager) updateAddresses(wltId string) {
-	// mutex := walletM.utilByWallets[wltId].m
-	// sendChan := walletM.utilByWallets[wltId].sendChannel
-	// addresses, ok := walletM.addresseseByWallets[wltId]
-	// if !ok {
-	// walletM.addresseseByWallets[wltId] = make(map[string]*QAddress)
-	// addresses = walletM.addresseseByWallets[wltId]
-	// }
-	// mutex.Lock()
-	// defer mutex.Unlock()
-	logWalletManager.Info("Updating Addresses")
-	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(wltId)
-	// qAddresses := make([]*address.QAddress, 0)
-	it, err := wlt.GetLoadedAddresses()
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't loaded addresses")
-		return
-	}
-	for it.Next() {
-		addr := it.Value()
-		qAddress := address.NewQAddress(nil)
-		qAddress.SetWalletId(wltId)
-		qml.QQmlEngine_SetObjectOwnership(qAddress, qml.QQmlEngine__CppOwnership)
-		qAddress.SetAddress(addr.String())
-		qml.QQmlEngine_SetObjectOwnership(qAddress, qml.QQmlEngine__CppOwnership)
-
-		// info := new(updateAddressInfo)
-		// oldAddr, exist := addresses[addr.String()]
-		// if !exist {
-		// addresses[addr.String()] = qAddress
-		// info.isNew = true
-		// info.address = qAddress
-		// sendChan <- info
-		//
-		// } else {
-		// 	changed := false
-		// 	if qAddress.AddressSky() != "N/A" && qAddress.AddressSky() != oldAddr.AddressSky() {
-		// 		changed = true
-		// 		oldAddr.SetAddressSky(qAddress.AddressSky())
-		// 	}
-		// 	if qAddress.AddressCoinHours() != "N/A" && qAddress.AddressCoinHours() != oldAddr.AddressCoinHours() {
-		// 		changed = true
-		// 		oldAddr.SetAddressCoinHours(qAddress.AddressCoinHours())
-		// 	}
-		// 	if changed {
-		// 		info.isNew = false
-		// 		info.address = oldAddr
-		// 		sendChan <- info
-		// 	}
-
-	}
-
-}
-
-func (walletM *WalletManager) updateOutputs(wltId, address string) {
-	outs := make([]*QOutput, 0)
-	logWalletManager.Info(address)
-	logWalletManager.Info(wltId)
-	addressIterator, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId).GetLoadedAddresses()
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't get an addresses iterator")
-		walletM.outputsByAddressMutex.Lock()
-		walletM.outputsByAddress[address] = outs
-		walletM.outputsByAddressMutex.Unlock()
-		return
-	}
-	var addr core.Address
-	for addressIterator.Next() {
-		if addressIterator.Value().String() == address {
-			addr = addressIterator.Value()
-			break
-		}
-	}
-	if addr == nil {
-		logWalletManager.WithError(err).Warn("Couldn't get address")
-		walletM.outputsByAddressMutex.Lock()
-		walletM.outputsByAddress[address] = outs
-		walletM.outputsByAddressMutex.Unlock()
-		return
-	}
-	outsIter, err := addr.GetCryptoAccount().ScanUnspentOutputs()
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't scan unspent outputs")
-		walletM.outputsByAddressMutex.Lock()
-		// walletM.outputsByAddress[address] = outs
-		walletM.outputsByAddressMutex.Unlock()
-		return
-	}
-	for outsIter.Next() {
-		qout := NewQOutput(nil)
-		qml.QQmlEngine_SetObjectOwnership(qout, qml.QQmlEngine__CppOwnership)
-		qout.SetOutputID(outsIter.Value().GetId())
-		skyV, err := outsIter.Value().GetCoins(sky.Sky)
-		if err != nil {
-			qout.SetAddressSky("N/A")
-			logWalletManager.WithError(err).Warn("Couldn't get " + sky.Sky + " coins")
-			continue
-		}
-		quotient, err := util.AltcoinQuotient(sky.Sky)
-		if err != nil {
-			qout.SetAddressSky("N/A")
-			logWalletManager.WithError(err).Warn("Couldn't get " + sky.Sky + " quotient")
-			continue
-		}
-		sSky := util.FormatCoins(skyV, quotient)
-		qout.SetAddressSky(sSky)
-		ch, err := outsIter.Value().GetCoins(sky.CoinHour)
-		if err != nil {
-			qout.SetAddressCoinHours("N/A")
-			logWalletManager.WithError(err).Warn("Couldn't get " + sky.CoinHour + " coins")
-			continue
-		}
-		quotient, err = util.AltcoinQuotient(sky.CoinHour)
-		if err != nil {
-			qout.SetAddressCoinHours("N/A")
-			logWalletManager.WithError(err).Warn("Couldn't get " + sky.Sky + " quotient")
-			continue
-		}
-		sCh := util.FormatCoins(ch, quotient)
-		qout.SetAddressCoinHours(sCh)
-		qout.SetAddressOwner(addr.String())
-		qout.SetWalletOwner(wltId)
-		outs = append(outs, qout)
-	}
-	walletM.outputsByAddressMutex.Lock()
-	walletM.outputsByAddressMutex.Unlock()
-}
-
-func (walletM *WalletManager) updateWallets() {
-
-	it := walletM.WalletEnv.GetWalletSet().ListWallets()
-	if it == nil {
-		logWalletManager.WithError(nil).Warn("Couldn't get a wallet iterator")
-		return
-	}
-	for it.Next() {
-		go walletM.updateAddresses(it.Value().GetId())
-		encrypted, err := walletM.WalletEnv.GetStorage().IsEncrypted(it.Value().GetId())
-		if err != nil {
-			logWalletManager.WithError(err).Warn("Couldn't get wallet by id")
-			continue
-		}
-		qw := wallets.FromWalletToQWallet(it.Value(), encrypted)
-		founded, changed := false, false
-
-		for i := range walletM.wallets {
-			if walletM.wallets[i].FileName() == qw.FileName() {
-				founded = true
-				break
-			}
-		}
-		if !founded {
-			changed = true
-			walletM.wallets = append(walletM.wallets, qw)
-		}
-
-		if changed {
-			// walletM.utilByWallets[it.Value().GetId()] = &utilByWallet{
-			// 	m:           sync.Mutex{},
-			// 	sendChannel: make(chan *updateAddressInfo),
-			// }
-			// wi := &updateWalletInfo{
-			// 	isNew:  !founded,
-			// 	row:    row,
-			// 	wallet: qw,
-			// }
-			// walletManager.updaterChannel <- wi
-		}
-	}
-}
-
-func (walletM *WalletManager) getAllAddresses() []*address.QAddress {
-	logWalletManager.Info("Getting all addresses")
-	qAddresses := make([]*address.QAddress, 0)
-	wltIter := walletM.WalletEnv.GetWalletSet().ListWallets()
-	if wltIter == nil {
-		logWalletManager.Warn("Error getting the list of wallets")
-		return nil
-	}
-	for wltIter.Next() {
-		qAddresses = append(qAddresses, walletM.getAddresses(wltIter.Value().GetId())...)
-	}
-	return qAddresses
 }
 
 func (walletM *WalletManager) broadcastTxn(txn *transactions.TransactionDetails) bool {
@@ -524,6 +295,7 @@ func (walletM *WalletManager) sendFromOutputs(wltIds []string, from, addrTo, sky
 	}
 	return qTransaction
 }
+
 func (walletM *WalletManager) sendFromAddresses(wltIds []string, from, addrTo, skyTo, coinHoursTo []string, change string, automaticCoinHours bool, burnFactor string) *transactions.TransactionDetails {
 	wltCache := make(map[string]core.Wallet, 0)
 	wlts := make([]core.Wallet, 0)
@@ -605,29 +377,6 @@ func (walletM *WalletManager) sendFromAddresses(wltIds []string, from, addrTo, s
 	logWalletManager.Info("Transaction created")
 	return qtxn
 
-}
-
-func (walletM *WalletManager) getOutputs(wltId, address string) []*QOutput {
-	outs, ok := walletM.outputsByAddress[address]
-	if !ok {
-		walletM.updateOutputs(wltId, address)
-	}
-	return outs
-}
-
-func (walletM *WalletManager) getOutputsFromWallet(wltId string) []*QOutput {
-	logWalletManager.Info("Getting Outputs from wallet by Id")
-	outs := make([]*QOutput, 0)
-	addrIter, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltId).GetLoadedAddresses()
-	if err != nil {
-		logWalletManager.WithError(err).Warn("Couldn't load addresses iterator")
-		return nil
-	}
-	for addrIter.Next() {
-		outs = append(outs, walletM.getOutputs(wltId, addrIter.Value().String())...)
-	}
-	logWalletManager.Info("Loaded all outputs")
-	return outs
 }
 
 func (walletM *WalletManager) sendTo(wltId, destinationAddress, amount, currency string) *transactions.TransactionDetails {
@@ -957,9 +706,6 @@ func (walletM *WalletManager) editWalletLbl(id, label string) {
 
 func (walletM *WalletManager) getCurrencyList() []string {
 	logWalletManager.Info("Obtaining list of currency")
-	if walletM.wallets == nil {
-		walletM.updateWallets()
-	}
 
 	var currencyList = make([]string, 0)
 	exist := func(currency string) bool {
@@ -978,19 +724,6 @@ func (walletM *WalletManager) getCurrencyList() []string {
 	}
 	sort.Strings(currencyList)
 	return currencyList
-}
-
-func (walletM *WalletManager) getAddresses(Id string) []*address.QAddress {
-	addrs, ok := walletM.orderedAddressesByWallets[Id]
-	if !ok {
-		walletM.updateAddresses(Id)
-		addrs = walletM.orderedAddressesByWallets[Id]
-	}
-	addresses := make([]*address.QAddress, 0)
-	for _, addr := range addrs {
-		addresses = append(addresses, addr)
-	}
-	return addresses
 }
 
 func (walletM *WalletManager) loadAddressModelByWallet(wltName string, model *address.ModelAddress) {

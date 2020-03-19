@@ -3,7 +3,6 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import WalletsManager 1.0
-import OutputsModels 1.0
 import Address 1.0
 import QWallets 1.0
 
@@ -133,14 +132,14 @@ Page {
         return addrs
     }
 	function updateOutputs() {
-		listOutputs.cleanModel()
+//		listOutputs.cleanModel()
 		if (checkBoxAllAddresses.checked) {
        		for (var i = 0; i < comboBoxWalletsSendFrom.checkedElements.length; i++) {
 				walletManager.updateAddresses(comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.checkedElements[i]].fileName)
 				var addresses = walletManager.getAddresses(comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.checkedElements[i]].fileName)
 				for(var j = 0; j < addresses.length; j++) {
 					walletManager.updateOutputs(comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.checkedElements[i]].fileName, addresses[j].address)
-					listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.checkedElements[i]].fileName, addresses[j].address))
+//					listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsSendFrom.model.wallets[comboBoxWalletsSendFrom.checkedElements[i]].fileName, addresses[j].address))
 				}
 			}
 		} else {
@@ -149,7 +148,7 @@ Page {
 			}
        		for (var i = 0; i < comboBoxWalletsAddressesSendFrom.checkedElements.length; i++) {
 				walletManager.updateOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].walletId, comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].address)
-				listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].walletId, comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].address))
+//				listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].walletId, comboBoxWalletsAddressesSendFrom.model.addresses[comboBoxWalletsAddressesSendFrom.checkedElements[i]].address))
 			}
 		}
 	}
@@ -229,7 +228,7 @@ Page {
                                     comboBoxWalletsSendFrom.checkedElementsText.push(text)
                                 }
                                 listAddresses.loadModel(walletManager.getAddresses(comboBoxWalletsSendFrom.model.wallets[index].fileName))
-                                listOutputs.insertOutputs(walletManager.getOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName))
+//                                listOutputs.insertOutputs(walletManager.getOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName))
                             } else {
                                 var pos = comboBoxWalletsSendFrom.checkedElements.indexOf(index)
                                 if (pos >= 0) {
@@ -238,7 +237,7 @@ Page {
                                 }
                                 // Update Outputs and Addresses Model
                                 listAddresses.removeAddressesFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName)
-                                listOutputs.removeOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName)
+//                                listOutputs.removeOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[index].fileName)
                             }
 							subPageSendAdvanced.updateInfo();
                             comboBoxWalletsSendFrom.numberOfCheckedElements = comboBoxWalletsSendFrom.checkedElements.length
@@ -348,9 +347,9 @@ Page {
                             if (checked) {
                                 var addrText = comboBoxWalletsAddressesSendFrom.textRole ? (Array.isArray(comboBoxWalletsAddressesSendFrom.model) ? modelData[comboBoxWalletsAddressesSendFrom.textRole] : model[comboBoxWalletsAddressesSendFrom.textRole]) : modelData;
                                 if (comboBoxWalletsAddressesSendFrom.getCheckedDelegates().length > 1){
-                                    listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[index].walletId, addrText))
+//                                    listOutputs.insertOutputs(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[index].walletId, addrText))
                                 } else{
-                                    listOutputs.loadModel(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[index].walletId, addrText))
+//                                    listOutputs.loadModel(walletManager.getOutputs(comboBoxWalletsAddressesSendFrom.model.addresses[index].walletId, addrText))
                                 }
                                 var pos = comboBoxWalletsAddressesSendFrom.checkedElements.indexOf(index)
                                 if (pos < 0) {
@@ -358,11 +357,11 @@ Page {
                                     comboBoxWalletsAddressesSendFrom.checkedElementsText.push(text)
                                 }
                             } else {
-                                listOutputs.removeOutputsFromAddress(text)
+//                                listOutputs.removeOutputsFromAddress(text)
                                 if (comboBoxWalletsAddressesSendFrom.getCheckedDelegates().length == 0){
                                     var indexs = comboBoxWalletsSendFrom.getCheckedDelegates()
                                     for (var i = 0; i < indexs.length; i++){
-                                        listOutputs.insertOutputs(walletManager.getOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[indexs[i]].fileName))
+//                                        listOutputs.insertOutputs(walletManager.getOutputsFromWallet(comboBoxWalletsSendFrom.model.wallets[indexs[i]].fileName))
                                     }
                                 }
                                 var pos = comboBoxWalletsAddressesSendFrom.checkedElements.indexOf(index)
@@ -416,9 +415,9 @@ Page {
                 displayText: checkBoxUnspentOutputsUseAllOutputs.checked ? qsTr("All outputs selected") : numberOfCheckedElements > 1 ? (numberOfCheckedElements + ' ' + qsTr("outputs selected")) : numberOfCheckedElements === 1 ? checkedElementsText[0] : qsTr("No output selected")
 
                 enabled: !checkBoxUnspentOutputsUseAllOutputs.checked
-                model: QOutputs {
-                    id: listOutputs
-                }
+//                model: QOutputs {
+//                    id: listOutputs
+//                }
 
                 onModelChanged: {
                     if (!model) {

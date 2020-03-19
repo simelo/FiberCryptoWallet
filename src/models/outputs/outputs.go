@@ -236,7 +236,7 @@ func FromOutputsToQOutputs(output core.TransactionOutput, wltName string) *QOutp
 func loadCoinFeatures(output core.TransactionOutput) *modelUtil.Map {
 	coinFtr := modelUtil.NewMap(nil)
 	for _, trait := range output.GetCoinTraits() {
-		models.Helper.RunInMain(func() {
+		modelUtil.Helper.RunInMain(func() {
 			coinFtr.SetValue(trait.GetTrait(), trait.GetValue())
 		})
 	}

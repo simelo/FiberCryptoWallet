@@ -322,33 +322,36 @@ func FromCorAddrToQAddr(address core.Address, wltName string) *QAddress {
 }
 
 func LoadCoinFtrAsync(address core.Address, update chan updateQAddr) {
-	newCF := LoadCoinFtr(address)
+	newCF, err := LoadCoinFtr(address)
+	if err != nil {
+		return
+	}
+
 	update <- updateQAddr{
 		strAddr: address.String(),
 		coinFtr: newCF,
 	}
 }
 
-func LoadCoinFtr(address core.Address) *modelUtil.Map {
+func LoadCoinFtr(address core.Address) (*modelUtil.Map, error) {
 	coinFtr := modelUtil.NewMap(nil)
 	for _, asset := range address.GetCryptoAccount().ListAssets() {
 		balance, err := address.GetCryptoAccount().GetBalance(asset)
 		if err != nil {
 			logAddressModel.WithError(err).Warnf(
 				"Couldn't get balance for asset: %s in address %s", asset, address.String())
-			coinFtr.SetValueAsync(asset, "N/A")
-			continue
+			return nil, err
 		}
 
 		accuracy, err := util.AltcoinQuotient(asset)
 		if err != nil {
 			logAddressModel.WithError(err).Warnf(
 				"Couldn't get accuracy for asset: %s in address %s", asset, address.String())
-			coinFtr.SetValueAsync(asset, "N/A")
-			continue
+			return nil, err
+
 		}
 
 		coinFtr.SetValueAsync(asset, util.FormatCoins(balance, accuracy))
 	}
-	return coinFtr
+	return coinFtr, nil
 }

@@ -35,7 +35,6 @@
         <file>src/ui/Delegates/WalletListDelegate.qml</file>
         <file>src/ui/Delegates/AddressListDelegate.qml</file>
         <file>src/ui/Delegates/ContactDelegate.qml</file>
-        <file>src/ui/Delegates/WalletListAddressDelegate.qml</file>
         <file>src/ui/Delegates/NetworkingListDelegate.qml</file>
         <file>src/ui/Delegates/OutputDelegate.qml</file>
         <file>src/ui/Delegates/DestinationListDelegate.qml</file>
