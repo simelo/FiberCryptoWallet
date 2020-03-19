@@ -25,9 +25,9 @@ Page {
                 text: qsTr("Filters")
                 onClicked:{
                     if (!checked) {
-                        historyManager.hasChanged(false)
+//                        historyManager.hasChanged(false)
 			        }else {
-                        historyManager.hasChanged(true)
+//                        historyManager.hasChanged(true)
                     }
                 }
             }
@@ -76,7 +76,7 @@ Page {
         title: qsTr("Available filters")
 
         onClosed: {
-           historyManager.hasChanged(true)
+//           historyManager.hasChanged(true)
         }
 
 
@@ -118,7 +118,7 @@ Page {
     QTransactionList {
         id: modelTransactions
         Component.onCompleted:{
-            historyManager.loadTransactionAsync(this)
+//            historyManager.loadTransactionAsync(this)
         }
     }
 

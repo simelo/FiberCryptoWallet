@@ -7,7 +7,7 @@ id: root
     property alias walletName: walletDetails.name
     property alias walletCoin: walletDetails.coin
     property alias walletCoinOpts: walletDetails.coinOpts
-    property alias walletAddressList: walletDetails.addressList
+//    property alias walletAddressList: walletDetails.addressList
     property alias expanded: walletDetails.expanded
     property alias walletStatus: walletDetails.isEncrypted
     property alias walletFileName: walletDetails.fileName

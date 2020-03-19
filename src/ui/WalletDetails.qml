@@ -19,7 +19,6 @@ Item {
     property string coin
     property string fileName
     property Map coinOpts
-    property QAddressList addressList
     property bool isEncrypted
     property int index
     property alias specificDetails : gridLayoutBasicInfo
@@ -41,6 +40,19 @@ Item {
 
     implicitWidth: 600
     clip: true
+
+    QAddressList{
+        id: addressList
+        Component.onCompleted:{
+        addressList.start() //start Async
+        }
+    }
+
+    onFileNameChanged:{
+    walletManager.loadAddressModelByWallet(fileName, addressList)
+    // if wallet is different change the model
+    // else continue updating
+    }
 
     ColumnLayout {
         id: columnLayoutRoot
@@ -169,16 +181,11 @@ Item {
                         clip: true
                         delegate: InputOutputDelegate {
                             copyOn: true
+                            strAddr:  address
                             Component.onCompleted : {
-                            let keyList = coinOptions.getKeys()
-                            var isEmpty = true
-                            for (var i=0;i<keyList.length;i++){
-                                if (coinOptions.getValue(keyList[i])!="0"){
-                                    isEmpty=false
+                                coinFtr = Qt.binding(function(){return coinOptions})
+                                implicitHeight = Qt.binding(function(){return !(emptyAddressVisible && isEmpty ) ? 90 : 0 })
                                 }
-                            }
-                            implicitHeight = Qt.binding(function(){return !(emptyAddressVisible && isEmpty) ? 90 : 0 })
-                            }
                             width: parent.width
                             clip: true
                         }
@@ -202,6 +209,8 @@ Item {
 
             } else{
                 walletManager.newWalletAddress(fileName, spinValue, "")
+                walletManager.loadAddressModelByWallet(fileName, addressList)
+
             }
 
 
@@ -222,7 +231,7 @@ Item {
 
             onAccepted: {
                 walletManager.newWalletAddress(fileName, nAddress, dialogGetPasswordForAddAddresses.password)
-                walletModel.updateModel(walletManager.getWallets())
+                walletManager.loadAddressModelByWallet(fileName, addressList)
             }
         }
 

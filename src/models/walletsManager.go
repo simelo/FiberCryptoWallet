@@ -72,6 +72,8 @@ type WalletManager struct {
 	_                        func(string, address.ModelAddress)                                                                                                                    `slot:"updateModel"`
 	_                        func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
 	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
+	_                        func(wltName string, model *address.ModelAddress)                                                                                                     `slot:"loadAddressModelByWallet"`
+	_                        func(model *address.ModelAddress)                                                                                                                     `slot:"loadAddressForAllWallets"`
 }
 
 func (walletM *WalletManager) init() {
@@ -108,6 +110,9 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectGetDefaultWalletType(walletM.getDefaultWalletType)
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
 		walletM.ConnectUpdateModel(walletM.updateModel)
+		walletM.ConnectLoadAddressModelByWallet(walletM.loadAddressModelByWallet)
+		walletM.ConnectLoadAddressForAllWallets(walletM.loadAddressForAllWallets)
+
 		walletM.SeedGenerator = new(sky.SeedService)
 		walletManager = walletM
 		walletM.updateWalletModel = make(chan struct{})
@@ -992,7 +997,7 @@ func (walletM *WalletManager) updateModel(fileName string, list *address.ModelAd
 		wait <- true
 	}()
 	<-wait
-	go list.LoadModel(walletM.getAddresses(fileName))
+	// go list.LoadModel(walletM.getAddresses(fileName))
 }
 
 // func (walletM *WalletManager) loadOutputsAsync(modelOutputs *outputs.ModelOutputs) {
@@ -1032,3 +1037,37 @@ func (walletM *WalletManager) updateModel(fileName string, list *address.ModelAd
 // 	}
 // }()
 // }
+
+func (walletM *WalletManager) loadAddressModelByWallet(wltName string, model *address.ModelAddress) {
+	addrIter, err := walletM.WalletEnv.GetWalletSet().GetWallet(wltName).GetLoadedAddresses()
+	if err != nil {
+		logWalletManager.WithError(err).Warnf("Couldn't get address iterator for wallet %s", wltName)
+		return
+	}
+
+	addrList := make([]*address.QAddress, 0)
+	for addrIter.Next() {
+		addrList = append(addrList, address.FromCorAddrToQAddr(addrIter.Value(), wltName))
+	}
+	model.LoadModelAsync(addrList)
+}
+
+func (walletM *WalletManager) loadAddressForAllWallets(model *address.ModelAddress) {
+	wltIter := walletM.WalletEnv.GetWalletSet().ListWallets()
+	if wltIter == nil {
+		panic("implement me")
+	}
+
+	addrList := make([]*address.QAddress, 0)
+
+	for wltIter.Next() {
+		addrIter, err := wltIter.Value().GetLoadedAddresses()
+		if err != nil {
+			panic("implement me")
+		}
+		for addrIter.Next() {
+			addrList = append(addrList, address.FromCorAddrToQAddr(addrIter.Value(), wltIter.Value().GetLabel()))
+		}
+	}
+	model.LoadModel(addrList)
+}

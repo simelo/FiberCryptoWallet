@@ -3,9 +3,8 @@ package wallets
 import (
 	"context"
 	"github.com/fibercrypto/fibercryptowallet/src/core"
-	"github.com/fibercrypto/fibercryptowallet/src/models/address"
 	modelUtil "github.com/fibercrypto/fibercryptowallet/src/models/util"
-	"github.com/fibercrypto/fibercryptowallet/src/util"
+	// "github.com/fibercrypto/fibercryptowallet/src/util"
 	"github.com/fibercrypto/fibercryptowallet/src/util/logging"
 	qtCore "github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
@@ -15,7 +14,6 @@ const (
 	Name = int(qtCore.Qt__UserRole) + iota + 1
 	EncryptionEnabled
 	FileName
-	Addresses
 	Currency
 	CoinOptions
 	Loading
@@ -54,13 +52,12 @@ type WalletModel struct {
 
 type QWallet struct {
 	qtCore.QObject
-	_ string                `property:"name"`
-	_ int                   `property:"encryptionEnabled"`
-	_ string                `property:"fileName"`
-	_ string                `property:"currency"`
-	_ *address.ModelAddress `property:"addresses"`
-	_ *modelUtil.Map        `property:"coinOptions"`
-	_ bool                  `property:"loading"`
+	_ string         `property:"name"`
+	_ int            `property:"encryptionEnabled"`
+	_ string         `property:"fileName"`
+	_ string         `property:"currency"`
+	_ *modelUtil.Map `property:"coinOptions"`
+	_ bool           `property:"loading"`
 }
 
 func (walletModel *WalletModel) init() {
@@ -69,7 +66,6 @@ func (walletModel *WalletModel) init() {
 		Name:              qtCore.NewQByteArray2("name", -1),
 		EncryptionEnabled: qtCore.NewQByteArray2("encryptionEnabled", -1),
 		FileName:          qtCore.NewQByteArray2("fileName", -1),
-		Addresses:         qtCore.NewQByteArray2("addresses", -1),
 		Currency:          qtCore.NewQByteArray2("currency", -1),
 		CoinOptions:       qtCore.NewQByteArray2("coinOpts", -1),
 		Loading:           qtCore.NewQByteArray2("loading", -1),
@@ -123,10 +119,6 @@ func (walletModel *WalletModel) data(index *qtCore.QModelIndex, role int) *qtCor
 	case FileName:
 		{
 			return qtCore.NewQVariant1(w.FileName())
-		}
-	case Addresses:
-		{
-			return qtCore.NewQVariant1(w.Addresses())
 		}
 	case Currency:
 		{
@@ -227,9 +219,6 @@ func (walletModel *WalletModel) editWallet(row int, wallet *QWallet, changedRole
 		case changedRoles[e] == EncryptionEnabled:
 			wlt.SetEncryptionEnabled(wallet.EncryptionEnabled())
 			break
-		case changedRoles[e] == Addresses:
-			wlt.SetAddresses(wallet.Addresses())
-			break
 
 		case changedRoles[e] == CoinOptions:
 			wlt.SetCoinOptions(wallet.CoinOptions())
@@ -289,9 +278,6 @@ func (walletModel *WalletModel) destroy() {
 
 func CompareWallet(a, b *QWallet) []int {
 	var changedRoles = make([]int, 0)
-	if !address.CompareModelAddress(a.Addresses(), b.Addresses()) {
-		changedRoles = append(changedRoles, Addresses)
-	}
 	if !modelUtil.CompareMaps(a.CoinOptions(), b.CoinOptions()) {
 		changedRoles = append(changedRoles, CoinOptions)
 	}
@@ -316,7 +302,6 @@ func CompareWallet(a, b *QWallet) []int {
 func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 	qWallet := NewQWallet(nil)
 	qWallet.SetName(wlt.GetLabel())
-	qWallet.SetAddresses(address.NewModelAddress(nil))
 	qWallet.SetFileName(wlt.GetId())
 	qWallet.SetCurrency(wlt.GetCoinType())
 	qWallet.SetEncryptionEnabled(0)
@@ -329,58 +314,22 @@ func FromWalletToQWallet(wlt core.Wallet, isEncrypted bool) *QWallet {
 
 	// Iterate on all asset (the first asset need be the main asset ) and obtains the balance for that.
 	for _, asset := range wlt.GetCryptoAccount().ListAssets() {
-		bl, err := wlt.GetCryptoAccount().GetBalance(asset)
-		if err != nil {
-			logWalletsModel.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
-			qWallet.SetLoading(true)
-		} else {
-			accuracy, err := util.AltcoinQuotient(asset)
-			if err != nil {
-				logWalletsModel.WithError(err).Warnf("Couldn't get %s Altcoin quotient", util.AltcoinCaption(asset))
-				qWallet.SetLoading(true)
-			}
-			coinOpts.SetValueAsync(util.AltcoinCaption(asset), util.FormatCoins(bl, accuracy)+" "+asset)
-		}
+		coinOpts.SetValueAsync(asset, "N/A")
+		// bl, err := wlt.GetCryptoAccount().GetBalance(asset)
+		// if err != nil {
+		// 	logWalletsModel.WithError(err).Warnf("Couldn't get %s balance", util.AltcoinCaption(asset))
+		// 	qWallet.SetLoading(true)
+		// } else {
+		// 	accuracy, err := util.AltcoinQuotient(asset)
+		// 	if err != nil {
+		// 		logWalletsModel.WithError(err).Warnf("Couldn't get %s Altcoin quotient", util.AltcoinCaption(asset))
+		// 		qWallet.SetLoading(true)
+		// 	}
+		// 	coinOpts.SetValueAsync(util.AltcoinCaption(asset), util.FormatCoins(bl, accuracy)+" "+asset)
+		// }
 	}
 
 	qWallet.SetCoinOptions(coinOpts)
-
-	addrIt, err := wlt.GetLoadedAddresses()
-
-	if err != nil {
-		logWalletsModel.WithError(err).Error("Couldn't get address iterator ")
-		qWallet.SetLoading(true)
-	}
-
-	var addressList = address.NewModelAddress(nil)
-	var addressDetailList = make([]*address.QAddress, 0)
-	for addrIt.Next() {
-		var addrsDetail = address.NewQAddress(nil)
-		addrsDetail.SetWalletId(wlt.GetId())
-		addrsDetail.SetAddress(addrIt.Value().String())
-
-		var addressCoinOption = modelUtil.NewMap(nil)
-		for _, asset := range addrIt.Value().GetCryptoAccount().ListAssets() {
-			balance, err := addrIt.Value().GetCryptoAccount().GetBalance(asset)
-			if err != nil {
-				logWalletsModel.WithError(err).Warnf("Couldn't get balance for %s asset", asset)
-				qWallet.SetLoading(true)
-			}
-			accuracy, err := util.AltcoinQuotient(asset)
-			if err != nil {
-				logWalletsModel.WithError(err).Warnf("Couldn't get accuracy for %s asset", asset)
-				qWallet.SetLoading(true)
-			}
-
-			addressCoinOption.SetValueAsync(asset, util.FormatCoins(balance, accuracy))
-		}
-
-		addrsDetail.SetCoinOptions(addressCoinOption)
-		addressDetailList = append(addressDetailList, addrsDetail)
-	}
-
-	addressList.SetAddresses(addressDetailList)
-	qWallet.SetAddresses(addressList)
 
 	return qWallet
 }

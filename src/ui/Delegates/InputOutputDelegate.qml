@@ -8,32 +8,51 @@ Item {
     id: root
     implicitHeight: 90
     property bool copyOn: false
-    Component.onCompleted:{
-            let keyList=coinOptions.getKeys()
-            for (let i=0;i<keyList.length;i++){
+    property Map coinFtr
+    property string strAddr:""
+    property bool isEmpty: true
 
-                Qt.createQmlObject("import QtQuick 2.12;
+    function generateDetails(){
+        if (!coinFtr){
+            return
+        }
+
+	    Array.from(gridLayoutInputAndOutputInfo.children).forEach(item=>{item.destroy()})
+
+        isEmpty = coinFtr.getKeys().find(key=>{return coinFtr.getValue(key) !== "0"}) ? false : true
+
+	    coinFtr.getKeys().forEach(key=>{
+
+                Qt.createQmlObject(`import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;
                                     import QtQuick.Controls.Material 2.12;
                                     import QtQuick.Layouts 1.12
                                         Label {
-                                            text: qsTr(\""+keyList[i]+":\")
+                                            text: qsTr("${key}")
                                             font.pointSize: Qt.application.font.pointSize * 0.9
                                             font.bold: true
                                         }
-                                    ",gridLayoutInputAndOutputInfo)
+                                    `,gridLayoutInputAndOutputInfo)
 
-                Qt.createQmlObject("import QtQuick 2.12;
+                Qt.createQmlObject(`import QtQuick 2.12;
                                     import QtQuick.Controls 2.12;
                                     import QtQuick.Controls.Material 2.12;
                                     import QtQuick.Layouts 1.12
                                         Label {
-                                            text: \""+coinOptions.getValue(keyList[i])+"\"
+                                            text: "${coinFtr.getValue(key)}"
                                             font.pointSize: Qt.application.font.pointSize * 0.9
                                         }
-                                    ",gridLayoutInputAndOutputInfo)
-            }
-  }
+                                    `,gridLayoutInputAndOutputInfo)
+	    })
+    }
+
+    Component.onCompleted:{
+        generateDetails()
+    }
+
+    onCoinFtrChanged:{
+        generateDetails()
+    }
 
     ColumnLayout {
         id: columnLayoutRoot

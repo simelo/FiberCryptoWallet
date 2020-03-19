@@ -32,9 +32,8 @@ type ModelOutputs struct {
 	Ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
-	// walletsByOutputs map[string]string
-	_ func() `constructor:"init"`
-	_ func() `destructor:"destroy"`
+	_      func() `constructor:"init"`
+	_      func() `destructor:"destroy"`
 
 	_ map[int]*qtCore.QByteArray `property:"roles"`
 	_ []*QOutput                 `property:"outputs"`
@@ -72,7 +71,7 @@ func (modelOutputs *ModelOutputs) init() {
 	modelOutputs.ConnectGet(modelOutputs.get)
 	modelOutputs.ConnectLoadModelAsync(modelOutputs.loadModelAsync)
 	modelOutputs.Ctx, modelOutputs.cancel = context.WithCancel(context.Background())
-	modelOutputs.walletsByOutputs = make(map[string]string)
+	// modelOutputs.walletsByOutputs = make(map[string]string)
 	modelOutputs.wg = sync.WaitGroup{}
 	modelOutputs.SetLoading(true)
 }

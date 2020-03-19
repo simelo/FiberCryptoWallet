@@ -29,7 +29,7 @@ Item {
 
             Layout.fillWidth: true
             tristate: true
-            text: name
+            text: address
             LayoutMirroring.enabled: true
 
             nextCheckState: function() {

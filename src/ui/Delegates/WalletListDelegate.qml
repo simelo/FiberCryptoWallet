@@ -105,7 +105,6 @@ Item {
                 drawerWalletDetail.walletName = Qt.binding(function(){return name})
                 drawerWalletDetail.walletCoin = Qt.binding(function(){return currency})
                 drawerWalletDetail.walletCoinOpts = Qt.binding(function(){return coinOpts})
-                drawerWalletDetail.walletAddressList = Qt.binding(function(){return addresses})
                 drawerWalletDetail.walletStatus = Qt.binding(function(){return encryptionEnabled})
                 drawerWalletDetail.walletFileName = Qt.binding(function(){return fileName})
                 drawerWalletDetail.walletIndex = Qt.binding(function(){return index})
