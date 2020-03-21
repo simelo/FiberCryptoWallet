@@ -29,7 +29,6 @@ type TransactionList struct {
 }
 
 func (txnList *TransactionList) init() {
-	logTransactionDetails.Info("Initialize Transaction list for History")
 	txnList.SetRoles(map[int]*core.QByteArray{
 		Date:          core.NewQByteArray2("date", -1),
 		Status:        core.NewQByteArray2("status", -1),
@@ -135,7 +134,7 @@ func (txnList *TransactionList) data(index *core.QModelIndex, role int) *core.QV
 }
 
 func (txnList *TransactionList) addMultipleTransactions(txns []*TransactionDetails) {
-	logTransactionDetails.Info("load transaction model async")
+	logTransactionDetails.Info("adding multiple transactions")
 
 	var newTxnList = make(map[string]struct{})
 	for _, txn := range txns {

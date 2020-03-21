@@ -118,11 +118,14 @@ Page {
     QTransactionList {
         id: modelTransactions
         Component.onCompleted:{
-//            historyManager.loadTransactionAsync(this)
         }
     }
 
     HistoryManager {
         id: historyManager
+        onNewTransactions:{
+
+            modelTransactions.addMultipleTransactions(historyManager.getTransactions())
+        }
     }
 }

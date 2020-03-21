@@ -283,6 +283,7 @@ Item {
 
             onAccepted: {
                  walletManager.editWalletLbl(fileName, name)
+
             }
         } // DialogEditWallet
 }

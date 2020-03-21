@@ -129,6 +129,7 @@ Page {
             drawerWalletDetail.changedContent()
         }
         Component.onCompleted: {
+            walletManager.initWltModelAsync(this)
             walletManager.loadWallets(walletModel)
         }
     }

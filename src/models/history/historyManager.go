@@ -1,6 +1,7 @@
 package history
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/util"
 	"time"
 
 	"sync"
@@ -343,6 +344,195 @@ func (hm *HistoryManager) getAddressesWithWallets() map[string]string {
 	return response
 }
 
+func getTxnType(txn core.Transaction, addrsMap map[string]string) int {
+	var isInput, someOutputs, allOutputs = false, false, true
+	var wltLblList = make(map[string]struct{}, 0)
+	for _, input := range txn.GetInputs() {
+		inpAddr, err := getAddressFromInput(input)
+		if err != nil {
+			logHistoryManager.WithError(err).Warnf("Couldn't get address from input %s", input.GetId())
+			continue
+		}
+
+		if wltLbl, ok := addrsMap[inpAddr.String()]; ok {
+			wltLblList[wltLbl] = struct{}{}
+			isInput = true
+		}
+	}
+
+	for _, output := range txn.GetOutputs() {
+		outAddr, err := output.GetAddress()
+		if err != nil {
+			logHistoryManager.WithError(err).Warnf("Couldn't get address from output %s", output.GetId())
+			continue
+		}
+
+		if wlt, ok := addrsMap[outAddr.String()]; ok {
+			someOutputs = true
+			if _, ok2 := wltLblList[wlt]; !ok2 {
+				allOutputs = false
+			}
+		} else {
+			allOutputs = false
+		}
+	}
+
+	switch {
+	case isInput && allOutputs:
+		return transactions.TransactionTypeInternal
+	case isInput && !allOutputs:
+		return transactions.TransactionTypeSend
+	case !isInput && someOutputs:
+		return transactions.TransactionTypeReceive
+	default:
+		return transactions.TransactionTypeGeneric
+	}
+}
+
+func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]string) (string, error) {
+	var mainAsset = txn.SupportedAssets()[0]
+	var amount uint64
+
+	switch txnType {
+	case transactions.TransactionTypeInternal:
+		var inputContainAddrs = make(map[string]struct{})
+		for _, input := range txn.GetInputs() {
+			inpBalance, err := input.GetCoins(mainAsset)
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Could't get main balance of input %s", input.GetId())
+				return "N/A", err
+			}
+			amount += inpBalance
+			inpAddr, err := getAddressFromInput(input)
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get string address from input %s", input.GetId())
+				return "N/A", err
+			}
+			inputContainAddrs[inpAddr.String()] = struct{}{}
+		}
+
+		for _, output := range txn.GetOutputs() {
+			addrs, err := output.GetAddress()
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get address from output %s", output.GetId())
+				return "N/A", err
+			}
+
+			if _, ok := inputContainAddrs[addrs.String()]; ok {
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Warnf(
+						"Couldn't get main balance from output %s", output.GetId())
+					return "N/A", err
+				}
+				amount -= outBalance
+			}
+		}
+		break
+	case transactions.TransactionTypeSend:
+		var wltInp = make(map[string]struct{})
+		for _, input := range txn.GetInputs() {
+			inpAddr, err := getAddressFromInput(input)
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get string address from input %s", input.GetId())
+				return "N/A", err
+			}
+			if wlt, ok := addrMap[inpAddr.String()]; ok {
+				wltInp[wlt] = struct{}{}
+			}
+		}
+		for _, output := range txn.GetOutputs() {
+			addrs, err := output.GetAddress()
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get address from output %s", output.GetId())
+				return "N/A", err
+			}
+
+			if wlt, ok := addrMap[addrs.String()]; ok {
+				if _, ok2 := wltInp[wlt]; ok2 {
+					continue
+				}
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Warnf(
+						"Couldn't get main balance from output %s", output.GetId())
+					return "N/A", err
+				}
+				amount += outBalance
+			} else {
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Warnf(
+						"Couldn't get main balance from output %s", output.GetId())
+					return "N/A", err
+				}
+				amount += outBalance
+			}
+		}
+		break
+	case transactions.TransactionTypeReceive:
+		for _, output := range txn.GetOutputs() {
+			addrs, err := output.GetAddress()
+			if err != nil {
+				logHistoryManager.WithError(err).Warnf(
+					"Couldn't get address from output %s", output.GetId())
+				return "N/A", err
+			}
+			if _, ok := addrMap[addrs.String()]; ok {
+				outBalance, err := output.GetCoins(mainAsset)
+				if err != nil {
+					logHistoryManager.WithError(err).Warnf(
+						"Couldn't get main balance from output %s", output.GetId())
+					return "N/A", err
+				}
+				amount += outBalance
+			}
+		}
+		break
+	}
+	accuracy, err := util.AltcoinQuotient(mainAsset)
+	if err != nil {
+		logHistoryManager.WithError(err).Warnf(
+			"Couldn't get accuracy from asset %s", mainAsset)
+
+		return "N/A", err
+	}
+
+	return util.FormatCoins(amount, accuracy), nil
+}
+
 func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]string) (*transactions.TransactionDetails, error) {
-	return nil, nil
+	logHistoryManager.Info("Getting list of transactions")
+
+	txnType := getTxnType(txn, addresses)
+	txnDetails, err := transactions.NewTransactionDetailFromCoreTransaction(txn, txnType)
+	if err != nil {
+		logHistoryManager.WithError(err).Warnf("error obtaining transaction"+
+			" details from core transaction: %s", txn.GetId())
+		return nil, err
+	}
+
+	amount, err := getTxnAmount(txn, txnType, addresses)
+	if err != nil {
+		return nil, err
+	}
+
+	txnDetails.SetAmount(amount)
+
+	return txnDetails, nil
+}
+
+func getAddressFromInput(input core.TransactionInput) (core.Address, error) {
+	spendOutput, err := input.GetSpentOutput()
+	if err != nil {
+		logHistoryManager.WithError(err).Warnf(
+			"Couldn't get spend output from input %s", input.GetId())
+		return nil, err
+	}
+	return spendOutput.GetAddress()
 }

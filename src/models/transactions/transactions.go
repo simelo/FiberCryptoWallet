@@ -95,7 +95,6 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	for _, input := range transaction.GetInputs() {
 
-		qIn := address.NewQAddress(nil)
 		unspentOutput, err := input.GetSpentOutput()
 		if err != nil {
 			logTransactionDetails.WithError(err).Errorf(
@@ -108,8 +107,7 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 				"Couldn't get address from input %s in transaction %s", input.GetId(), transaction.GetId())
 			continue
 		}
-
-		qIn.SetAddress(inputAddrs.String())
+		qIn := address.FromCorAddrToQAddr(inputAddrs, "unknown")
 		inputCoinOptions := modelUtil.NewMap(nil)
 
 		for _, v := range input.GetCoinTraits() {
@@ -128,13 +126,13 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 	for _, out := range transaction.GetOutputs() {
 
-		qOu := address.NewQAddress(nil)
 		outAddrs, err := out.GetAddress()
 		if err != nil {
 			logTransactionDetails.WithError(err).Errorf("Couldn't get output address for %s in transaction %s",
 				out.GetId(), transaction.GetId())
 			continue
 		}
+		qOu := address.FromCorAddrToQAddr(outAddrs, "unknown")
 		qOu.SetAddress(outAddrs.String())
 		outputCoinOptions := modelUtil.NewMap(nil)
 

@@ -1,12 +1,12 @@
 package models
 
 import (
+	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
 	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/config"
+	util2 "github.com/fibercrypto/fibercryptowallet/src/models/util"
 	"github.com/fibercrypto/fibercryptowallet/src/models/wallets"
 	"sync"
 	"time"
-
-	"github.com/fibercrypto/fibercryptowallet/src/coin/skycoin"
 
 	// "github.com/fibercrypto/fibercryptowallet/src/coin/skycoin/params"
 	"github.com/fibercrypto/fibercryptowallet/src/models/address"
@@ -28,6 +28,8 @@ var logWalletManager = logging.MustGetLogger("modelsWalletManager")
 var once sync.Once
 var walletManager *WalletManager
 
+var updtWltChan = make(chan wallets.UpdateWallet, 100)
+
 type WalletManager struct {
 	qtCore.QObject
 	WalletEnv                core.WalletEnv
@@ -40,7 +42,6 @@ type WalletManager struct {
 	addressesAndWalletsMutex sync.Mutex
 	outputsByAddressMutex    sync.Mutex
 	walletsIterator          core.WalletIterator
-	updateWalletModel        chan struct{}
 	_                        func()                                                                                                                                                `constructor:"init"`
 	_                        func(model *wallets.WalletModel)                                                                                                                      `slot:"loadWallets"`
 	_                        func()                                                                                                                                                `slot:"updateAll"`
@@ -65,6 +66,8 @@ type WalletManager struct {
 	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
 	_                        func(wltName string, model *address.ModelAddress)                                                                                                     `slot:"loadAddressModelByWallet"`
 	_                        func(model *address.ModelAddress)                                                                                                                     `slot:"loadAddressForAllWallets"`
+	_                        func(model *wallets.WalletModel)                                                                                                                      `signal:"initWltModelAsync"`
+	_                        func(wallet *wallets.QWallet)                                                                                                                         `slot:"addWltAsync"`
 }
 
 func (walletM *WalletManager) init() {
@@ -95,10 +98,11 @@ func (walletM *WalletManager) init() {
 		walletM.ConnectGetAvailableWalletTypes(walletM.getAvailableWalletTypes)
 		walletM.ConnectLoadAddressModelByWallet(walletM.loadAddressModelByWallet)
 		walletM.ConnectLoadAddressForAllWallets(walletM.loadAddressForAllWallets)
+		walletM.ConnectInitWltModelAsync(walletM.initWltModelAsync)
+		walletM.ConnectAddWltAsync(walletM.addWalletAsync)
 
 		walletM.SeedGenerator = new(sky.SeedService)
 		walletManager = walletM
-		walletM.updateWalletModel = make(chan struct{})
 	})
 	walletM.altManager = local.LoadAltcoinManager()
 	walletM.updateTransactionAPI()
@@ -540,7 +544,6 @@ func (walletM *WalletManager) createEncryptedWallet(seed, label, wltType, passwo
 	qWallet := wallets.FromWalletToQWallet(wlt, true)
 	walletM.wallets = append(walletM.wallets, qWallet)
 
-	walletM.updateWalletModel <- struct{}{}
 	return qWallet
 }
 
@@ -557,7 +560,6 @@ func (walletM *WalletManager) createUnencryptedWallet(seed, label, wltType strin
 	qWallet := wallets.FromWalletToQWallet(wlt, true)
 	walletM.wallets = append(walletM.wallets, qWallet)
 
-	walletM.updateWalletModel <- struct{}{}
 	return qWallet
 }
 
@@ -598,11 +600,17 @@ func (walletM *WalletManager) encryptWallet(id, password string) int {
 		logWalletManager.WithError(err).Error("Couldn't create encrypted wallets")
 	}
 	logWalletManager.Info("Wallet encrypted")
+	loadWlt := func(id string, encrypted bool) {
+		updtWltChan <- wallets.UpdateWallet{
+			Wlt:   wallets.FromWalletToQWallet(walletM.WalletEnv.GetWalletSet().GetWallet(id), encrypted),
+			Roles: []int{wallets.EncryptionEnabled},
+		}
+	}
 	if ret {
-		walletM.updateWalletModel <- struct{}{}
+		loadWlt(id, true)
 		return 1
 	}
-	walletM.updateWalletModel <- struct{}{}
+	loadWlt(id, false)
 	return 0
 }
 
@@ -617,11 +625,18 @@ func (walletM *WalletManager) decryptWallet(id, password string) int {
 		logWalletManager.WithError(err).Error("Couldn't decrypt wallet")
 	}
 	logWalletManager.Info("Wallet decrypted")
+
+	loadWlt := func(id string, encrypted bool) {
+		updtWltChan <- wallets.UpdateWallet{
+			Wlt:   wallets.FromWalletToQWallet(walletM.WalletEnv.GetWalletSet().GetWallet(id), encrypted),
+			Roles: []int{wallets.EncryptionEnabled},
+		}
+	}
 	if ret {
-		walletM.updateWalletModel <- struct{}{}
+		loadWlt(id, true)
 		return 1
 	}
-	walletM.updateWalletModel <- struct{}{}
+	loadWlt(id, false)
 	return 0
 }
 
@@ -641,8 +656,6 @@ func (walletM *WalletManager) newWalletAddress(id string, n int, password string
 		wltEntriesLen++
 	}
 	wlt.GenAddresses(core.AccountAddress, uint32(wltEntriesLen), uint32(n), pwd)
-	walletM.updateWalletModel <- struct{}{}
-	logWalletManager.Info("New addresses created")
 }
 
 func (walletM *WalletManager) getWallets() []*wallets.QWallet {
@@ -677,20 +690,56 @@ func (walletM *WalletManager) getWallets() []*wallets.QWallet {
 	return walletM.wallets
 }
 
-func (walletM *WalletManager) loadWallets(model *wallets.WalletModel) {
-	logWalletManager.Info("Load qWallets async")
+func (walletM *WalletManager) initWltModelAsync(model *wallets.WalletModel) {
+	logWalletManager.Info("Init wallet model async")
+	getPos := func(list []*wallets.QWallet, obj *wallets.QWallet) int {
+		for e := range list {
+			if list[e].FileName() == obj.FileName() {
+				return e
+			}
+		}
+		return -1
+	}
 
 	go func() {
-		model.LoadModelAsync(walletM.getWallets())
+		mutex := sync.Mutex{}
 		for {
 			select {
 			case <-time.After(time.Duration(config.GetDataUpdateTime()) * time.Second):
-				model.LoadModelAsync(walletM.getWallets())
-			case <-walletM.updateWalletModel:
-				model.LoadModelAsync(walletM.getWallets())
-			case <-model.Ctx.Done():
-				logWalletManager.Info("Cancel Wallet updating")
-				return
+				for _, qWlt := range model.Wallets() {
+					if qWlt.EncryptionEnabled() == 0 {
+						wallets.LoadCoinFtrFromWalletAsync(qWlt.GetCorWlt(), false, updtWltChan)
+					} else {
+						wallets.LoadCoinFtrFromWalletAsync(qWlt.GetCorWlt(), true, updtWltChan)
+					}
+				}
+				break
+			case updtWlt := <-updtWltChan:
+				if len(updtWlt.Roles) == 0 {
+					util2.Helper.RunInMain(func() {
+						mutex.Lock()
+						defer mutex.Unlock()
+						model.AddWallet(updtWlt.Wlt)
+					})
+				} else {
+					util2.Helper.RunInMain(func() {
+						mutex.Lock()
+						defer mutex.Unlock()
+						model.EditWallet(getPos(model.Wallets(), updtWlt.Wlt), updtWlt.Wlt, updtWlt.Roles)
+					})
+				}
+			}
+		}
+	}()
+}
+
+func (walletM *WalletManager) loadWallets(model *wallets.WalletModel) {
+	logWalletManager.Info("Load qWallets async")
+	go func() {
+		for _, qWlt := range walletM.getWallets() {
+			updtWltChan <- wallets.UpdateWallet{
+				Wlt:   qWlt,
+				Roles: []int{},
 			}
 		}
 	}()
@@ -700,8 +749,11 @@ func (walletM *WalletManager) editWalletLbl(id, label string) {
 	logWalletManager.Info("Editing wallet")
 	wlt := walletM.WalletEnv.GetWalletSet().GetWallet(id)
 	wlt.SetLabel(label)
-	walletM.updateWalletModel <- struct{}{}
-	logWalletManager.Info("Wallet edited")
+
+	updtWltChan <- wallets.UpdateWallet{
+		Wlt:   wallets.FromWalletToQWallet(wlt, true),
+		Roles: []int{wallets.Name},
+	}
 }
 
 func (walletM *WalletManager) getCurrencyList() []string {
@@ -758,4 +810,12 @@ func (walletM *WalletManager) loadAddressForAllWallets(model *address.ModelAddre
 		}
 	}
 	model.LoadModel(addrList)
+}
+
+func (walletM *WalletManager) addWalletAsync(wallet *wallets.QWallet) {
+	logWalletManager.Info("Add wallet async ", wallet.GetCorWlt().GetLabel())
+	updtWltChan <- wallets.UpdateWallet{
+		Wlt:   wallet,
+		Roles: []int{},
+	}
 }

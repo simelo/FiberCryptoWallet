@@ -254,22 +254,31 @@ func loadCoreOutputsAsync(isLoading chan<- bool, send chan<- *QOutput, outToRemo
 				continue
 			}
 			for walletIter.Next() {
-				outputIter, err := walletIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+				addrIter, err := walletIter.Value().GetLoadedAddresses()
 				if err != nil {
 					logModelOutputs.WithError(err).Errorf(
-						"Couldn't get output iterator from wallet: %s", walletIter.Value().GetLabel())
+						"Couldn't get address iterator from wallet: %s", walletIter.Value().GetLabel())
 					isLoading <- true
 					continue
 				}
-				isLoading <- false
 				// Outputs list for the current wallet
 				isPersistent := make(map[string]struct{})
-				for outputIter.Next() {
-					isPersistent[outputIter.Value().GetId()] = struct{}{}
-					if _, ok := walletByOutputs[outputIter.Value().GetId()]; !ok {
-						walletByOutputs[outputIter.Value().GetId()] = walletIter.Value().GetLabel()
-						// <- OutToAdd
-						send <- FromOutputsToQOutputs(outputIter.Value(), walletIter.Value().GetLabel())
+				for addrIter.Next() {
+					outputIter, err := addrIter.Value().GetCryptoAccount().ScanUnspentOutputs()
+					if err != nil {
+						logModelOutputs.WithError(err).Errorf(
+							"Couldn't get output iterator from address: %s", addrIter.Value().String())
+						isLoading <- true
+						continue
+					}
+					isLoading <- false
+					for outputIter.Next() {
+						isPersistent[outputIter.Value().GetId()] = struct{}{}
+						if _, ok := walletByOutputs[outputIter.Value().GetId()]; !ok {
+							walletByOutputs[outputIter.Value().GetId()] = walletIter.Value().GetLabel()
+							// <- OutToAdd
+							send <- FromOutputsToQOutputs(outputIter.Value(), walletIter.Value().GetLabel())
+						}
 					}
 				}
 				removeOutList := make([]string, 0)
@@ -287,7 +296,6 @@ func loadCoreOutputsAsync(isLoading chan<- bool, send chan<- *QOutput, outToRemo
 				}
 				outToRemove <- removeOutList
 				// remove no persistent outputs
-				// <- removeOutList
 			}
 			break
 		case <-ctx.Done():
