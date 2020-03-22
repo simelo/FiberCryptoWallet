@@ -94,7 +94,6 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	}
 
 	for _, input := range transaction.GetInputs() {
-
 		unspentOutput, err := input.GetSpentOutput()
 		if err != nil {
 			logTransactionDetails.WithError(err).Errorf(
@@ -125,7 +124,6 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 	txnDetails.SetInputs(inputList)
 
 	for _, out := range transaction.GetOutputs() {
-
 		outAddrs, err := out.GetAddress()
 		if err != nil {
 			logTransactionDetails.WithError(err).Errorf("Couldn't get output address for %s in transaction %s",

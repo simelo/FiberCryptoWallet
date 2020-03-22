@@ -124,8 +124,8 @@ Page {
     HistoryManager {
         id: historyManager
         onNewTransactions:{
-
-            modelTransactions.addMultipleTransactions(historyManager.getTransactions())
+//historyManager.getNewTransactions()
+            modelTransactions.addMultipleTransactions(historyManager.getNewTransactions())
         }
     }
 }

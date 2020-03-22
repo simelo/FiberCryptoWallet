@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/qml"
-	"sort"
 )
 
 func init() {
@@ -134,27 +133,8 @@ func (txnList *TransactionList) data(index *core.QModelIndex, role int) *core.QV
 }
 
 func (txnList *TransactionList) addMultipleTransactions(txns []*TransactionDetails) {
-	logTransactionDetails.Info("adding multiple transactions")
-
-	var newTxnList = make(map[string]struct{})
 	for _, txn := range txns {
-		newTxnList[txn.TransactionID()] = struct{}{}
-		if _, ok := txnList.txnFind[txn.TransactionID()]; !ok {
-			txnList.addTransaction(txn)
-			txnList.txnFind[txn.TransactionID()] = struct{}{}
-		}
-	}
-	var posToRemove = make([]int, 0)
-	for index, qTxn := range txnList.Transactions() {
-		if _, ok := newTxnList[qTxn.TransactionID()]; !ok {
-			posToRemove = append(posToRemove, index)
-			delete(txnList.txnFind, qTxn.TransactionID())
-		}
-	}
-
-	sort.Sort(sort.Reverse(sort.IntSlice(posToRemove)))
-	for e := range posToRemove {
-		txnList.removeTransaction(posToRemove[e])
+		txnList.addTransaction(txn)
 	}
 }
 

@@ -508,7 +508,6 @@ func getTxnAmount(txn core.Transaction, txnType int, addrMap map[string]string) 
 
 func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]string) (*transactions.TransactionDetails, error) {
 	logHistoryManager.Info("Getting list of transactions")
-
 	txnType := getTxnType(txn, addresses)
 	txnDetails, err := transactions.NewTransactionDetailFromCoreTransaction(txn, txnType)
 	if err != nil {
