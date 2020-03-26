@@ -65,7 +65,7 @@ type WalletManager struct {
 	_                        func(wltIds, addresses []string, source string, bridgeForPassword *QBridge, index []int, qTxn *transactions.TransactionDetails)                       `slot:"signAndBroadcastTxnAsync"`
 	_                        func() []string                                                                                                                                       `slot:"getAvailableWalletTypes"`
 	_                        func(wltName string, model *address.ModelAddress)                                                                                                     `slot:"loadAddressModelByWallet"`
-	_                        func(model *address.ModelAddress)                                                                                                                     `slot:"loadAddressForAllWallets"`
+	_                        func() []*address.QAddress                                                                                                                            `slot:"loadAddressForAllWallets"`
 	_                        func(model *wallets.WalletModel)                                                                                                                      `signal:"initWltModelAsync"`
 	_                        func(wallet *wallets.QWallet)                                                                                                                         `slot:"addWltAsync"`
 }
@@ -792,7 +792,7 @@ func (walletM *WalletManager) loadAddressModelByWallet(wltName string, model *ad
 	model.LoadModelAsync(addrList)
 }
 
-func (walletM *WalletManager) loadAddressForAllWallets(model *address.ModelAddress) {
+func (walletM *WalletManager) loadAddressForAllWallets() []*address.QAddress {
 	wltIter := walletM.WalletEnv.GetWalletSet().ListWallets()
 	if wltIter == nil {
 		panic("implement me")
@@ -809,7 +809,7 @@ func (walletM *WalletManager) loadAddressForAllWallets(model *address.ModelAddre
 			addrList = append(addrList, address.FromCorAddrToQAddr(addrIter.Value(), wltIter.Value().GetLabel()))
 		}
 	}
-	model.LoadModel(addrList)
+	return addrList
 }
 
 func (walletM *WalletManager) addWalletAsync(wallet *wallets.QWallet) {

@@ -25,9 +25,11 @@ Page {
                 text: qsTr("Filters")
                 onClicked:{
                     if (!checked) {
-//                        historyManager.hasChanged(false)
+                        modelTransactions.clear()
+                        modelTransactions.addMultipleTransactions(historyManager.getTransactions())
 			        }else {
-//                        historyManager.hasChanged(true)
+                        modelTransactions.clear()
+                        modelTransactions.addMultipleTransactions(historyManager.getTransactionsWithFilters())
                     }
                 }
             }
@@ -76,7 +78,8 @@ Page {
         title: qsTr("Available filters")
 
         onClosed: {
-//           historyManager.hasChanged(true)
+            modelTransactions.clear()
+            modelTransactions.addMultipleTransactions(historyManager.getTransactionsWithFilters())
         }
 
 
@@ -117,15 +120,16 @@ Page {
 
     QTransactionList {
         id: modelTransactions
-        Component.onCompleted:{
-        }
     }
 
     HistoryManager {
         id: historyManager
         onNewTransactions:{
-//historyManager.getNewTransactions()
-            modelTransactions.addMultipleTransactions(historyManager.getNewTransactions())
+            if (!switchFilters.checked){
+                modelTransactions.addMultipleTransactions(historyManager.getNewTransactions())
+            }else{
+                modelTransactions.addMultipleTransactions(historyManager.getNewTransactionsWithFilters())
+            }
         }
     }
 }

@@ -142,9 +142,9 @@ func NewTransactionDetailFromCoreTransaction(transaction core.Transaction, txTyp
 
 		outputsList.AddAddress(qOu)
 
-		if !containsAddress(qOu.Address()) {
-			addresses.AddAddress(qOu)
-		}
+		// if !containsAddress(qOu.Address()) {
+		// addresses.AddAddress(qOu)
+		// }
 	}
 
 	txnCoinOptions := modelUtil.NewMap(nil)

@@ -82,7 +82,8 @@ ItemDelegate {
                 Layout.alignment: Qt.AlignLeft
                 height: contentHeight
                 id: listViewAddresses
-                model: modelInputs
+                model: modelAddresses
+
                 delegate: TransactionAddressDelegate {}
             }
         } // ColumnLayout (main content)

@@ -511,6 +511,7 @@ func TransactionDetailsFromCoreTxn(txn core.Transaction, addresses map[string]st
 	txnType := getTxnType(txn, addresses)
 	txnDetails, err := transactions.NewTransactionDetailFromCoreTransaction(txn, txnType)
 	if err != nil {
+		logHistoryManager.Infof("%#v", txn)
 		logHistoryManager.WithError(err).Warnf("error obtaining transaction"+
 			" details from core transaction: %s", txn.GetId())
 		return nil, err

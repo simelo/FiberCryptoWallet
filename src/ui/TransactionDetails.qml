@@ -252,6 +252,9 @@ Item {
                         model: modelInputs
                         clip: true
                         delegate: InputOutputDelegate {
+                            Component.onCompleted : {
+                                coinFtr = Qt.binding(function(){return coinOptions})
+                            }
                             width: parent.width
                         }
                     }
@@ -282,6 +285,9 @@ Item {
                         model: modelOutputs
                         clip: true
                         delegate: InputOutputDelegate {
+                            Component.onCompleted : {
+                                coinFtr = Qt.binding(function(){return coinOptions})
+                            }
                             width: parent.width
                         }
                     }

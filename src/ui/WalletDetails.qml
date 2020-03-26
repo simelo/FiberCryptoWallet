@@ -44,12 +44,12 @@ Item {
     QAddressList{
         id: addressList
         Component.onCompleted:{
-        addressList.start() //start Async
+            addressList.start() //start Async
         }
     }
 
     onFileNameChanged:{
-    walletManager.loadAddressModelByWallet(fileName, addressList)
+        walletManager.loadAddressModelByWallet(fileName, addressList)
     // if wallet is different change the model
     // else continue updating
     }
@@ -283,7 +283,6 @@ Item {
 
             onAccepted: {
                  walletManager.editWalletLbl(fileName, name)
-
             }
         } // DialogEditWallet
 }

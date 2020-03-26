@@ -164,13 +164,13 @@ func (modelAddrs *ModelAddress) data(index *qtCore.QModelIndex, role int) *qtCor
 }
 
 func (modelAddrs *ModelAddress) loadModel(addrList []*QAddress) {
-	if len(modelAddrs.Addresses()) == 0 {
-		for e := range addrList {
-			modelAddrs.AddAddress(addrList[e])
-		}
-		return
-	}
-
+	// if len(modelAddrs.Addresses()) == 0 {
+	// 	for e := range addrList {
+	// 		modelAddrs.AddAddress(addrList[e])
+	// 	}
+	// 	return
+	// }
+	logAddressModel.Info(modelAddrs.wltByAddr)
 	if len(modelAddrs.Addresses()) < len(addrList) {
 		for e := range addrList {
 			if _, ok := modelAddrs.wltByAddr[addrList[e].corAddr.String()]; !ok {
